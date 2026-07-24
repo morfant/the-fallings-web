@@ -24,15 +24,15 @@ html, body {
 }
 
 #canvas-holder {
-    flex: 1 1 58%;
+    flex: 1 1 52%;
     min-width: 0;
     position: relative;
 }
 #canvas-holder canvas { display: block; }
 
 #panel {
-    flex: 0 0 42%;
-    max-width: 560px;
+    flex: 0 0 48%;
+    max-width: 620px;
     background: var(--panel-bg);
     border-left: 1px solid var(--line);
     padding: 32px 28px;
@@ -52,6 +52,20 @@ html, body {
     font-size: 13px;
     line-height: 1.7;
     color: var(--text-dim);
+}
+
+#data-notice {
+    border-left: 2px solid var(--accent);
+    padding: 4px 0 4px 14px;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--text-dim);
+    word-break: keep-all;
+}
+#data-notice p + p { margin-top: 8px; }
+#data-notice .notice-strong {
+    color: var(--text);
+    font-weight: 600;
 }
 
 #revisit-banner {

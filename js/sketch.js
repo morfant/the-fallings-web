@@ -169,6 +169,32 @@ function drawFallingBlock() {
     drawBlock(p.x, p.y, pile.falling.body.angle, v, { highlight: 0.6, hover: false });
 }
 
+// 같은 날짜의 사고 블럭은 같은 색 — 날짜 문자열 해시로 낮은 채도의 색을 결정론적으로 생성
+const _dateColorCache = new Map();
+function dateColor(dateStr) {
+    let c = _dateColorCache.get(dateStr);
+    if (!c) {
+        let h = 0;
+        const s = String(dateStr);
+        for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+        c = color(`hsl(${h % 360}, 24%, 14%)`);
+        _dateColorCache.set(dateStr, c);
+    }
+    return c;
+}
+
+const _DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
+const _dowCache = new Map();
+function dayOfWeek(dateStr) {
+    let d = _dowCache.get(dateStr);
+    if (d === undefined) {
+        const t = new Date(`${dateStr}T00:00:00`);
+        d = isNaN(t) ? "" : _DAY_NAMES[t.getDay()];
+        _dowCache.set(dateStr, d);
+    }
+    return d;
+}
+
 function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     const w = pile.blockW();
     const h = CONFIG.BLOCK_H;
@@ -178,7 +204,7 @@ function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     if (angle) rotate(angle);
 
     rectMode(CENTER);
-    fill(...CONFIG.COLORS.block);
+    fill(dateColor(v.date));
     if (hover) {
         stroke(...CONFIG.COLORS.text);
         strokeWeight(1.2);
@@ -195,7 +221,9 @@ function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     noStroke();
     textSize(12);
     const region = displayRegion(v);
-    const leftLabel = region ? `${v.date}   ${region}` : `${v.date}`;
+    const dow = dayOfWeek(v.date);
+    const dateLabel = dow ? `${v.date} ${dow}` : `${v.date}`;
+    const leftLabel = region ? `${dateLabel}   ${region}` : dateLabel;
     const rightParts = [];
     if (v.accType) rightParts.push(v.accType);
     const dec = ageDecadeLabel(v.age);
