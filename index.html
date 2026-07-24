@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Fallings — 떨어진 사람들</title>
+    <meta name="description" content="한국에서 일하다 사망한 노동자들의 기록. 언론 보도를 수집해 산업재해 사망을 기억합니다." />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="lib/matter.min.js"></script>
+</head>
+<body>
+    <div id="layout">
+        <main id="canvas-holder" aria-label="사망 기록이 블럭으로 쌓이는 화면"></main>
+        <aside id="panel">
+            <header id="panel-header">
+                <h1>The Fallings</h1>
+                <p class="tagline">일하다 떨어지고, 끼이고, 깔려 죽은 사람들의 기록.<br />
+                    한 사람이 사망할 때마다 블럭 하나가 떨어져 쌓입니다.</p>
+            </header>
+            <div id="revisit-banner" hidden></div>
+            <div id="stats-content" aria-live="polite"></div>
+            <footer id="panel-footer">
+                <p>2025년 9월부터 언론 보도(한겨레·경향·연합뉴스)를 수집해 집계합니다.
+                    보도되지 않은 죽음은 여기에 없습니다. 이 숫자는 전부가 아닙니다.</p>
+            </footer>
+        </aside>
+    </div>
+
+    <button id="follow-btn" hidden>현재로 ↓</button>
+
+    <div id="detail-overlay" hidden>
+        <div id="detail-card" role="dialog" aria-modal="true">
+            <button id="detail-close" aria-label="닫기">×</button>
+            <p id="detail-date"></p>
+            <h2 id="detail-title"></h2>
+            <p id="detail-meta"></p>
+            <p id="detail-summary"></p>
+            <a id="detail-link" href="#" target="_blank" rel="noopener">기사 원문 보기 →</a>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/dataloader.js"></script>
+    <script src="js/blocks.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/sketch.js"></script>
+</body>
+</html>
