@@ -288,7 +288,7 @@ function showDetail(v) {
     document.getElementById("detail-title").textContent = title;
     document.getElementById("detail-meta").textContent = displayRegion(v);
     const summaryEl = document.getElementById("detail-summary");
-    summaryEl.textContent = "자세한 내용은 기사 원문에서 확인할 수 있습니다.";
+    summaryEl.textContent = v.accSummary || "자세한 내용은 기사 원문에서 확인할 수 있습니다.";
     const link = document.getElementById("detail-link");
     const realLink = String(v.link || "").split("#s")[0]; // stress 테스트 접미사 제거
     if (realLink) {
