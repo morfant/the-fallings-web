@@ -275,6 +275,8 @@ function setupDOM() {
 }
 
 function showDetail(v) {
+    // 공개 데이터는 최소 필드(date/region/accType/age/immigrant/link)만 담는다 —
+    // 상세한 내용은 기사 원문 링크로 안내.
     const dec = ageDecadeLabel(v.age);
     const parts = [];
     if (dec) parts.push(dec);
@@ -282,22 +284,19 @@ function showDetail(v) {
     parts.push("노동자");
     const title = `${parts.join(" ")}${v.accType ? `, ${v.accType} 사고로` : ""} 사망`;
 
-    const metaParts = [];
-    if (v.address) metaParts.push(v.address);
-    if (v.occuType) metaParts.push(v.occuType);
-    if (v.emp1) metaParts.push(v.emp1);
-
-    document.getElementById("detail-date").textContent =
-        formatKoreanDate(v.date) + (v.time ? ` ${v.time}` : "");
+    document.getElementById("detail-date").textContent = formatKoreanDate(v.date);
     document.getElementById("detail-title").textContent = title;
-    document.getElementById("detail-meta").textContent = metaParts.join(" · ");
-    document.getElementById("detail-summary").textContent = v.accSummary || "";
+    document.getElementById("detail-meta").textContent = displayRegion(v);
+    const summaryEl = document.getElementById("detail-summary");
+    summaryEl.textContent = "자세한 내용은 기사 원문에서 확인할 수 있습니다.";
     const link = document.getElementById("detail-link");
-    if (v.link) {
-        link.href = v.link;
+    const realLink = String(v.link || "").split("#s")[0]; // stress 테스트 접미사 제거
+    if (realLink) {
+        link.href = realLink;
         link.hidden = false;
     } else {
         link.hidden = true;
+        summaryEl.textContent = "";
     }
     document.getElementById("detail-overlay").hidden = false;
 }
