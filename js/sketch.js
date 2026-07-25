@@ -172,16 +172,19 @@ function drawFallingBlock() {
     drawBlock(p.x, p.y, pile.falling.body.angle, v, { highlight: 0.6, hover: false });
 }
 
-// 같은 요일 = 같은 색. 모노톤(무채색에 가까운 블루그레이) 밝기 7단계 —
-// 월요일이 가장 어둡고 일요일로 갈수록 밝아져, 지층에서 주간 리듬이 보인다.
-const _DOW_LIGHTNESS = [31, 11, 14, 17, 20, 23, 27]; // index = getDay() (0=일 ... 6=토)
+// 같은 요일 = 같은 색. 모노톤(무채색에 가까운 블루그레이)을 유지하되
+// 명도 범위를 크게 벌려(12%~48%) 요일 구분이 확실하게 —
+// 월요일이 가장 어둡고 일요일이 가장 밝다. 밝은 블럭은 글자를 어두운 색으로 반전.
+const _DOW_LIGHTNESS = [48, 12, 18, 24, 30, 36, 42]; // index = getDay() (0=일, 1=월 ... 6=토)
 const _dateColorCache = new Map();
+function dateLightness(dateStr) {
+    const t = new Date(`${dateStr}T00:00:00`);
+    return isNaN(t) ? 18 : _DOW_LIGHTNESS[t.getDay()];
+}
 function dateColor(dateStr) {
     let c = _dateColorCache.get(dateStr);
     if (!c) {
-        const t = new Date(`${dateStr}T00:00:00`);
-        const l = isNaN(t) ? 14 : _DOW_LIGHTNESS[t.getDay()];
-        c = color(`hsl(228, 7%, ${l}%)`);
+        c = color(`hsl(228, 7%, ${dateLightness(dateStr)}%)`);
         _dateColorCache.set(dateStr, c);
     }
     return c;
@@ -222,8 +225,12 @@ function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     rect(0, 0, w, h, 3);
 
     // 라벨: [날짜  지역]                [유형 · 연령대]
+    // 밝은 요일 블럭(금·토·일)에서는 글자를 어두운 색으로 반전
     noStroke();
     textSize(12);
+    const isLight = dateLightness(v.date) >= 36;
+    const mainCol = isLight ? [28, 28, 33] : CONFIG.COLORS.text;
+    const dimCol = isLight ? [72, 72, 84] : CONFIG.COLORS.textDim;
     const region = displayRegion(v);
     const dow = dayOfWeek(v.date);
     const dateLabel = dow ? `${v.date} ${dow}` : `${v.date}`;
@@ -235,7 +242,7 @@ function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     if (v.immigrant) rightParts.push("이주노동자");
     const rightLabel = rightParts.join(" · ");
 
-    fill(...CONFIG.COLORS.text);
+    fill(...mainCol);
     textAlign(LEFT, CENTER);
     text(leftLabel, -w / 2 + 14, 0);
 
@@ -244,13 +251,13 @@ function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
     textAlign(RIGHT, CENTER);
     if (n > 0) {
-        fill(...CONFIG.COLORS.textDim);
+        fill(...dimCol);
         const heart = `🖤 ${n}`;
         text(heart, rightX, 0);
         rightX -= textWidth(heart) + 14;
     }
     if (rightLabel) {
-        fill(...CONFIG.COLORS.textDim);
+        fill(...dimCol);
         const maxRight = rightX - (-w / 2 + 14 + textWidth(leftLabel)) - 20;
         if (textWidth(rightLabel) < maxRight) {
             text(rightLabel, rightX, 0);

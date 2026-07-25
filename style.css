@@ -24,7 +24,7 @@ html, body {
 }
 
 #canvas-holder {
-    flex: 0 0 32%;
+    flex: 0 0 40%;
     min-width: 320px;
     position: relative;
 }
@@ -147,7 +147,7 @@ html, body {
 }
 .bar-row .bar-label { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar-row .bar-track { background: #1d1d22; border-radius: 3px; height: 14px; overflow: hidden; }
-.bar-row .bar-fill { background: #4a6b8a; height: 100%; border-radius: 3px; min-width: 2px; }
+.bar-row .bar-fill { display: block; background: #4a6b8a; height: 100%; border-radius: 3px; min-width: 2px; }
 .bar-row.unknown .bar-fill { background: #3a3a42; }
 .bar-row .bar-count { text-align: right; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
