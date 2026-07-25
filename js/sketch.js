@@ -237,7 +237,7 @@ function drawPeriodMarker(label, y, size, strong) {
     textSize(size);
     const tw = textWidth(label);
     const ph = size + 14;
-    noFill();
+    fill(13, 13, 15, 235);
     stroke(255, strong ? 240 : 210);
     strokeWeight(strong ? 2 : 1.6);
     rect(width / 2 - tw / 2 - 16, y - ph / 2, tw + 32, ph, ph / 2);
@@ -323,6 +323,24 @@ function dayOfWeek(dateStr) {
     return d;
 }
 
+// 캔버스용 추모 리본 (흰 테두리 + 검은 심) — cx,cy 중심, hpx 높이
+function drawRibbonGlyph(cx, cy, hpx) {
+    const s = hpx / 30;
+    push();
+    translate(cx - 12 * s, cy - 15 * s);
+    scale(s);
+    noFill();
+    for (const [col, wgt] of [[[232, 232, 238], 5], [[10, 10, 12], 2.6]]) {
+        stroke(...col);
+        strokeWeight(wgt); // viewBox 단위 — scale과 함께 SVG와 동일 비율
+        bezier(12, 3, 7.5, 5.5, 7.5, 10, 12, 14.5);
+        bezier(12, 14.5, 16.5, 10, 16.5, 5.5, 12, 3);
+        line(9.6, 12.2, 16.6, 27);
+        line(14.4, 12.2, 7.4, 27);
+    }
+    pop();
+}
+
 function drawBlockLabels(cx, cy, v) {
     const w = pile.blockW();
 
@@ -343,16 +361,18 @@ function drawBlockLabels(cx, cy, v) {
     textAlign(LEFT, CENTER);
     text(leftLabel, cx - w / 2 + 18, cy);
 
-    // 우측: [유형 · 연령 · 이주노동자]  ♥N (애도 수 — 흰색 하트 글리프)
+    // 우측: [유형 · 연령 · 이주노동자]  [추모 리본]N (애도 수)
     textSize(16);
     let rightX = cx + w / 2 - 18;
     const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
     textAlign(RIGHT, CENTER);
     if (n > 0) {
         fill(...CONFIG.COLORS.text);
-        const heart = `♥ ${n}`;
-        text(heart, rightX, cy);
-        rightX -= textWidth(heart) + 16;
+        const numStr = `${n}`;
+        text(numStr, rightX, cy);
+        rightX -= textWidth(numStr) + 8;
+        drawRibbonGlyph(rightX - 8, cy, 20); // 리본 (흰 테두리 + 검은 심)
+        rightX -= 16 + 14;
     }
     if (rightLabel) {
         fill(...CONFIG.COLORS.text);
@@ -478,7 +498,7 @@ async function updateAckRow(link) {
         n > 0 ? `이 죽음을 ${n}명이 들었습니다` : "이 소식을 들었다면, 눌러주세요";
     const btn = document.getElementById("ack-btn");
     btn.disabled = hasAcked(id);
-    btn.textContent = hasAcked(id) ? "🖤 들었습니다 ✓" : "🖤 들었습니다";
+    btn.innerHTML = hasAcked(id) ? `${RIBBON_SVG} 들었습니다 ✓` : `${RIBBON_SVG} 들었습니다`;
 }
 
 async function onAckClick() {
@@ -491,7 +511,7 @@ async function onAckClick() {
         const count = await sendAck(detailLink);
         markAcked(id);
         document.getElementById("ack-count").textContent = `이 죽음을 ${count}명이 들었습니다`;
-        btn.textContent = "🖤 들었습니다 ✓";
+        btn.innerHTML = `${RIBBON_SVG} 들었습니다 ✓`;
         renderStats(victims, pile.settled.length); // '기록된 애도' 즉시 반영
     } catch {
         btn.disabled = false; // 실패 시 다시 시도 가능

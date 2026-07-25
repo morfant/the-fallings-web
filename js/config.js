@@ -8,7 +8,7 @@ const CONFIG = {
     BLOCK_MARGIN: 8,        // 좌우 여백
     GROUND_Y: 1000000,      // 바닥의 월드 y (더미는 위로 자람 — 수십 년치 여유)
     GRAVITY_REPLAY: 1.4,    // 리플레이 낙하 중력
-    GRAVITY_LIVE: 0.18,     // 신규(세리머니) 낙하 중력
+    GRAVITY_LIVE: 0.26,     // 신규(세리머니) 낙하 중력
 
     // 로드/리플레이/라이브
     REPLAY_N: 1,            // 페이지 로드 시 낙하로 재생할 최근 건수 (마지막 한 명만)

@@ -177,7 +177,7 @@ function playThud(vol = 1) {
     // 전체 엔벨로프: Env.perc(0.01, 1.5) × 0.4
     const master = ctx.createGain();
     master.gain.setValueAtTime(0.0001, t);
-    master.gain.exponentialRampToValueAtTime(0.4 * vol, t + 0.01);
+    master.gain.exponentialRampToValueAtTime(0.72 * vol, t + 0.01);
     master.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
     // LeakDC 근사
     const dc = ctx.createBiquadFilter();

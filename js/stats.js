@@ -52,6 +52,22 @@ function aggregateStats(victims, uptoCount) {
     return agg;
 }
 
+// 추모 리본 (흰 테두리 + 검은 심, 2겹 패스) — 통계·팝업 버튼 공용
+const RIBBON_SVG = `<svg class="ribbon-ic" viewBox="0 0 24 30" aria-label="추모 리본" role="img">
+    <g fill="none" stroke-linecap="round">
+        <g stroke="#e8e8ee" stroke-width="5">
+            <path d="M12 3 C7.5 5.5 7.5 10 12 14.5 C16.5 10 16.5 5.5 12 3 Z"/>
+            <path d="M9.6 12.2 L16.6 27"/>
+            <path d="M14.4 12.2 L7.4 27"/>
+        </g>
+        <g stroke="#0a0a0c" stroke-width="2.6">
+            <path d="M12 3 C7.5 5.5 7.5 10 12 14.5 C16.5 10 16.5 5.5 12 3 Z"/>
+            <path d="M9.6 12.2 L16.6 27"/>
+            <path d="M14.4 12.2 L7.4 27"/>
+        </g>
+    </g>
+</svg>`;
+
 function esc(s) {
     return String(s).replace(/[&<>"']/g, (c) =>
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -104,15 +120,9 @@ function renderStats(victims, uptoCount) {
     // 전체 애도 수 — 라벨 없이 추모 리본 모양 + 숫자만
     const totalAcks = typeof _acks === "object"
         ? Object.values(_acks).reduce((s, n) => s + (n | 0), 0) : 0;
-    const RIBBON = `<svg class="ribbon-ic" viewBox="0 0 24 30" aria-label="추모 리본" role="img">
-        <path d="M12 2.5 C7.5 5 7.5 10 12 14.5 C16.5 10 16.5 5 12 2.5 Z"
-            fill="none" stroke="currentColor" stroke-width="2.4"/>
-        <path d="M9.6 12.2 L16.6 27.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-        <path d="M14.4 12.2 L7.4 27.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-    </svg>`;
     const acksHtml = `
         <div class="stat-cell">
-            <div class="num ack-num">${RIBBON} ${totalAcks}</div>
+            <div class="num ack-num">${RIBBON_SVG} ${totalAcks}</div>
         </div>`;
 
     el.innerHTML = `
