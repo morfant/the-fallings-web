@@ -512,7 +512,7 @@ async function updateAckRow(link) {
     if (link !== detailLink) return; // 그 사이 다른 카드가 열렸으면 무시
     const n = _acks[id] || 0;
     document.getElementById("ack-count").textContent =
-        n > 0 ? `이 죽음을 ${n}명이 들었습니다` : "이 소식을 들었다면, 눌러주세요";
+        n > 0 ? `이 죽음을 ${n}명이 확인했습니다` : "이 죽음을 확인했다면, 눌러주세요";
     const btn = document.getElementById("ack-btn");
     btn.disabled = hasAcked(id);
     btn.innerHTML = hasAcked(id) ? `${RIBBON_SVG} ✓` : RIBBON_SVG;
@@ -527,7 +527,7 @@ async function onAckClick() {
     try {
         const count = await sendAck(detailLink);
         markAcked(id);
-        document.getElementById("ack-count").textContent = `이 죽음을 ${count}명이 들었습니다`;
+        document.getElementById("ack-count").textContent = `이 죽음을 ${count}명이 확인했습니다`;
         btn.innerHTML = `${RIBBON_SVG} ✓`;
         renderStats(victims, pile.settled.length); // '기록된 애도' 즉시 반영
     } catch {
