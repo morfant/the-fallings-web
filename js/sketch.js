@@ -238,8 +238,7 @@ function drawPeriodMarker(label, y, size, strong) {
     const tw = textWidth(label);
     const ph = size + 14;
     fill(13, 13, 15, 235);
-    stroke(255, strong ? 240 : 210);
-    strokeWeight(strong ? 2 : 1.6);
+    noStroke();
     rect(width / 2 - tw / 2 - 16, y - ph / 2, tw + 32, ph, ph / 2);
     noStroke();
     fill(255);
@@ -498,7 +497,7 @@ async function updateAckRow(link) {
         n > 0 ? `이 죽음을 ${n}명이 들었습니다` : "이 소식을 들었다면, 눌러주세요";
     const btn = document.getElementById("ack-btn");
     btn.disabled = hasAcked(id);
-    btn.innerHTML = hasAcked(id) ? `${RIBBON_SVG} 들었습니다 ✓` : `${RIBBON_SVG} 들었습니다`;
+    btn.innerHTML = hasAcked(id) ? `${RIBBON_SVG} ✓` : RIBBON_SVG;
 }
 
 async function onAckClick() {
@@ -511,7 +510,7 @@ async function onAckClick() {
         const count = await sendAck(detailLink);
         markAcked(id);
         document.getElementById("ack-count").textContent = `이 죽음을 ${count}명이 들었습니다`;
-        btn.innerHTML = `${RIBBON_SVG} 들었습니다 ✓`;
+        btn.innerHTML = `${RIBBON_SVG} ✓`;
         renderStats(victims, pile.settled.length); // '기록된 애도' 즉시 반영
     } catch {
         btn.disabled = false; // 실패 시 다시 시도 가능
