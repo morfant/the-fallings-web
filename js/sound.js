@@ -13,7 +13,9 @@
 
 let _audioCtx = null;
 let _noiseBuf = null;
-let soundOn = localStorage.getItem("tf:sound") === "1";
+// 소리는 기본 켬. 브라우저 자동재생 정책상 첫 사용자 제스처(클릭/터치/키) 후부터
+// 실제로 소리가 난다 — 아래에서 제스처 시 오디오를 잠금 해제한다.
+let soundOn = true;
 
 // 날씨 → 신스 파라미터 (SC와 동일 매핑, wttr.in/Seoul — 설치 버전과 같은 소스)
 let _weather = { freq2: 150, wet: 0.1, category: 0 }; // 기본값 = SynthDef 기본값
@@ -49,20 +51,12 @@ function _ensureCtx() {
     return _audioCtx;
 }
 
-function toggleSound() {
-    soundOn = !soundOn;
-    localStorage.setItem("tf:sound", soundOn ? "1" : "0");
-    if (soundOn) {
-        const ctx = _ensureCtx();
-        if (ctx && ctx.state === "suspended") ctx.resume();
-        playThud(0.7); // 켜는 순간 미리듣기
-    }
-    _updateSoundBtn();
-}
-
-function _updateSoundBtn() {
-    const btn = document.getElementById("sound-btn");
-    if (btn) btn.textContent = soundOn ? "🔊 소리 끄기" : "🔇 소리 켜기";
+// 첫 사용자 제스처에서 오디오 잠금 해제 (1회)
+function _unlockAudio() {
+    const ctx = _ensureCtx();
+    if (ctx && ctx.state === "suspended") ctx.resume();
+    ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
+        document.removeEventListener(ev, _unlockAudio));
 }
 
 // SinOscFB 근사: 자기 FM — 인덱스(rad)×주파수 = 주파수 편차, Env.perc(0.001, 0.1)로 감쇠
@@ -207,7 +201,8 @@ function playThud(vol = 1) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    _updateSoundBtn();
     loadWeather();
     setInterval(loadWeather, 30 * 60 * 1000); // 30분마다 날씨 갱신
+    ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
+        document.addEventListener(ev, _unlockAudio));
 });

@@ -233,15 +233,19 @@ function dateOfSettled(i) {
 }
 
 function drawPeriodMarker(label, y, size, strong) {
+    textStyle(BOLD);
     textSize(size);
     const tw = textWidth(label);
-    const ph = size + 12;
+    const ph = size + 14;
+    noFill();
+    stroke(255, strong ? 240 : 210);
+    strokeWeight(strong ? 2 : 1.6);
+    rect(width / 2 - tw / 2 - 16, y - ph / 2, tw + 32, ph, ph / 2);
     noStroke();
-    fill(13, 13, 15, strong ? 240 : 215);
-    rect(width / 2 - tw / 2 - 14, y - ph / 2, tw + 28, ph, ph / 2);
-    fill(...(strong ? CONFIG.COLORS.text : CONFIG.COLORS.textDim));
+    fill(255);
     textAlign(CENTER, CENTER);
     text(label, width / 2, y);
+    textStyle(NORMAL);
 }
 
 function drawPeriodMarkers(lo, hi) {
@@ -255,10 +259,10 @@ function drawPeriodMarkers(lo, hi) {
         // i(위, 새 달)와 i-1(아래, 이전 달) 사이 경계 — 이전 달의 요약을 표시
         const by = pile.yOfCenter(i) + H / 2;
         const ym = prev.slice(0, 7);
-        drawPeriodMarker(`${parseInt(ym.slice(5, 7), 10)}월 · ${_monthCounts.get(ym) || 0}명`, by, 13, false);
+        drawPeriodMarker(`${parseInt(ym.slice(5, 7), 10)}월 · ${_monthCounts.get(ym) || 0}명`, by, 16, false);
         if (cur.slice(0, 4) !== prev.slice(0, 4)) {
             const yy = prev.slice(0, 4);
-            drawPeriodMarker(`${yy}년 · ${_yearCounts.get(yy) || 0}명`, by - 30, 16, true);
+            drawPeriodMarker(`${yy}년 · ${_yearCounts.get(yy) || 0}명`, by - 38, 20, true);
         }
     }
 }

@@ -86,7 +86,7 @@ function monthChart(monthly) {
         <div class="m-col">
             <div class="m-bar" style="height:${Math.round((c.count / maxV) * 100)}%"
                  title="${c.ym}: ${c.count}명"></div>
-            <div class="m-label">${c.label}</div>
+            <div class="m-label">${c.label}월</div>
         </div>`).join("") + `</div>`;
 }
 
@@ -101,13 +101,18 @@ function renderStats(victims, uptoCount) {
             <div class="label">마지막 사망으로부터 (${esc(formatKoreanDate(a.lastDate))})</div>
         </div>`;
 
-    // 전체 애도 수 (카운터 서버에서 로드 — 로드 전이면 0으로 표시 후 갱신됨)
+    // 전체 애도 수 — 라벨 없이 추모 리본 모양 + 숫자만
     const totalAcks = typeof _acks === "object"
         ? Object.values(_acks).reduce((s, n) => s + (n | 0), 0) : 0;
+    const RIBBON = `<svg class="ribbon-ic" viewBox="0 0 24 30" aria-label="추모 리본" role="img">
+        <path d="M12 2.5 C7.5 5 7.5 10 12 14.5 C16.5 10 16.5 5 12 2.5 Z"
+            fill="none" stroke="currentColor" stroke-width="2.4"/>
+        <path d="M9.6 12.2 L16.6 27.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M14.4 12.2 L7.4 27.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>`;
     const acksHtml = `
         <div class="stat-cell">
-            <div class="num">♥ ${totalAcks}</div>
-            <div class="label">기록된 애도</div>
+            <div class="num ack-num">${RIBBON} ${totalAcks}</div>
         </div>`;
 
     el.innerHTML = `

@@ -228,20 +228,9 @@ html, body {
 }
 #follow-btn:hover { border-color: var(--accent); color: #fff; }
 
-#sound-btn {
-    position: fixed;
-    left: 24px;
-    bottom: 72px;
-    background: var(--block);
-    color: var(--text-dim);
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 12.5px;
-    cursor: pointer;
-    z-index: 20;
-}
-#sound-btn:hover { border-color: var(--accent); color: var(--text); }
+/* ---- 추모 리본 아이콘 ---- */
+.ack-num { display: flex; align-items: center; gap: 8px; }
+.ribbon-ic { width: 15px; height: 19px; color: var(--text); flex-shrink: 0; }
 
 /* ---- 상세 오버레이 ---- */
 #detail-overlay {
