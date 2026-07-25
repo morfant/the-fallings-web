@@ -10,6 +10,22 @@ let cameraY = 0;
 let followMode = true;
 let hoverIdx = -1;
 let selectedIdx = -1; // 상세 팝업이 열려 있는 블럭
+
+// 착지 충격파 (렌더 전용 — 물리 바디는 건드리지 않음)
+let shakeStart = -1e9; // millis
+let shakeTopIdx = -1;  // 착지한 블럭 인덱스
+const SHAKE = { DUR: 0.7, REACH: 12, AMP: 6, FREQ: 9, DECAY: 6 };
+
+function shakeOffset(i, nowMs) {
+    const elapsed = (nowMs - shakeStart) / 1000;
+    if (elapsed < 0 || elapsed > SHAKE.DUR) return 0;
+    const depth = shakeTopIdx - i; // 0 = 방금 착지한 블럭, 아래로 갈수록 증가
+    if (depth < 0 || depth >= SHAKE.REACH) return 0;
+    const depthAtten = 1 - depth / SHAKE.REACH;            // 아래로 갈수록 약하게
+    const timeAtten = Math.exp(-elapsed * SHAKE.DECAY);    // 시간 감쇠
+    const phase = elapsed * TWO_PI * SHAKE.FREQ - depth * 0.6; // 아래로 전파되는 위상
+    return SHAKE.AMP * depthAtten * timeAtten * Math.sin(phase);
+}
 let lastLandAt = 0;
 
 function setup() {
@@ -110,6 +126,8 @@ function draw() {
         lastLandAt = now;
         renderStats(victims, pile.settled.length);
         playThud(); // 착지음 (소리 켜져 있을 때만)
+        shakeStart = now; // 아래 블럭들로 전파되는 충격파
+        shakeTopIdx = pile.settled.length - 1;
     }
 
     updateCamera();
@@ -275,7 +293,7 @@ function drawSettledBlocks(now) {
         const s = pile.settled[i];
         if (!s) continue;
         const v = victims[s.victimIdx];
-        const cy = pile.yOfCenter(i);
+        const cy = pile.yOfCenter(i) + shakeOffset(i, now); // 착지 충격파 (렌더 전용)
 
         drawMetalBlock(width / 2, cy);
 
