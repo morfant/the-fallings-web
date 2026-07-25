@@ -9,6 +9,7 @@ let appState = "loading";
 let cameraY = 0;
 let followMode = true;
 let hoverIdx = -1;
+let selectedIdx = -1; // 상세 팝업이 열려 있는 블럭
 let lastLandAt = 0;
 
 function setup() {
@@ -211,9 +212,17 @@ function drawSettledBlocks(now) {
 
         drawMetalBlock(width / 2, cy);
 
+        // 선택된 블럭: 은은한 앰버 틴트 + 테두리
+        if (i === selectedIdx) {
+            fill(...CONFIG.COLORS.accent, 34);
+            stroke(...CONFIG.COLORS.accent, 200);
+            strokeWeight(1.5);
+            rect(width / 2 - w / 2 + 1, cy - H / 2 + 1, w - 2, H - 2, 3);
+        }
+
         const highlight = s.settledAt > 0 && now - s.settledAt < CONFIG.HIGHLIGHT_MS
             ? 1 - (now - s.settledAt) / CONFIG.HIGHLIGHT_MS : 0;
-        if (highlight > 0 || i === hoverIdx) {
+        if ((highlight > 0 || i === hoverIdx) && i !== selectedIdx) {
             noFill();
             if (i === hoverIdx) { stroke(...CONFIG.COLORS.text); strokeWeight(1.2); }
             else { stroke(...CONFIG.COLORS.accent, 90 + 165 * highlight); strokeWeight(1.5); }
@@ -270,13 +279,13 @@ function drawBlockLabels(cx, cy, v) {
     const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
     textAlign(RIGHT, CENTER);
     if (n > 0) {
-        fill(...CONFIG.COLORS.textDim);
+        fill(...CONFIG.COLORS.text);
         const heart = `🖤 ${n}`;
         text(heart, rightX, cy);
         rightX -= textWidth(heart) + 16;
     }
     if (rightLabel) {
-        fill(...CONFIG.COLORS.textDim);
+        fill(...CONFIG.COLORS.text);
         textSize(15);
         const leftEnd = cx - w / 2 + 18 + textWidth(leftLabel);
         textSize(13.5);
@@ -319,7 +328,7 @@ function mousePressed(event) {
     if (DEBUG) console.log("[tf] click idx", idx, "settled", pile.settled.length);
     if (idx < 0) return;
     const s = pile.settled[idx];
-    if (s) showDetail(victims[s.victimIdx]);
+    if (s) { selectedIdx = idx; showDetail(victims[s.victimIdx]); }
 }
 
 function windowResized() {
@@ -347,7 +356,7 @@ function setupDOM() {
             e.clientY >= r.top && e.clientY <= r.bottom) {
             const idx = pile.indexAtWorldY((e.clientY - r.top) + cameraY);
             const s = idx >= 0 ? pile.settled[idx] : null;
-            if (s) { showDetail(victims[s.victimIdx]); return; }
+            if (s) { selectedIdx = idx; showDetail(victims[s.victimIdx]); return; }
         }
         hideDetail();
     });
@@ -419,6 +428,7 @@ async function onAckClick() {
 }
 
 function hideDetail() {
+    selectedIdx = -1;
     document.getElementById("detail-overlay").hidden = true;
 }
 
