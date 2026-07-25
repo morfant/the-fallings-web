@@ -89,7 +89,7 @@ function barRows(map, { unknownKey = null, max = 8 } = {}) {
 }
 
 function monthChart(monthly) {
-    // 최근 12개월
+    // 최근 12개월 — 세로축(0/중간/최대) + 가로 그리드
     const now = new Date();
     const cols = [];
     for (let i = 11; i >= 0; i--) {
@@ -98,12 +98,20 @@ function monthChart(monthly) {
         cols.push({ ym, label: `${d.getMonth() + 1}`, count: monthly.get(ym) || 0 });
     }
     const maxV = Math.max(1, ...cols.map((c) => c.count));
-    return `<div class="month-chart">` + cols.map((c) => `
-        <div class="m-col">
-            <div class="m-bar" style="height:${Math.round((c.count / maxV) * 100)}%"
-                 title="${c.ym}: ${c.count}명"></div>
-            <div class="m-label">${c.label}월</div>
-        </div>`).join("") + `</div>`;
+    const niceMax = Math.max(5, Math.ceil(maxV / 5) * 5); // 5 단위로 올림 → 눈금이 깔끔
+    return `<div class="month-wrap">
+        <div class="month-axis"><span>${niceMax}</span><span>${niceMax / 2}</span><span>0</span></div>
+        <div class="month-main">
+            <div class="month-plot">
+                <div class="m-grid" style="top:0"></div>
+                <div class="m-grid" style="top:50%"></div>
+                <div class="m-grid" style="bottom:0"></div>
+                ${cols.map((c) => `<div class="m-bar" style="height:${(c.count / niceMax) * 100}%"
+                    title="${c.ym}: ${c.count}명"></div>`).join("")}
+            </div>
+            <div class="month-labels">${cols.map((c) => `<span>${c.label}월</span>`).join("")}</div>
+        </div>
+    </div>`;
 }
 
 function renderStats(victims, uptoCount) {
@@ -145,11 +153,5 @@ function renderStats(victims, uptoCount) {
             <h3>최근 12개월</h3>
             ${monthChart(a.monthly)}
         </div>
-        ${a.immigrant > 0 ? `<div class="stat-section wide">
-            <h3>이주노동자</h3>
-            <div class="bar-row"><span class="bar-label">확인된 수</span>
-            <span class="bar-track"><span class="bar-fill" style="width:${Math.round((a.immigrant / Math.max(1, a.total)) * 100)}%"></span></span>
-            <span class="bar-count">${a.immigrant}</span></div>
-        </div>` : ""}
     `;
 }

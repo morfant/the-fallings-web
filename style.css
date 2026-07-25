@@ -151,15 +151,29 @@ html, body {
 .bar-row.unknown .bar-fill { background: #3a3a42; }
 .bar-row .bar-count { text-align: right; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
-.month-chart {
+.month-wrap { display: flex; gap: 10px; }
+.month-axis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 72px;
+    font-size: 10px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+}
+.month-main { flex: 1; min-width: 0; }
+.month-plot {
+    position: relative;
+    height: 72px;
     display: flex;
     align-items: flex-end;
     gap: 4px;
-    height: 64px;
 }
-.month-chart .m-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
-.month-chart .m-bar { background: #4a6b8a; border-radius: 2px 2px 0 0; min-height: 2px; }
-.month-chart .m-label { font-size: 9px; color: var(--text-dim); text-align: center; margin-top: 4px; }
+.m-grid { position: absolute; left: 0; right: 0; height: 1px; background: var(--line); }
+.m-bar { flex: 1; background: #4a6b8a; border-radius: 2px 2px 0 0; min-height: 2px; position: relative; z-index: 1; }
+.month-labels { display: flex; gap: 4px; margin-top: 5px; }
+.month-labels span { flex: 1; text-align: center; font-size: 9.5px; color: var(--text-dim); }
 
 #panel-footer {
     margin-top: auto;
