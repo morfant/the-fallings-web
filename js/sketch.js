@@ -54,6 +54,7 @@ async function initData() {
     // "들었습니다" 카운터 — 로드되면 통계(기록된 애도)도 갱신
     loadAcks().then(() => renderStats(victims, pile.settled.length));
     computeAckIds(victims); // 블럭 위 ♥N 표시용 id 사전 계산
+    computePeriodCounts(); // 월/연 경계 요약 오버레이용
 
     renderStats(victims, pile.settled.length);
     appState = "replay";
@@ -98,6 +99,7 @@ function draw() {
     if (landedIdx !== null) {
         lastLandAt = now;
         renderStats(victims, pile.settled.length);
+        playThud(); // 착지음 (소리 켜져 있을 때만)
     }
 
     updateCamera();
@@ -200,6 +202,57 @@ function drawMetalBlock(cx, cy) {
     pop();
 }
 
+// ---- 월/연 경계 요약 오버레이 ----
+let _monthCounts = new Map(); // "YYYY-MM" → n
+let _yearCounts = new Map();  // "YYYY" → n
+function computePeriodCounts() {
+    _monthCounts = new Map();
+    _yearCounts = new Map();
+    for (const v of victims) {
+        const ym = String(v.date || "").slice(0, 7);
+        if (ym.length !== 7) continue;
+        _monthCounts.set(ym, (_monthCounts.get(ym) || 0) + 1);
+        const y = ym.slice(0, 4);
+        _yearCounts.set(y, (_yearCounts.get(y) || 0) + 1);
+    }
+}
+
+function dateOfSettled(i) {
+    const s = pile.settled[i];
+    return s ? victims[s.victimIdx].date : null;
+}
+
+function drawPeriodMarker(label, y, size, strong) {
+    textSize(size);
+    const tw = textWidth(label);
+    const ph = size + 12;
+    noStroke();
+    fill(13, 13, 15, strong ? 240 : 215);
+    rect(width / 2 - tw / 2 - 14, y - ph / 2, tw + 28, ph, ph / 2);
+    fill(...(strong ? CONFIG.COLORS.text : CONFIG.COLORS.textDim));
+    textAlign(CENTER, CENTER);
+    text(label, width / 2, y);
+}
+
+function drawPeriodMarkers(lo, hi) {
+    const H = CONFIG.BLOCK_H;
+    for (let i = Math.max(1, lo); i <= hi; i++) {
+        const cur = dateOfSettled(i);
+        const prev = dateOfSettled(i - 1);
+        if (!cur || !prev) continue;
+        if (cur.slice(0, 7) === prev.slice(0, 7)) continue;
+
+        // i(위, 새 달)와 i-1(아래, 이전 달) 사이 경계 — 이전 달의 요약을 표시
+        const by = pile.yOfCenter(i) + H / 2;
+        const ym = prev.slice(0, 7);
+        drawPeriodMarker(`${parseInt(ym.slice(5, 7), 10)}월 · ${_monthCounts.get(ym) || 0}명`, by, 13, false);
+        if (cur.slice(0, 4) !== prev.slice(0, 4)) {
+            const yy = prev.slice(0, 4);
+            drawPeriodMarker(`${yy}년 · ${_yearCounts.get(yy) || 0}명`, by - 30, 16, true);
+        }
+    }
+}
+
 function drawSettledBlocks(now) {
     const [lo, hi] = pile.visibleRange(cameraY, height);
     const w = pile.blockW();
@@ -232,6 +285,8 @@ function drawSettledBlocks(now) {
 
         drawBlockLabels(width / 2, cy, v);
     }
+
+    drawPeriodMarkers(lo, hi); // 월/연 경계 요약 (블럭 위에 오버랩)
 }
 
 function drawFallingBlock() {
@@ -457,6 +512,8 @@ function startPolling() {
                     spawnQueue.push(victims.length - 1);
                 }
                 markLatestSeen(victims);
+                computeAckIds(fresh);   // 신규 블럭 ♥ 표시용
+                computePeriodCounts();  // 월/연 요약 갱신
             }
         } catch (e) {
             console.warn("poll failed:", e);
