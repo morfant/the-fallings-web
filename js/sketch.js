@@ -51,6 +51,7 @@ async function initData() {
     if (since) showRevisitBanner(since);
 
     loadAcks(); // "들었습니다" 카운터 (실패해도 무해)
+    computeAckIds(victims); // 블럭 위 ♥N 표시용 id 사전 계산
 
     renderStats(victims, pile.settled.length);
     appState = "replay";
@@ -171,7 +172,8 @@ function drawFallingBlock() {
     drawBlock(p.x, p.y, pile.falling.body.angle, v, { highlight: 0.6, hover: false });
 }
 
-// 같은 날짜의 사고 블럭은 같은 색 — 날짜 문자열 해시로 낮은 채도의 색을 결정론적으로 생성
+// 같은 날짜의 사고 블럭은 같은 색 — 12색 팔레트에서 날짜 해시로 선택.
+// (연속 색상환 대신 30도 간격 양자화 → 인접 날짜도 뚜렷하게 구분됨)
 const _dateColorCache = new Map();
 function dateColor(dateStr) {
     let c = _dateColorCache.get(dateStr);
@@ -179,7 +181,7 @@ function dateColor(dateStr) {
         let h = 0;
         const s = String(dateStr);
         for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-        c = color(`hsl(${h % 360}, 24%, 14%)`);
+        c = color(`hsl(${(h % 12) * 30}, 34%, 18%)`);
         _dateColorCache.set(dateStr, c);
     }
     return c;
@@ -237,12 +239,21 @@ function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     textAlign(LEFT, CENTER);
     text(leftLabel, -w / 2 + 14, 0);
 
+    // 우측: [유형 · 연령 · 이주노동자]  ♥N (애도 수)
+    let rightX = w / 2 - 14;
+    const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
+    textAlign(RIGHT, CENTER);
+    if (n > 0) {
+        fill(...CONFIG.COLORS.accent, 220);
+        const heart = `♥ ${n}`;
+        text(heart, rightX, 0);
+        rightX -= textWidth(heart) + 14;
+    }
     if (rightLabel) {
         fill(...CONFIG.COLORS.textDim);
-        textAlign(RIGHT, CENTER);
-        const maxRight = w - 28 - textWidth(leftLabel) - 20;
+        const maxRight = rightX - (-w / 2 + 14 + textWidth(leftLabel)) - 20;
         if (textWidth(rightLabel) < maxRight) {
-            text(rightLabel, w / 2 - 14, 0);
+            text(rightLabel, rightX, 0);
         }
     }
     pop();
@@ -271,7 +282,9 @@ function mouseMoved() {
     cursor(hoverIdx >= 0 ? "pointer" : "default");
 }
 
-function mousePressed() {
+function mousePressed(event) {
+    // 캔버스 위 DOM 요소('현재로' 버튼, 오버레이 등) 클릭이 블럭 클릭으로 새지 않게
+    if (event && event.target && event.target.tagName !== "CANVAS") return;
     if (DEBUG) console.log("[tf] mousePressed", mouseX, mouseY, "cameraY", cameraY, "over", overCanvas());
     if (!overCanvas() || !pile) return;
     // 터치/클릭이 mouseMoved 없이 올 수 있으므로 hoverIdx에 의존하지 않고 직접 계산

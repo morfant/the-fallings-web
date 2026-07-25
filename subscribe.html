@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Fallings — 알림 받기</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        body { overflow-y: auto; }
+        #sub-page {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 48px 24px 64px;
+        }
+        #sub-page h1 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+        #sub-page > p { font-size: 14px; color: var(--text-dim); line-height: 1.8; margin-bottom: 32px; word-break: keep-all; }
+        .ch-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .ch-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+        .ch-card .ch-desc { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 16px; word-break: keep-all; }
+        .ch-card ol { margin: 0 0 16px 20px; font-size: 13px; color: var(--text-dim); line-height: 2; }
+        .ch-card ol a { color: #7ea7cc; }
+        .ch-go {
+            display: inline-block;
+            background: var(--block);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .ch-go:hover { border-color: var(--accent); }
+        .back { display: inline-block; margin-top: 24px; font-size: 13px; color: #7ea7cc; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <main id="sub-page">
+        <div style="width:40px;height:3px;background:var(--accent);margin-bottom:20px"></div>
+        <h1>알림 받기</h1>
+        <p>새로운 죽음이 기록될 때, 당신의 휴대폰이 함께 울리게 할 수 있습니다.
+            알림에서 <b>🖤 들었습니다</b>를 누르면 그 애도가 기록에 남습니다.</p>
+
+        <div class="ch-card">
+            <h2>텔레그램</h2>
+            <p class="ch-desc">텔레그램을 쓰고 있다면 채널에 들어오는 것만으로 끝납니다.</p>
+            <a class="ch-go" href="https://t.me/thefallings_kr" target="_blank" rel="noopener">
+                @thefallings_kr 채널 열기 →</a>
+        </div>
+
+        <div class="ch-card">
+            <h2>ntfy</h2>
+            <p class="ch-desc">가입 없이 쓰는 오픈소스 알림 앱입니다. 텔레그램이 없다면 이쪽을.</p>
+            <ol>
+                <li><a href="https://ntfy.sh/" target="_blank" rel="noopener">ntfy 앱</a> 설치 (iOS / Android, 무료)</li>
+                <li>앱에서 <b>+ 구독</b> → 아래 토픽 이름 입력</li>
+            </ol>
+            <code class="sub-topic">the-fallings-kr-x7m4</code>
+        </div>
+
+        <a class="back" href="./">← 기록으로 돌아가기</a>
+    </main>
+</body>
+</html>

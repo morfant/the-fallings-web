@@ -81,6 +81,13 @@ async function ackId(link) {
     return id;
 }
 
+// 블럭 위 ♥N 표시용 — 각 레코드에 카운터 id를 미리 계산해 붙임 (런타임 파생 필드)
+async function computeAckIds(list) {
+    for (const v of list) {
+        if (!v._ackId && v.link) v._ackId = await ackId(v.link);
+    }
+}
+
 let _acks = {};
 async function loadAcks() {
     try {
