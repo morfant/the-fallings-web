@@ -152,26 +152,50 @@ function drawGround() {
     text(CONFIG.COUNT_SINCE_LABEL, CONFIG.BLOCK_MARGIN + 8, CONFIG.GROUND_Y + 10);
 }
 
-// ---- 블럭 렌더링: 채움 없는 와이어프레임 ----
-// 개별 블럭에는 채움/외곽선이 없고, "같은 날짜"의 연속 블럭들이 하나의 외곽선으로
-// 묶인다. 그룹 안의 블럭 사이에는 옅은 구분선만. 요일 구분은 외곽선 밝기로 (모노톤 유지).
+// ---- 블럭 렌더링: 금속 바 ----
+// 채움색이 가로 방향 가운데를 기준으로 양쪽으로 어두워지는 그라데이션 —
+// 무광 금속 막대가 쌓이는 느낌. (캔버스 네이티브 linearGradient, 폭 기준 캐시)
 
-const _DOW_STROKE_L = [78, 34, 41, 48, 55, 62, 70]; // index = getDay() (0=일, 1=월 ... 6=토)
-const _strokeColorCache = new Map();
-function dateStroke(dateStr) {
-    let c = _strokeColorCache.get(dateStr);
-    if (!c) {
-        const t = new Date(`${dateStr}T00:00:00`);
-        const l = isNaN(t) ? 45 : _DOW_STROKE_L[t.getDay()];
-        c = color(`hsl(228, 8%, ${l}%)`);
-        _strokeColorCache.set(dateStr, c);
+let _metalGrad = null, _metalGradW = 0;
+function metalGradient(w) { // translate된 좌표계(-w/2 ~ w/2) 기준 — 모든 블럭이 공유
+    if (_metalGradW !== w) {
+        const g = drawingContext.createLinearGradient(-w / 2, 0, w / 2, 0);
+        g.addColorStop(0.0, "hsl(228, 6%, 11%)");
+        g.addColorStop(0.5, "hsl(228, 7%, 36%)"); // 중앙 하이라이트
+        g.addColorStop(1.0, "hsl(228, 6%, 11%)");
+        _metalGrad = g;
+        _metalGradW = w;
     }
-    return c;
+    return _metalGrad;
 }
 
-function dateOfSettled(i) {
-    const s = pile.settled[i];
-    return s ? victims[s.victimIdx].date : null;
+let _bevelGrad = null, _bevelGradH = 0;
+function bevelGradient(H) { // 입체감: 윗면 하이라이트 → 아랫면 그림자 (수직 오버레이)
+    if (_bevelGradH !== H) {
+        const g = drawingContext.createLinearGradient(0, -H / 2, 0, H / 2);
+        g.addColorStop(0.0, "rgba(255,255,255,0.13)");
+        g.addColorStop(0.18, "rgba(255,255,255,0.03)");
+        g.addColorStop(0.55, "rgba(0,0,0,0)");
+        g.addColorStop(1.0, "rgba(0,0,0,0.28)");
+        _bevelGrad = g;
+        _bevelGradH = H;
+    }
+    return _bevelGrad;
+}
+
+function drawMetalBlock(cx, cy) {
+    const w = pile.blockW();
+    const H = CONFIG.BLOCK_H;
+    push();
+    translate(cx, cy);
+    drawingContext.fillStyle = metalGradient(w);
+    stroke(0, 110); // 켜 사이 가는 어두운 경계
+    strokeWeight(1);
+    rect(-w / 2, -H / 2, w, H, 3);
+    drawingContext.fillStyle = bevelGradient(H);
+    noStroke();
+    rect(-w / 2 + 0.5, -H / 2 + 0.5, w - 1, H - 1, 3);
+    pop();
 }
 
 function drawSettledBlocks(now) {
@@ -179,19 +203,13 @@ function drawSettledBlocks(now) {
     const w = pile.blockW();
     const H = CONFIG.BLOCK_H;
 
-    // 1) 개별 블럭: 라벨 + 그룹 내부 구분선 + 하이라이트/호버
     for (let i = lo; i <= hi; i++) {
         const s = pile.settled[i];
         if (!s) continue;
         const v = victims[s.victimIdx];
         const cy = pile.yOfCenter(i);
 
-        // 같은 날짜 그룹 내부 구분선 (아래 블럭과 날짜가 같으면 경계에 옅은 선)
-        if (i > 0 && dateOfSettled(i - 1) === v.date) {
-            stroke(255, 22);
-            strokeWeight(1);
-            line(width / 2 - w / 2 + 10, cy + H / 2, width / 2 + w / 2 - 10, cy + H / 2);
-        }
+        drawMetalBlock(width / 2, cy);
 
         const highlight = s.settledAt > 0 && now - s.settledAt < CONFIG.HIGHLIGHT_MS
             ? 1 - (now - s.settledAt) / CONFIG.HIGHLIGHT_MS : 0;
@@ -204,37 +222,13 @@ function drawSettledBlocks(now) {
 
         drawBlockLabels(width / 2, cy, v);
     }
-
-    // 2) 날짜 그룹 외곽선 — 그룹 시작점을 화면 밖까지 거슬러 찾은 뒤 그룹 단위로 그림
-    let i = Math.max(0, lo);
-    while (i > 0 && dateOfSettled(i - 1) === dateOfSettled(i)) i--;
-    while (i < pile.settled.length && i <= hi) {
-        let j = i;
-        while (j + 1 < pile.settled.length && dateOfSettled(j + 1) === dateOfSettled(j)) j++;
-        const top = pile.yOfCenter(j) - H / 2 + 1.5;
-        const bottom = pile.yOfCenter(i) + H / 2 - 1.5;
-        noFill();
-        stroke(dateStroke(dateOfSettled(i)));
-        strokeWeight(1);
-        rect(width / 2 - w / 2, top, w, bottom - top, 5);
-        i = j + 1;
-    }
 }
 
 function drawFallingBlock() {
     if (!pile.falling) return;
     const v = victims[pile.falling.victimIdx];
     const p = pile.falling.body.position;
-    const w = pile.blockW();
-    const H = CONFIG.BLOCK_H;
-    push();
-    translate(p.x, p.y);
-    if (pile.falling.body.angle) rotate(pile.falling.body.angle);
-    noFill();
-    stroke(dateStroke(v.date));
-    strokeWeight(1.2);
-    rect(-w / 2, -H / 2, w, H, 5);
-    pop();
+    drawMetalBlock(p.x, p.y);
     drawBlockLabels(p.x, p.y, v);
 }
 
@@ -344,7 +338,18 @@ function setupDOM() {
     const overlay = document.getElementById("detail-overlay");
     document.getElementById("detail-close").addEventListener("click", hideDetail);
     overlay.addEventListener("click", (e) => {
-        if (e.target === overlay) hideDetail();
+        if (e.target !== overlay) return;
+        // 팝업이 열린 상태에서 다른 블럭을 누르면 그 블럭의 내용으로 교체
+        const canvas = document.querySelector("#canvas-holder canvas");
+        const r = canvas ? canvas.getBoundingClientRect() : null;
+        if (r && pile &&
+            e.clientX >= r.left && e.clientX <= r.right &&
+            e.clientY >= r.top && e.clientY <= r.bottom) {
+            const idx = pile.indexAtWorldY((e.clientY - r.top) + cameraY);
+            const s = idx >= 0 ? pile.settled[idx] : null;
+            if (s) { showDetail(victims[s.victimIdx]); return; }
+        }
+        hideDetail();
     });
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") hideDetail();
