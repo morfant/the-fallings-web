@@ -111,12 +111,6 @@ function renderStats(victims, uptoCount) {
     if (!el) return;
     const a = aggregateStats(victims, uptoCount);
 
-    const daysHtml = a.daysSinceLast === null ? "" : `
-        <div class="stat-cell">
-            <div class="num">${a.daysSinceLast}일</div>
-            <div class="label">마지막 사망으로부터 (${esc(formatKoreanDate(a.lastDate))})</div>
-        </div>`;
-
     // 전체 애도 수 — 라벨 없이 추모 리본 모양 + 숫자만
     const totalAcks = typeof _acks === "object"
         ? Object.values(_acks).reduce((s, n) => s + (n | 0), 0) : 0;
@@ -128,17 +122,16 @@ function renderStats(victims, uptoCount) {
     el.innerHTML = `
         <div class="stat-big">
             <span class="num">${a.total}</span>
-            <span class="label">명 사망<br>${esc(CONFIG.COUNT_SINCE_LABEL)}</span>
+            <span class="label">명 사망 (* ${esc(CONFIG.COUNT_SINCE_LABEL)})</span>
         </div>
         <div class="stat-row">
             <div class="stat-cell"><div class="num">${a.thisYear}</div><div class="label">올해</div></div>
             <div class="stat-cell"><div class="num">${a.thisMonth}</div><div class="label">이번 달</div></div>
-            ${daysHtml}
             ${acksHtml}
         </div>
         ${a.deathsPerDay ? `<div class="stat-speed">
             <div class="speed-value">${a.deathsPerDay.toFixed(1)}명<span class="per">/</span>1일</div>
-            <div class="label">수집된 산재 사망의 평균 속도</div>
+            <div class="label">산재 사망의 평균 속도 (수집된 데이터 기준)</div>
         </div>` : ""}
         <div class="stat-section">
             <h3>사고 유형</h3>
