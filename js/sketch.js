@@ -59,6 +59,16 @@ async function initData() {
     renderStats(victims, pile.settled.length);
     appState = "replay";
     startPolling();
+
+    // ?demo=1 — 사운드/낙하 튜닝용: 6초마다 무작위 기록을 다시 떨어뜨림
+    // (화면·통계 숫자가 부풀어 보임 — 새로고침하면 원상복구되는 클라이언트 전용 모드)
+    if (getParam("demo")) {
+        setInterval(() => {
+            if (appState === "live" && !pile.falling && spawnQueue.length === 0) {
+                spawnQueue.push(Math.floor(Math.random() * victims.length));
+            }
+        }, 6000);
+    }
 }
 
 // =====================[ 메인 루프 ]=====================
