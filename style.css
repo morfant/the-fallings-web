@@ -32,7 +32,7 @@ html, body {
 
 #panel {
     flex: 1 1 auto;
-    max-width: 760px;
+    max-width: none; /* 좌측을 줄이고 남은 공간 전부 사용 */
     background: var(--panel-bg);
     border-left: 1px solid var(--line);
     padding: 32px 28px;
@@ -78,7 +78,34 @@ html, body {
 }
 
 /* ---- 통계 ---- */
-#stats-content { display: flex; flex-direction: column; gap: 22px; }
+#stats-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 넓어진 패널: 유형/연령대를 나란히 */
+    gap: 26px 36px;
+}
+#stats-content > .stat-big,
+#stats-content > .stat-row,
+#stats-content > .stat-speed,
+#stats-content > .stat-section.wide { grid-column: 1 / -1; }
+@media (max-width: 1100px) {
+    #stats-content { grid-template-columns: 1fr; }
+}
+
+/* 평균 속도 */
+.stat-speed {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px 22px;
+    background: var(--block);
+}
+.stat-speed .speed-value {
+    font-size: 30px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+}
+.stat-speed .speed-value .per { color: var(--text-dim); font-weight: 400; margin: 0 6px; }
+.stat-speed .label { font-size: 12.5px; color: var(--text-dim); margin-top: 6px; }
 
 .stat-big { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .stat-big .num {
@@ -103,20 +130,20 @@ html, body {
 .stat-cell .label { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 
 .stat-section h3 {
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--text-dim);
     letter-spacing: 0.08em;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .bar-row {
     display: grid;
-    grid-template-columns: 72px 1fr 34px;
+    grid-template-columns: 96px 1fr 40px;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-    font-size: 12px;
+    gap: 10px;
+    margin-bottom: 7px;
+    font-size: 13px;
 }
 .bar-row .bar-label { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar-row .bar-track { background: #1d1d22; border-radius: 3px; height: 14px; overflow: hidden; }

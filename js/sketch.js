@@ -172,16 +172,16 @@ function drawFallingBlock() {
     drawBlock(p.x, p.y, pile.falling.body.angle, v, { highlight: 0.6, hover: false });
 }
 
-// 같은 날짜의 사고 블럭은 같은 색 — 12색 팔레트에서 날짜 해시로 선택.
-// (연속 색상환 대신 30도 간격 양자화 → 인접 날짜도 뚜렷하게 구분됨)
+// 같은 요일 = 같은 색. 모노톤(무채색에 가까운 블루그레이) 밝기 7단계 —
+// 월요일이 가장 어둡고 일요일로 갈수록 밝아져, 지층에서 주간 리듬이 보인다.
+const _DOW_LIGHTNESS = [31, 11, 14, 17, 20, 23, 27]; // index = getDay() (0=일 ... 6=토)
 const _dateColorCache = new Map();
 function dateColor(dateStr) {
     let c = _dateColorCache.get(dateStr);
     if (!c) {
-        let h = 0;
-        const s = String(dateStr);
-        for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-        c = color(`hsl(${(h % 12) * 30}, 34%, 18%)`);
+        const t = new Date(`${dateStr}T00:00:00`);
+        const l = isNaN(t) ? 14 : _DOW_LIGHTNESS[t.getDay()];
+        c = color(`hsl(228, 7%, ${l}%)`);
         _dateColorCache.set(dateStr, c);
     }
     return c;
@@ -239,13 +239,13 @@ function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     textAlign(LEFT, CENTER);
     text(leftLabel, -w / 2 + 14, 0);
 
-    // 우측: [유형 · 연령 · 이주노동자]  ♥N (애도 수)
+    // 우측: [유형 · 연령 · 이주노동자]  🖤N (애도 수 — 검은 하트)
     let rightX = w / 2 - 14;
     const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
     textAlign(RIGHT, CENTER);
     if (n > 0) {
-        fill(...CONFIG.COLORS.accent, 220);
-        const heart = `♥ ${n}`;
+        fill(...CONFIG.COLORS.textDim);
+        const heart = `🖤 ${n}`;
         text(heart, rightX, 0);
         rightX -= textWidth(heart) + 14;
     }

@@ -41,7 +41,22 @@ function aggregateStats(victims, uptoCount) {
         agg.daysSinceLast = Math.max(0, Math.floor(ms / 86400000));
         agg.lastDate = lastDate;
     }
+
+    // 수집된 산재 사망의 평균 속도: 수집 기간 ÷ 사망자 수 → "1명 / N일"
+    if (list.length >= 2) {
+        const dates = list.map((v) => v.date).filter(Boolean).sort();
+        const spanDays =
+            (new Date(dates[dates.length - 1] + "T00:00:00") - new Date(dates[0] + "T00:00:00")) / 86400000;
+        agg.avgDaysPerDeath = spanDays / list.length;
+    }
     return agg;
+}
+
+function speedLabel(days) {
+    if (!days) return null;
+    if (days >= 0.95 && days <= 1.05) return "1일";
+    if (days >= 1) return `${days.toFixed(1)}일`;
+    return `${Math.round(days * 24)}시간`;
 }
 
 function esc(s) {
@@ -103,6 +118,10 @@ function renderStats(victims, uptoCount) {
             <div class="stat-cell"><div class="num">${a.thisMonth}</div><div class="label">이번 달</div></div>
             ${daysHtml}
         </div>
+        ${a.avgDaysPerDeath ? `<div class="stat-speed">
+            <div class="speed-value">1명<span class="per">/</span>${esc(speedLabel(a.avgDaysPerDeath))}</div>
+            <div class="label">수집된 산재 사망의 평균 속도</div>
+        </div>` : ""}
         <div class="stat-section">
             <h3>사고 유형</h3>
             ${barRows(a.byType, { unknownKey: "확인 안 됨" })}
@@ -111,11 +130,11 @@ function renderStats(victims, uptoCount) {
             <h3>연령대</h3>
             ${barRows(a.byDecade, { unknownKey: "미상" })}
         </div>
-        <div class="stat-section">
+        <div class="stat-section wide">
             <h3>최근 12개월</h3>
             ${monthChart(a.monthly)}
         </div>
-        ${a.immigrant > 0 ? `<div class="stat-section">
+        ${a.immigrant > 0 ? `<div class="stat-section wide">
             <h3>이주노동자</h3>
             <div class="bar-row"><span class="bar-label">확인된 수</span>
             <span class="bar-track"><span class="bar-fill" style="width:${Math.round((a.immigrant / Math.max(1, a.total)) * 100)}%"></span></span>
