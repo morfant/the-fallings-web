@@ -66,3 +66,42 @@ function ageDecadeLabel(age) {
 function displayRegion(v) {
     return v.region || "";
 }
+
+// ---- "들었습니다" 카운터 ----
+// id = 기사 link의 SHA-256 앞 16자리(hex). 발송 스크립트(node)와 동일 규칙.
+const _ackIdCache = new Map();
+async function ackId(link) {
+    const clean = String(link || "").split("#s")[0];
+    let id = _ackIdCache.get(clean);
+    if (!id) {
+        const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(clean));
+        id = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+        _ackIdCache.set(clean, id);
+    }
+    return id;
+}
+
+let _acks = {};
+async function loadAcks() {
+    try {
+        const res = await fetch(`${CONFIG.ACK_URL}/acks`);
+        if (res.ok) _acks = await res.json();
+    } catch { /* 카운터 서버 불통은 치명적이지 않음 */ }
+    return _acks;
+}
+
+async function sendAck(link) {
+    const id = await ackId(link);
+    const res = await fetch(`${CONFIG.ACK_URL}/ack/${id}`, { method: "POST" });
+    if (!res.ok) throw new Error(`ack ${res.status}`);
+    const data = await res.json();
+    _acks[id] = data.count;
+    return data.count;
+}
+
+function hasAcked(id) {
+    return localStorage.getItem(`tf:acked:${id}`) === "1";
+}
+function markAcked(id) {
+    localStorage.setItem(`tf:acked:${id}`, "1");
+}

@@ -50,6 +50,8 @@ async function initData() {
     const since = checkRevisit(victims);
     if (since) showRevisitBanner(since);
 
+    loadAcks(); // "들었습니다" 카운터 (실패해도 무해)
+
     renderStats(victims, pile.settled.length);
     appState = "replay";
     startPolling();
@@ -291,6 +293,7 @@ function windowResized() {
 function setupDOM() {
     const followBtn = document.getElementById("follow-btn");
     followBtn.addEventListener("click", () => setFollow(true));
+    document.getElementById("ack-btn").addEventListener("click", onAckClick);
 
     const overlay = document.getElementById("detail-overlay");
     document.getElementById("detail-close").addEventListener("click", hideDetail);
@@ -326,7 +329,42 @@ function showDetail(v) {
         link.hidden = true;
         summaryEl.textContent = "";
     }
+
+    detailLink = realLink || null;
+    document.getElementById("detail-ack").hidden = !detailLink;
+    if (detailLink) updateAckRow(detailLink);
+
     document.getElementById("detail-overlay").hidden = false;
+}
+
+// ---- "들었습니다" ----
+let detailLink = null;
+
+async function updateAckRow(link) {
+    const id = await ackId(link);
+    if (link !== detailLink) return; // 그 사이 다른 카드가 열렸으면 무시
+    const n = _acks[id] || 0;
+    document.getElementById("ack-count").textContent =
+        n > 0 ? `이 죽음을 ${n}명이 들었습니다` : "이 소식을 들었다면, 눌러주세요";
+    const btn = document.getElementById("ack-btn");
+    btn.disabled = hasAcked(id);
+    btn.textContent = hasAcked(id) ? "🖤 들었습니다 ✓" : "🖤 들었습니다";
+}
+
+async function onAckClick() {
+    if (!detailLink) return;
+    const id = await ackId(detailLink);
+    if (hasAcked(id)) return;
+    const btn = document.getElementById("ack-btn");
+    btn.disabled = true;
+    try {
+        const count = await sendAck(detailLink);
+        markAcked(id);
+        document.getElementById("ack-count").textContent = `이 죽음을 ${count}명이 들었습니다`;
+        btn.textContent = "🖤 들었습니다 ✓";
+    } catch {
+        btn.disabled = false; // 실패 시 다시 시도 가능
+    }
 }
 
 function hideDetail() {
@@ -346,6 +384,7 @@ function startPolling() {
     const ms = sec > 0 ? sec * 1000 : CONFIG.POLL_MS;
     setInterval(async () => {
         if (appState !== "live") return;
+        loadAcks(); // 애도 카운터도 주기 갱신
         try {
             const next = await loadVictimData();
             const fresh = diffNewVictims(victims, next);

@@ -1,6 +1,7 @@
 // 전역 설정 상수. 모든 모듈이 참조.
 const CONFIG = {
     DATA_URL: "data/victims_web.json",
+    ACK_URL: "https://the-fallings-acks.thefallings.workers.dev", // "들었습니다" 카운터
 
     // 물리/좌표
     BLOCK_H: 44,            // 블럭 높이(px) — 지층 한 켜

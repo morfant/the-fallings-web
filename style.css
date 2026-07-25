@@ -239,6 +239,28 @@ html, body {
 #detail-link { font-size: 13px; color: #7ea7cc; text-decoration: none; }
 #detail-link:hover { text-decoration: underline; }
 
+#detail-ack {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+#ack-count { font-size: 13px; color: var(--text-dim); }
+#ack-btn {
+    background: var(--block);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 7px 16px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+}
+#ack-btn:hover:not(:disabled) { border-color: var(--accent); }
+#ack-btn:disabled { opacity: 0.55; cursor: default; }
+
 [hidden] { display: none !important; }
 
 /* ---- 반응형 ---- */
