@@ -152,16 +152,72 @@ function drawGround() {
     text(CONFIG.COUNT_SINCE_LABEL, CONFIG.BLOCK_MARGIN + 8, CONFIG.GROUND_Y + 10);
 }
 
+// ---- 블럭 렌더링: 채움 없는 와이어프레임 ----
+// 개별 블럭에는 채움/외곽선이 없고, "같은 날짜"의 연속 블럭들이 하나의 외곽선으로
+// 묶인다. 그룹 안의 블럭 사이에는 옅은 구분선만. 요일 구분은 외곽선 밝기로 (모노톤 유지).
+
+const _DOW_STROKE_L = [78, 34, 41, 48, 55, 62, 70]; // index = getDay() (0=일, 1=월 ... 6=토)
+const _strokeColorCache = new Map();
+function dateStroke(dateStr) {
+    let c = _strokeColorCache.get(dateStr);
+    if (!c) {
+        const t = new Date(`${dateStr}T00:00:00`);
+        const l = isNaN(t) ? 45 : _DOW_STROKE_L[t.getDay()];
+        c = color(`hsl(228, 8%, ${l}%)`);
+        _strokeColorCache.set(dateStr, c);
+    }
+    return c;
+}
+
+function dateOfSettled(i) {
+    const s = pile.settled[i];
+    return s ? victims[s.victimIdx].date : null;
+}
+
 function drawSettledBlocks(now) {
     const [lo, hi] = pile.visibleRange(cameraY, height);
+    const w = pile.blockW();
+    const H = CONFIG.BLOCK_H;
+
+    // 1) 개별 블럭: 라벨 + 그룹 내부 구분선 + 하이라이트/호버
     for (let i = lo; i <= hi; i++) {
         const s = pile.settled[i];
         if (!s) continue;
         const v = victims[s.victimIdx];
         const cy = pile.yOfCenter(i);
+
+        // 같은 날짜 그룹 내부 구분선 (아래 블럭과 날짜가 같으면 경계에 옅은 선)
+        if (i > 0 && dateOfSettled(i - 1) === v.date) {
+            stroke(255, 22);
+            strokeWeight(1);
+            line(width / 2 - w / 2 + 10, cy + H / 2, width / 2 + w / 2 - 10, cy + H / 2);
+        }
+
         const highlight = s.settledAt > 0 && now - s.settledAt < CONFIG.HIGHLIGHT_MS
             ? 1 - (now - s.settledAt) / CONFIG.HIGHLIGHT_MS : 0;
-        drawBlock(width / 2, cy, 0, v, { highlight, hover: i === hoverIdx });
+        if (highlight > 0 || i === hoverIdx) {
+            noFill();
+            if (i === hoverIdx) { stroke(...CONFIG.COLORS.text); strokeWeight(1.2); }
+            else { stroke(...CONFIG.COLORS.accent, 90 + 165 * highlight); strokeWeight(1.5); }
+            rect(width / 2 - w / 2 + 2, cy - H / 2 + 2, w - 4, H - 4, 4);
+        }
+
+        drawBlockLabels(width / 2, cy, v);
+    }
+
+    // 2) 날짜 그룹 외곽선 — 그룹 시작점을 화면 밖까지 거슬러 찾은 뒤 그룹 단위로 그림
+    let i = Math.max(0, lo);
+    while (i > 0 && dateOfSettled(i - 1) === dateOfSettled(i)) i--;
+    while (i < pile.settled.length && i <= hi) {
+        let j = i;
+        while (j + 1 < pile.settled.length && dateOfSettled(j + 1) === dateOfSettled(j)) j++;
+        const top = pile.yOfCenter(j) - H / 2 + 1.5;
+        const bottom = pile.yOfCenter(i) + H / 2 - 1.5;
+        noFill();
+        stroke(dateStroke(dateOfSettled(i)));
+        strokeWeight(1);
+        rect(width / 2 - w / 2, top, w, bottom - top, 5);
+        i = j + 1;
     }
 }
 
@@ -169,25 +225,17 @@ function drawFallingBlock() {
     if (!pile.falling) return;
     const v = victims[pile.falling.victimIdx];
     const p = pile.falling.body.position;
-    drawBlock(p.x, p.y, pile.falling.body.angle, v, { highlight: 0.6, hover: false });
-}
-
-// 같은 요일 = 같은 색. 모노톤(무채색에 가까운 블루그레이)을 유지하되
-// 명도 범위를 크게 벌려(12%~48%) 요일 구분이 확실하게 —
-// 월요일이 가장 어둡고 일요일이 가장 밝다. 밝은 블럭은 글자를 어두운 색으로 반전.
-const _DOW_LIGHTNESS = [48, 12, 18, 24, 30, 36, 42]; // index = getDay() (0=일, 1=월 ... 6=토)
-const _dateColorCache = new Map();
-function dateLightness(dateStr) {
-    const t = new Date(`${dateStr}T00:00:00`);
-    return isNaN(t) ? 18 : _DOW_LIGHTNESS[t.getDay()];
-}
-function dateColor(dateStr) {
-    let c = _dateColorCache.get(dateStr);
-    if (!c) {
-        c = color(`hsl(228, 7%, ${dateLightness(dateStr)}%)`);
-        _dateColorCache.set(dateStr, c);
-    }
-    return c;
+    const w = pile.blockW();
+    const H = CONFIG.BLOCK_H;
+    push();
+    translate(p.x, p.y);
+    if (pile.falling.body.angle) rotate(pile.falling.body.angle);
+    noFill();
+    stroke(dateStroke(v.date));
+    strokeWeight(1.2);
+    rect(-w / 2, -H / 2, w, H, 5);
+    pop();
+    drawBlockLabels(p.x, p.y, v);
 }
 
 const _DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
@@ -202,35 +250,11 @@ function dayOfWeek(dateStr) {
     return d;
 }
 
-function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
+function drawBlockLabels(cx, cy, v) {
     const w = pile.blockW();
-    const h = CONFIG.BLOCK_H;
 
-    push();
-    translate(cx, cy);
-    if (angle) rotate(angle);
-
-    rectMode(CENTER);
-    fill(dateColor(v.date));
-    if (hover) {
-        stroke(...CONFIG.COLORS.text);
-        strokeWeight(1.2);
-    } else if (highlight > 0) {
-        stroke(...CONFIG.COLORS.accent, 90 + 165 * highlight);
-        strokeWeight(1.5);
-    } else {
-        stroke(...CONFIG.COLORS.blockLine);
-        strokeWeight(1);
-    }
-    rect(0, 0, w, h, 3);
-
-    // 라벨: [날짜  지역]                [유형 · 연령대]
-    // 밝은 요일 블럭(금·토·일)에서는 글자를 어두운 색으로 반전
     noStroke();
-    textSize(12);
-    const isLight = dateLightness(v.date) >= 36;
-    const mainCol = isLight ? [28, 28, 33] : CONFIG.COLORS.text;
-    const dimCol = isLight ? [72, 72, 84] : CONFIG.COLORS.textDim;
+    textSize(15);
     const region = displayRegion(v);
     const dow = dayOfWeek(v.date);
     const dateLabel = dow ? `${v.date} ${dow}` : `${v.date}`;
@@ -242,28 +266,30 @@ function drawBlock(cx, cy, angle, v, { highlight = 0, hover = false } = {}) {
     if (v.immigrant) rightParts.push("이주노동자");
     const rightLabel = rightParts.join(" · ");
 
-    fill(...mainCol);
+    fill(...CONFIG.COLORS.text);
     textAlign(LEFT, CENTER);
-    text(leftLabel, -w / 2 + 14, 0);
+    text(leftLabel, cx - w / 2 + 18, cy);
 
-    // 우측: [유형 · 연령 · 이주노동자]  🖤N (애도 수 — 검은 하트)
-    let rightX = w / 2 - 14;
+    // 우측: [유형 · 연령 · 이주노동자]  🖤N (애도 수)
+    textSize(13.5);
+    let rightX = cx + w / 2 - 18;
     const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
     textAlign(RIGHT, CENTER);
     if (n > 0) {
-        fill(...dimCol);
+        fill(...CONFIG.COLORS.textDim);
         const heart = `🖤 ${n}`;
-        text(heart, rightX, 0);
-        rightX -= textWidth(heart) + 14;
+        text(heart, rightX, cy);
+        rightX -= textWidth(heart) + 16;
     }
     if (rightLabel) {
-        fill(...dimCol);
-        const maxRight = rightX - (-w / 2 + 14 + textWidth(leftLabel)) - 20;
-        if (textWidth(rightLabel) < maxRight) {
-            text(rightLabel, rightX, 0);
+        fill(...CONFIG.COLORS.textDim);
+        textSize(15);
+        const leftEnd = cx - w / 2 + 18 + textWidth(leftLabel);
+        textSize(13.5);
+        if (rightX - textWidth(rightLabel) > leftEnd + 24) {
+            text(rightLabel, rightX, cy);
         }
     }
-    pop();
 }
 
 function drawHUD() {

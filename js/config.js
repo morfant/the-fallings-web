@@ -4,7 +4,7 @@ const CONFIG = {
     ACK_URL: "https://the-fallings-acks.thefallings.workers.dev", // "들었습니다" 카운터
 
     // 물리/좌표
-    BLOCK_H: 44,            // 블럭 높이(px) — 지층 한 켜
+    BLOCK_H: 88,            // 블럭 높이(px) — 지층 한 켜
     BLOCK_MARGIN: 8,        // 좌우 여백
     GROUND_Y: 1000000,      // 바닥의 월드 y (더미는 위로 자람 — 수십 년치 여유)
     GRAVITY_REPLAY: 1.4,    // 리플레이 낙하 중력
