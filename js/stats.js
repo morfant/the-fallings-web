@@ -42,21 +42,14 @@ function aggregateStats(victims, uptoCount) {
         agg.lastDate = lastDate;
     }
 
-    // 수집된 산재 사망의 평균 속도: 수집 기간 ÷ 사망자 수 → "1명 / N일"
+    // 수집된 산재 사망의 평균 속도: 사망자 수 ÷ 수집 기간 → "N.N명 / 1일" (하루 고정)
     if (list.length >= 2) {
         const dates = list.map((v) => v.date).filter(Boolean).sort();
         const spanDays =
             (new Date(dates[dates.length - 1] + "T00:00:00") - new Date(dates[0] + "T00:00:00")) / 86400000;
-        agg.avgDaysPerDeath = spanDays / list.length;
+        if (spanDays > 0) agg.deathsPerDay = list.length / spanDays;
     }
     return agg;
-}
-
-function speedLabel(days) {
-    if (!days) return null;
-    if (days >= 0.95 && days <= 1.05) return "1일";
-    if (days >= 1) return `${days.toFixed(1)}일`;
-    return `${Math.round(days * 24)}시간`;
 }
 
 function esc(s) {
@@ -118,8 +111,8 @@ function renderStats(victims, uptoCount) {
             <div class="stat-cell"><div class="num">${a.thisMonth}</div><div class="label">이번 달</div></div>
             ${daysHtml}
         </div>
-        ${a.avgDaysPerDeath ? `<div class="stat-speed">
-            <div class="speed-value">1명<span class="per">/</span>${esc(speedLabel(a.avgDaysPerDeath))}</div>
+        ${a.deathsPerDay ? `<div class="stat-speed">
+            <div class="speed-value">${a.deathsPerDay.toFixed(1)}명<span class="per">/</span>1일</div>
             <div class="label">수집된 산재 사망의 평균 속도</div>
         </div>` : ""}
         <div class="stat-section">
