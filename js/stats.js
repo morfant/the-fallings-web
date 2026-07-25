@@ -101,6 +101,15 @@ function renderStats(victims, uptoCount) {
             <div class="label">마지막 사망으로부터 (${esc(formatKoreanDate(a.lastDate))})</div>
         </div>`;
 
+    // 전체 애도 수 (카운터 서버에서 로드 — 로드 전이면 0으로 표시 후 갱신됨)
+    const totalAcks = typeof _acks === "object"
+        ? Object.values(_acks).reduce((s, n) => s + (n | 0), 0) : 0;
+    const acksHtml = `
+        <div class="stat-cell">
+            <div class="num">♥ ${totalAcks}</div>
+            <div class="label">기록된 애도</div>
+        </div>`;
+
     el.innerHTML = `
         <div class="stat-big">
             <span class="num">${a.total}</span>
@@ -110,6 +119,7 @@ function renderStats(victims, uptoCount) {
             <div class="stat-cell"><div class="num">${a.thisYear}</div><div class="label">올해</div></div>
             <div class="stat-cell"><div class="num">${a.thisMonth}</div><div class="label">이번 달</div></div>
             ${daysHtml}
+            ${acksHtml}
         </div>
         ${a.deathsPerDay ? `<div class="stat-speed">
             <div class="speed-value">${a.deathsPerDay.toFixed(1)}명<span class="per">/</span>1일</div>

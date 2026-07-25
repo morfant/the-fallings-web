@@ -51,7 +51,8 @@ async function initData() {
     const since = checkRevisit(victims);
     if (since) showRevisitBanner(since);
 
-    loadAcks(); // "들었습니다" 카운터 (실패해도 무해)
+    // "들었습니다" 카운터 — 로드되면 통계(기록된 애도)도 갱신
+    loadAcks().then(() => renderStats(victims, pile.settled.length));
     computeAckIds(victims); // 블럭 위 ♥N 표시용 id 사전 계산
 
     renderStats(victims, pile.settled.length);
@@ -162,7 +163,7 @@ function metalGradient(w) { // translate된 좌표계(-w/2 ~ w/2) 기준 — 모
     if (_metalGradW !== w) {
         const g = drawingContext.createLinearGradient(-w / 2, 0, w / 2, 0);
         g.addColorStop(0.0, "hsl(228, 6%, 11%)");
-        g.addColorStop(0.5, "hsl(228, 7%, 36%)"); // 중앙 하이라이트
+        g.addColorStop(0.5, "hsl(228, 7%, 30%)"); // 중앙 하이라이트
         g.addColorStop(1.0, "hsl(228, 6%, 11%)");
         _metalGrad = g;
         _metalGradW = w;
@@ -257,7 +258,7 @@ function drawBlockLabels(cx, cy, v) {
     const w = pile.blockW();
 
     noStroke();
-    textSize(15);
+    textSize(18);
     const region = displayRegion(v);
     const dow = dayOfWeek(v.date);
     const dateLabel = dow ? `${v.date} ${dow}` : `${v.date}`;
@@ -273,22 +274,22 @@ function drawBlockLabels(cx, cy, v) {
     textAlign(LEFT, CENTER);
     text(leftLabel, cx - w / 2 + 18, cy);
 
-    // 우측: [유형 · 연령 · 이주노동자]  🖤N (애도 수)
-    textSize(13.5);
+    // 우측: [유형 · 연령 · 이주노동자]  ♥N (애도 수 — 흰색 하트 글리프)
+    textSize(16);
     let rightX = cx + w / 2 - 18;
     const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
     textAlign(RIGHT, CENTER);
     if (n > 0) {
         fill(...CONFIG.COLORS.text);
-        const heart = `🖤 ${n}`;
+        const heart = `♥ ${n}`;
         text(heart, rightX, cy);
         rightX -= textWidth(heart) + 16;
     }
     if (rightLabel) {
         fill(...CONFIG.COLORS.text);
-        textSize(15);
+        textSize(18);
         const leftEnd = cx - w / 2 + 18 + textWidth(leftLabel);
-        textSize(13.5);
+        textSize(16);
         if (rightX - textWidth(rightLabel) > leftEnd + 24) {
             text(rightLabel, rightX, cy);
         }
@@ -422,6 +423,7 @@ async function onAckClick() {
         markAcked(id);
         document.getElementById("ack-count").textContent = `이 죽음을 ${count}명이 들었습니다`;
         btn.textContent = "🖤 들었습니다 ✓";
+        renderStats(victims, pile.settled.length); // '기록된 애도' 즉시 반영
     } catch {
         btn.disabled = false; // 실패 시 다시 시도 가능
     }
@@ -445,7 +447,7 @@ function startPolling() {
     const ms = sec > 0 ? sec * 1000 : CONFIG.POLL_MS;
     setInterval(async () => {
         if (appState !== "live") return;
-        loadAcks(); // 애도 카운터도 주기 갱신
+        loadAcks().then(() => renderStats(victims, pile.settled.length)); // 애도 카운터·통계 주기 갱신
         try {
             const next = await loadVictimData();
             const fresh = diffNewVictims(victims, next);
