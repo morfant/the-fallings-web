@@ -130,7 +130,7 @@ function renderStats(victims, uptoCount) {
     el.innerHTML = `
         <div class="stat-big">
             <span class="num">${a.total}</span>
-            <span class="label">명 사망 (* ${esc(CONFIG.COUNT_SINCE_LABEL)})</span>
+            <span class="label">명 사망 (${esc(CONFIG.COUNT_SINCE_LABEL)})</span>
         </div>
         <div class="stat-row">
             <div class="stat-cell"><div class="num">${a.thisYear}</div><div class="label">올해</div></div>
