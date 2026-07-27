@@ -68,8 +68,11 @@ async function initData() {
     if (since) showRevisitBanner(since);
 
     // "들었습니다" 카운터 — 로드되면 통계(기록된 애도)도 갱신
-    loadAcks().then(() => renderStats(victims, pile.settled.length));
-    computeAckIds(victims); // 블럭 위 ♥N 표시용 id 사전 계산
+    loadAcks().then(() => {
+        renderStats(victims, pile.settled.length);
+        if (detailLink) updateAckRow(detailLink); // 딥링크로 먼저 열린 상세 뷰의 카운트 반영
+    });
+    computeAckIds(victims).then(openFromHash); // 블럭 위 ♥N 표시용 id 사전 계산 + #/record/<id> 딥링크
     computePeriodCounts(); // 월/연 경계 요약 오버레이용
 
     renderStats(victims, pile.settled.length);
@@ -128,6 +131,13 @@ function draw() {
         playThud(); // 착지음 (소리 켜져 있을 때만)
         shakeStart = now; // 아래 블럭들로 전파되는 충격파
         shakeTopIdx = pile.settled.length - 1;
+    }
+
+    // 터치 관성(플링) 스크롤 — 손을 뗀 뒤 감쇠하며 이어짐
+    if (_touch.fling !== 0) {
+        cameraY += _touch.fling;
+        _touch.fling *= 0.94;
+        if (Math.abs(_touch.fling) < 0.3) _touch.fling = 0;
     }
 
     updateCamera();
@@ -438,6 +448,58 @@ function mousePressed(event) {
     if (s) { selectedIdx = idx; showDetail(victims[s.victimIdx]); }
 }
 
+// ---- 모바일: 캔버스 터치 드래그 스크롤 + 상단 헤더 숨김/표시 ----
+// 탭(이동 거의 없음)은 touchEnded에서 블럭 선택으로, 드래그는 카메라 스크롤로 처리.
+const _touch = { lastY: 0, moved: 0, headerAccum: 0, vel: 0, fling: 0 };
+
+function isCanvasEvent(event) {
+    return event && event.target && event.target.tagName === "CANVAS";
+}
+
+function setMobileHeader(show) {
+    document.body.classList.toggle("hdr-hidden", !show);
+}
+
+function touchStarted(event) {
+    if (!isCanvasEvent(event)) return true;
+    _touch.lastY = mouseY;
+    _touch.moved = 0;
+    _touch.headerAccum = 0;
+    _touch.vel = 0;
+    _touch.fling = 0; // 진행 중이던 관성 스크롤은 손이 닿는 순간 멈춤
+    return true; // touchstart 기본동작 유지 (오디오 언락 등)
+}
+
+function touchMoved(event) {
+    if (!isCanvasEvent(event)) return true;
+    const dy = _touch.lastY - mouseY; // 손가락 위로 = 아래(과거) 지층으로 스크롤
+    _touch.lastY = mouseY;
+    _touch.moved += Math.abs(dy);
+    if (_touch.moved > 4) {
+        cameraY += dy;
+        setFollow(false);
+        _touch.vel = 0.7 * dy + 0.3 * _touch.vel; // 놓았을 때 관성으로 이어질 속도
+        // 스크롤 방향에 따라 헤더 토글 — 방향이 바뀌면 누적을 리셋 (히스테리시스)
+        if ((dy > 0) !== (_touch.headerAccum > 0)) _touch.headerAccum = 0;
+        _touch.headerAccum += dy;
+        if (_touch.headerAccum > 24) setMobileHeader(false);
+        else if (_touch.headerAccum < -24) setMobileHeader(true);
+    }
+    return false; // 페이지 스크롤/바운스 방지
+}
+
+function touchEnded(event) {
+    if (!isCanvasEvent(event)) return true;
+    if (_touch.moved < 10 && pile) {
+        const idx = pile.indexAtWorldY(mouseY + cameraY);
+        const s = idx >= 0 ? pile.settled[idx] : null;
+        if (s) { selectedIdx = idx; showDetail(victims[s.victimIdx]); }
+    } else if (Math.abs(_touch.vel) > 1.5) {
+        _touch.fling = _touch.vel; // 관성 스크롤 시작 (draw에서 감쇠)
+    }
+    return false; // 합성 마우스 이벤트(mousePressed 중복 선택) 방지
+}
+
 function windowResized() {
     const holder = document.getElementById("canvas-holder");
     resizeCanvas(holder.clientWidth, holder.clientHeight);
@@ -450,9 +512,11 @@ function setupDOM() {
     const followBtn = document.getElementById("follow-btn");
     followBtn.addEventListener("click", () => setFollow(true));
     document.getElementById("ack-btn").addEventListener("click", onAckClick);
+    document.getElementById("post-ack-btn").addEventListener("click", onAckClick);
+    document.getElementById("post-back").addEventListener("click", closeDetail);
 
     const overlay = document.getElementById("detail-overlay");
-    document.getElementById("detail-close").addEventListener("click", hideDetail);
+    document.getElementById("detail-close").addEventListener("click", closeDetail);
     overlay.addEventListener("click", (e) => {
         if (e.target !== overlay) return;
         // 팝업이 열린 상태에서 다른 블럭을 누르면 그 블럭의 내용으로 교체
@@ -465,11 +529,52 @@ function setupDOM() {
             const s = idx >= 0 ? pile.settled[idx] : null;
             if (s) { selectedIdx = idx; showDetail(victims[s.victimIdx]); return; }
         }
-        hideDetail();
+        closeDetail();
     });
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") hideDetail();
+        if (e.key !== "Escape") return;
+        if (document.body.classList.contains("info-open")) closeInfo();
+        else closeDetail();
     });
+    document.getElementById("info-btn").addEventListener("click", () => {
+        if (document.body.classList.contains("info-open")) closeInfo();
+        else openInfo();
+    });
+    // 시스템 뒤로가기(제스처 포함)로 상세/정보 뷰가 닫히게 — 사이트 이탈 방지
+    window.addEventListener("popstate", (e) => {
+        const st = e.state || {};
+        if (!st.tfDetail) hideDetailUI();
+        if (!st.tfInfo) hideInfoUI();
+    });
+}
+
+// ---- 정보(i) 뷰 — 모바일에서 패널 전체(공지/통계/구독)를 펼침 ----
+
+function openInfo() {
+    document.body.classList.add("info-open");
+    document.getElementById("info-btn").textContent = "×";
+    history.pushState({ tfInfo: 1 }, "", "#/about");
+}
+
+function hideInfoUI() {
+    document.body.classList.remove("info-open");
+    document.getElementById("info-btn").textContent = "i";
+}
+
+function closeInfo() {
+    if (history.state && history.state.tfInfo) {
+        history.back(); // popstate가 hideInfoUI를 호출
+    } else {
+        hideInfoUI();
+        if (location.hash.startsWith("#/about")) {
+            history.replaceState(null, "", location.pathname + location.search);
+        }
+    }
+}
+
+// 모바일 여부는 열리는 시점에 판정 (회전/리사이즈 대응)
+function isMobileView() {
+    return window.matchMedia("(max-width: 800px)").matches;
 }
 
 function showDetail(v) {
@@ -481,63 +586,178 @@ function showDetail(v) {
     if (v.immigrant) parts.push("이주노동자");
     parts.push("노동자");
     const title = `${parts.join(" ")}${v.accType ? `, ${v.accType} 사고로` : ""} 사망`;
+    const realLink = String(v.link || "").split("#s")[0]; // stress 테스트 접미사 제거
+    let summary = "";
+    if (realLink) {
+        summary = stripByline(v.accSummary);
+        // 원본이 300자에서 중간에 잘린 경우 — 문장이 끝나지 않았으면 …로 마무리
+        if (summary && !/[.!?…]["'”’]?$/.test(summary)) summary += "…";
+        if (!summary) summary = "자세한 내용은 기사 원문에서 확인할 수 있습니다.";
+    }
 
+    detailLink = realLink || null;
+    if (isMobileView()) populatePostView(v, title, summary, realLink);
+    else populateDetailCard(v, title, summary, realLink);
+    if (detailLink) updateAckRow(detailLink);
+    pushDetailHistory(v);
+}
+
+function populateDetailCard(v, title, summary, realLink) {
     document.getElementById("detail-date").textContent = formatKoreanDate(v.date);
     document.getElementById("detail-title").textContent = title;
     document.getElementById("detail-meta").textContent = displayRegion(v);
-    const summaryEl = document.getElementById("detail-summary");
-    summaryEl.textContent = v.accSummary || "자세한 내용은 기사 원문에서 확인할 수 있습니다.";
+    document.getElementById("detail-summary").textContent = summary;
     const link = document.getElementById("detail-link");
-    const realLink = String(v.link || "").split("#s")[0]; // stress 테스트 접미사 제거
     if (realLink) {
         link.href = realLink;
         link.hidden = false;
     } else {
         link.hidden = true;
-        summaryEl.textContent = "";
     }
-
-    detailLink = realLink || null;
-    document.getElementById("detail-ack").hidden = !detailLink;
-    if (detailLink) updateAckRow(detailLink);
-
+    document.getElementById("detail-ack").hidden = !realLink;
+    document.getElementById("post-view").hidden = true;
     document.getElementById("detail-overlay").hidden = false;
+}
+
+// 모바일: 팝업 대신 화면을 가득 채우는 포스트 형식 —
+// 요약이 이미지 영역을(사진 없이 문장이 초상), 메타데이터가 캡션 영역을 차지.
+function populatePostView(v, title, summary, realLink) {
+    const summaryEl = document.getElementById("post-summary");
+    summaryEl.textContent = summary;
+    document.getElementById("post-title").textContent = title;
+    document.getElementById("post-meta").textContent = displayRegion(v);
+    const dow = dayOfWeek(v.date);
+    document.getElementById("post-date").textContent =
+        `${formatKoreanDate(v.date)}${dow ? ` ${dow}요일` : ""}`;
+    const link = document.getElementById("post-link");
+    if (realLink) {
+        link.href = realLink;
+        link.hidden = false;
+    } else {
+        link.hidden = true;
+    }
+    document.getElementById("post-actions").hidden = !realLink;
+    document.getElementById("detail-overlay").hidden = true;
+    document.getElementById("post-view").hidden = false;
+
+    // 글자 크기는 고정 — 레이아웃이 잡힌 뒤 공간에 맞춰 텍스트를 자름
+    requestAnimationFrame(() =>
+        fitSummary(summaryEl, document.getElementById("post-image"), summary));
+}
+
+// 이미지 영역에 들어가지 않는 요약은 텍스트를 잘라 " …"로 마무리.
+// 잘린 마지막 줄이 블록의 실제 마지막 줄이 되므로 justify가 늘리지 않아 …가 겹치지 않는다.
+function fitSummary(el, box, full) {
+    el.textContent = full;
+    const avail = box.clientHeight - 60; // 상하 패딩 30px
+    if (el.scrollHeight <= avail + 2) return; // 전부 들어감
+    let lo = 0, hi = full.length;
+    while (lo < hi) { // 들어가는 최대 길이를 이분 탐색 (~9회 재측정)
+        const mid = Math.ceil((lo + hi) / 2);
+        el.textContent = full.slice(0, mid).trimEnd() + " …";
+        if (el.scrollHeight <= avail + 2) lo = mid;
+        else hi = mid - 1;
+    }
+    el.textContent = full.slice(0, lo).trimEnd() + " …";
+}
+
+// 표시용 바이라인 제거 — "(안동=연합뉴스) 황수빈 기자 = " 류의 도입부.
+// 출처·기자는 '기사 원문 보기'가 담당하므로 초상 영역에서는 사고 서술만 남긴다.
+function stripByline(s) {
+    return String(s || "")
+        .replace(/^\s*[\[(][^\])]*(?:=|뉴스|일보|신문)[^\])]*[\])]\s*/, "")
+        .replace(/^\s*[가-힣a-zA-Z·\s]{2,20}(?:기자|특파원)\s*=\s*/, "")
+        .trim();
+}
+
+// ---- 히스토리/딥링크 ----
+// 상세 뷰를 열 때 히스토리 항목을 쌓아 시스템 뒤로가기가 "닫기"로 동작하게 한다.
+// URL은 #/record/<ackId> — 알림·공유 링크가 특정 기록으로 바로 열릴 수 있는 형태.
+
+async function pushDetailHistory(v) {
+    const id = v._ackId || (v.link ? await ackId(v.link) : null);
+    const hash = id ? `#/record/${id}` : location.hash;
+    if (history.state && history.state.tfDetail) history.replaceState({ tfDetail: id }, "", hash);
+    else history.pushState({ tfDetail: id }, "", hash);
+}
+
+function openFromHash() {
+    const m = /^#\/record\/([0-9a-f]{16})/.exec(location.hash || "");
+    if (!m) return;
+    const v = victims.find((x) => x._ackId === m[1]);
+    if (!v) return;
+    const si = pile.settled.findIndex((s) => victims[s.victimIdx] === v);
+    if (si >= 0) {
+        selectedIdx = si;
+        setFollow(false);
+        cameraY = pile.yOfCenter(si) - height / 2; // 닫았을 때 해당 블럭이 보이도록
+    }
+    // 진입 항목 자체에 마커를 심어 popstate 닫기 로직과 일관되게
+    history.replaceState({ tfDetail: m[1] }, "", location.hash);
+    showDetail(v);
 }
 
 // ---- "들었습니다" ----
 let detailLink = null;
 
+// 데스크톱 팝업과 모바일 포스트 뷰의 확인 버튼/카운트를 함께 갱신
+const ACK_UI = [["ack-count", "ack-btn"], ["post-ack-count", "post-ack-btn"]];
+
 async function updateAckRow(link) {
     const id = await ackId(link);
     if (link !== detailLink) return; // 그 사이 다른 카드가 열렸으면 무시
     const n = _acks[id] || 0;
+    const acked = hasAcked(id);
+
+    // 데스크톱 팝업: 아이콘 버튼 + 안내문
     document.getElementById("ack-count").textContent =
         n > 0 ? `이 죽음을 ${n}명이 확인했습니다` : "이 죽음을 확인했다면, 눌러주세요";
-    const btn = document.getElementById("ack-btn");
-    btn.disabled = hasAcked(id);
-    btn.innerHTML = hasAcked(id) ? `${RIBBON_SVG} ✓` : RIBBON_SVG;
+    const dBtn = document.getElementById("ack-btn");
+    dBtn.disabled = acked;
+    dBtn.innerHTML = acked ? `${RIBBON_SVG} ✓` : RIBBON_SVG;
+
+    // 모바일 포스트 뷰: 문장 버튼 + 카운트
+    document.getElementById("post-ack-count").textContent =
+        n > 0 ? `이 죽음을 ${n}명이 확인했습니다` : "아직 아무도 이 죽음을 확인하지 않았습니다";
+    const mBtn = document.getElementById("post-ack-btn");
+    mBtn.disabled = acked;
+    mBtn.innerHTML = acked
+        ? `${RIBBON_SVG} 이 죽음을 확인했습니다 ✓`
+        : `${RIBBON_SVG} 이 죽음을 확인합니다`;
 }
 
 async function onAckClick() {
     if (!detailLink) return;
     const id = await ackId(detailLink);
     if (hasAcked(id)) return;
-    const btn = document.getElementById("ack-btn");
-    btn.disabled = true;
+    for (const [, btnId] of ACK_UI) document.getElementById(btnId).disabled = true;
     try {
-        const count = await sendAck(detailLink);
+        await sendAck(detailLink);
         markAcked(id);
-        document.getElementById("ack-count").textContent = `이 죽음을 ${count}명이 확인했습니다`;
-        btn.innerHTML = `${RIBBON_SVG} ✓`;
+        updateAckRow(detailLink);
         renderStats(victims, pile.settled.length); // '기록된 애도' 즉시 반영
     } catch {
-        btn.disabled = false; // 실패 시 다시 시도 가능
+        for (const [, btnId] of ACK_UI) document.getElementById(btnId).disabled = false; // 재시도 가능
     }
 }
 
-function hideDetail() {
+// UI만 닫는다 (히스토리는 건드리지 않음 — popstate에서 호출됨)
+function hideDetailUI() {
     selectedIdx = -1;
     document.getElementById("detail-overlay").hidden = true;
+    document.getElementById("post-view").hidden = true;
+}
+
+// 닫기 버튼/ESC용 — 우리가 쌓은 히스토리 항목이 있으면 back으로 되돌린다
+function closeDetail() {
+    if (history.state && history.state.tfDetail) {
+        history.back(); // popstate가 hideDetailUI를 호출
+    } else {
+        hideDetailUI();
+        if (location.hash.startsWith("#/record")) {
+            history.replaceState(null, "", location.pathname + location.search);
+        }
+    }
 }
 
 function showRevisitBanner(n) {
@@ -553,7 +773,10 @@ function startPolling() {
     const ms = sec > 0 ? sec * 1000 : CONFIG.POLL_MS;
     setInterval(async () => {
         if (appState !== "live") return;
-        loadAcks().then(() => renderStats(victims, pile.settled.length)); // 애도 카운터·통계 주기 갱신
+        loadAcks().then(() => {
+            renderStats(victims, pile.settled.length); // 애도 카운터·통계 주기 갱신
+            if (detailLink) updateAckRow(detailLink);  // 열려 있는 상세 뷰 카운트도 갱신
+        });
         try {
             const next = await loadVictimData();
             const fresh = diffNewVictims(victims, next);

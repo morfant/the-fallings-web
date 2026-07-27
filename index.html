@@ -15,6 +15,7 @@
         <aside id="panel">
             <header id="panel-header">
                 <h1>The Fallings</h1>
+                <button id="info-btn" aria-label="이 기록에 대하여">i</button>
                 <p class="tagline">일하다 떨어지고, 끼이고, 깔려 죽은 사람들의 기록.
                     한 사람이 사망할 때마다 블럭 하나가 떨어져 쌓입니다.</p>
             </header>
@@ -24,6 +25,10 @@
                     보도되지 않은 죽음은 여기에 없습니다.</p>
                 <p>사고 현장에서 숨지는 사람보다 다치고 병들어 병원에서 투병하다
                     숨지는 사람이 더 많다고 알려져 있습니다. 그 죽음들은 대부분 기사가 되지 않습니다.</p>
+                <p>이 기록은 기계가 지킵니다. AI가 두 시간마다 언론 보도를 읽어
+                    일하다 숨진 사람을 찾아 기록합니다 — 당신이 보지 않는 동안에도.</p>
+                <p>기계의 판단이 늘 정확하지는 않습니다. 산재 사망이 아닌 죽음이 섞이거나
+                    세부 내용이 실제와 다를 수 있습니다. 의심스러운 기록은 기사 원문으로 확인해 주세요.</p>
             </div>
             <div id="revisit-banner" hidden></div>
             <div id="stats-content" aria-live="polite"></div>
@@ -35,6 +40,25 @@
     </div>
 
     <button id="follow-btn" hidden>현재로 ↑</button>
+
+    <!-- 모바일 상세 뷰 — 팝업 대신 화면을 가득 채우는 포스트 형식 -->
+    <div id="post-view" hidden>
+        <header id="post-topbar">
+            <button id="post-back" aria-label="뒤로가기">←</button>
+            <a id="post-subscribe" href="subscribe.html">알림받기</a>
+        </header>
+        <div id="post-image"><p id="post-summary"></p></div>
+        <div id="post-actions">
+            <button id="post-ack-btn" aria-label="이 죽음을 확인했습니다"></button>
+            <div id="post-ack-count"></div>
+        </div>
+        <div id="post-caption">
+            <h2 id="post-title"></h2>
+            <p id="post-meta"></p>
+            <a id="post-link" href="#" target="_blank" rel="noopener">기사 원문 보기 →</a>
+            <p id="post-date"></p>
+        </div>
+    </div>
 
     <div id="detail-overlay" hidden>
         <div id="detail-card" role="dialog" aria-modal="true">
