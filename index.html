@@ -49,8 +49,21 @@
         </header>
         <div id="post-image"><p id="post-summary"></p></div>
         <div id="post-actions">
-            <button id="post-ack-btn" aria-label="이 죽음을 확인했습니다"></button>
-            <div id="post-ack-count"></div>
+            <div id="post-action-row">
+                <button id="post-ack-btn" aria-label="이 죽음을 확인했습니다"></button>
+                <button id="post-share-btn" aria-label="공유">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 3v12"/>
+                        <path d="M8 6.5 12 3l4 3.5"/>
+                        <path d="M6.5 11H5.8A2.3 2.3 0 0 0 3.5 13.3v5.4A2.3 2.3 0 0 0 5.8 21h12.4a2.3 2.3 0 0 0 2.3-2.3v-5.4A2.3 2.3 0 0 0 18.2 11h-.7"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="post-status-row">
+                <div id="post-ack-count"></div>
+                <span id="post-share-msg" hidden>링크 복사 완료</span>
+            </div>
         </div>
         <div id="post-caption">
             <h2 id="post-title"></h2>

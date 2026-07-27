@@ -513,6 +513,7 @@ function setupDOM() {
     followBtn.addEventListener("click", () => setFollow(true));
     document.getElementById("ack-btn").addEventListener("click", onAckClick);
     document.getElementById("post-ack-btn").addEventListener("click", onAckClick);
+    document.getElementById("post-share-btn").addEventListener("click", onShareClick);
     document.getElementById("post-back").addEventListener("click", closeDetail);
 
     const overlay = document.getElementById("detail-overlay");
@@ -739,6 +740,53 @@ async function onAckClick() {
     } catch {
         for (const [, btnId] of ACK_UI) document.getElementById(btnId).disabled = false; // 재시도 가능
     }
+}
+
+// ---- 공유 ----
+// 네이티브 공유 시트(Web Share API)를 우선 쓰고, 미지원 환경은 딥링크 복사로 폴백.
+
+async function onShareClick() {
+    if (!detailLink) return;
+    const id = await ackId(detailLink);
+    const url = `${location.origin}${location.pathname}#/record/${id}`;
+    const title = document.getElementById("post-title").textContent;
+    const date = document.getElementById("post-date").textContent;
+    const text = `${date}. ${title} — The Fallings`;
+    if (navigator.share) {
+        try { await navigator.share({ title: "The Fallings", text, url }); }
+        catch { /* 사용자가 공유 시트를 닫음 */ }
+        return;
+    }
+    const ok = await copyText(url);
+    if (ok) flashShareMsg();
+}
+
+async function copyText(t) {
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(t);
+            return true;
+        }
+    } catch { /* 아래 폴백 시도 */ }
+    try { // http(LAN 테스트 등) — clipboard API가 없는 환경용 구식 폴백
+        const ta = document.createElement("textarea");
+        ta.value = t;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        return ok;
+    } catch { return false; }
+}
+
+let _shareMsgTimer = 0;
+function flashShareMsg() {
+    const msg = document.getElementById("post-share-msg");
+    msg.hidden = false;
+    clearTimeout(_shareMsgTimer);
+    _shareMsgTimer = setTimeout(() => { msg.hidden = true; }, 2000);
 }
 
 // UI만 닫는다 (히스토리는 건드리지 않음 — popstate에서 호출됨)
