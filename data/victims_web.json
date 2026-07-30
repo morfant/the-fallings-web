@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-07-29T21:14:23.232Z",
- "count": 306,
+ "generatedAt": "2026-07-30T10:35:29.876Z",
+ "count": 307,
  "victims": [
   {
    "date": "2025-09-20",
@@ -2755,6 +2755,15 @@
    "immigrant": null,
    "accSummary": "",
    "link": "https://www.khan.co.kr/article/202607292159015/?utm_source=khan_rss&utm_medium=rss&utm_campaign=total_news"
+  },
+  {
+   "date": "2026-07-30",
+   "region": "포천시",
+   "accType": "질식",
+   "age": 60,
+   "immigrant": null,
+   "accSummary": "(포천=연합뉴스) 심민규 기자 = 경기 포천시의 한 가구 공장에서 작업 중 목재에 맞은 60대 근로자가 나흘 뒤 숨지는 사고가 발생했다. 30일 경찰과 고용노동부에 따르면 지난 24일 오전 11시 40분께 포천시 가산면의 한 목재 가구 공장에서 60대 남성 A씨가 목재에 복부를 맞았다. 복통을 호소한 A씨는 인근 병원으로 이송됐으나 당시 외관상 큰 이상이 확인되지 않아 퇴원한 뒤 공장으로 복귀했다. 해당 공장 소속 근로자인 A씨는 목재 가공 작업을 하던 중 톱날에 접촉해 튕겨 나온 목재에 복부를 맞은 것으로 조사됐다.",
+   "link": "https://www.yna.co.kr/view/AKR20260730170400060"
   }
  ]
 }
