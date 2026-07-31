@@ -131,10 +131,14 @@ async function ackId(link) {
     return id;
 }
 
-// 블럭 위 ♥N 표시용 — 각 레코드에 카운터 id를 미리 계산해 붙임 (런타임 파생 필드)
+// 블럭 위 ♥N 표시용 — 각 레코드에 카운터 id를 붙임.
+// 데이터가 사람 단위가 된 뒤로는 서버가 pid를 내려준다 (한 기사가 여러 사람일 수 있어
+// 링크만으로는 사람을 구분할 수 없다). pid가 없는 옛 데이터는 링크 해시로 폴백.
 async function computeAckIds(list) {
     for (const v of list) {
-        if (!v._ackId && v.link) v._ackId = await ackId(v.link);
+        if (v._ackId) continue;
+        if (v.pid) v._ackId = v.pid;
+        else if (v.link) v._ackId = await ackId(v.link);
     }
 }
 
@@ -147,8 +151,7 @@ async function loadAcks() {
     return _acks;
 }
 
-async function sendAck(link) {
-    const id = await ackId(link);
+async function sendAck(id) {
     const res = await fetch(`${CONFIG.ACK_URL}/ack/${id}`, { method: "POST" });
     if (!res.ok) throw new Error(`ack ${res.status}`);
     const data = await res.json();

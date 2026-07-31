@@ -43,11 +43,15 @@ function aggregateStats(victims, uptoCount) {
     }
 
     // 수집된 산재 사망의 평균 속도: 사망자 수 ÷ 수집 기간 → "N.N명 / 1일" (하루 고정)
-    if (list.length >= 2) {
-        const dates = list.map((v) => v.date).filter(Boolean).sort();
+    // 체계적 수집 시작(COLLECTION_SINCE) 이후만 센다 — 그 이전 사망은 판결·성명 기사로
+    // 뒤늦게 발견된 것들이라 전수가 아니고, 포함하면 기간만 늘어나 속도가 실제보다 낮게 나온다.
+    const since = CONFIG.COLLECTION_SINCE;
+    const inWindow = since ? list.filter((v) => v.date && v.date >= since) : list;
+    if (inWindow.length >= 2) {
+        const dates = inWindow.map((v) => v.date).sort();
         const spanDays =
             (new Date(dates[dates.length - 1] + "T00:00:00") - new Date(dates[0] + "T00:00:00")) / 86400000;
-        if (spanDays > 0) agg.deathsPerDay = list.length / spanDays;
+        if (spanDays > 0) agg.deathsPerDay = inWindow.length / spanDays;
     }
     return agg;
 }

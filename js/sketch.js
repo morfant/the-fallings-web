@@ -70,7 +70,7 @@ async function initData() {
     // "들었습니다" 카운터 — 로드되면 통계(기록된 애도)도 갱신
     loadAcks().then(() => {
         renderStats(victims, pile.settled.length);
-        if (detailLink) updateAckRow(detailLink); // 딥링크로 먼저 열린 상세 뷰의 카운트 반영
+        if (detailPid) updateAckRow(detailPid); // 딥링크로 먼저 열린 상세 뷰의 카운트 반영
     });
     computeAckIds(victims).then(openFromHash); // 블럭 위 ♥N 표시용 id 사전 계산 + #/record/<id> 딥링크
     computePeriodCounts(); // 월/연 경계 요약 오버레이용
@@ -596,17 +596,20 @@ function showDetail(v) {
         if (!summary) summary = "자세한 내용은 기사 원문에서 확인할 수 있습니다.";
     }
 
-    detailLink = realLink || null;
+    detailPid = v._ackId || null;
     if (isMobileView()) populatePostView(v, title, summary, realLink);
     else populateDetailCard(v, title, summary, realLink);
-    if (detailLink) updateAckRow(detailLink);
+    if (detailPid) updateAckRow(detailPid);
     pushDetailHistory(v);
 }
 
 function populateDetailCard(v, title, summary, realLink) {
     document.getElementById("detail-date").textContent = formatKoreanDate(v.date);
     document.getElementById("detail-title").textContent = title;
-    document.getElementById("detail-meta").textContent = displayRegion(v);
+    document.getElementById("detail-meta").textContent =
+        v.ofDeaths > 1
+            ? `${displayRegion(v)} · 이 사고로 ${v.ofDeaths}명이 숨졌습니다`
+            : displayRegion(v);
     document.getElementById("detail-summary").textContent = summary;
     const link = document.getElementById("detail-link");
     if (realLink) {
@@ -626,7 +629,12 @@ function populatePostView(v, title, summary, realLink) {
     const summaryEl = document.getElementById("post-summary");
     summaryEl.textContent = summary;
     document.getElementById("post-title").textContent = title;
-    document.getElementById("post-meta").textContent = displayRegion(v);
+    // 여럿이 숨진 사고는 그 사실을 밝힌다 — 블럭 하나가 한 사람이므로,
+    // 같은 사고의 다른 블럭들이 왜 나란히 쌓여 있는지 여기서만 알 수 있다.
+    document.getElementById("post-meta").textContent =
+        v.ofDeaths > 1
+            ? `${displayRegion(v)} · 이 사고로 ${v.ofDeaths}명이 숨졌습니다`
+            : displayRegion(v);
     const dow = dayOfWeek(v.date);
     document.getElementById("post-date").textContent =
         `${formatKoreanDate(v.date)}${dow ? ` ${dow}요일` : ""}`;
@@ -676,7 +684,7 @@ function stripByline(s) {
 // URL은 #/record/<ackId> — 알림·공유 링크가 특정 기록으로 바로 열릴 수 있는 형태.
 
 async function pushDetailHistory(v) {
-    const id = v._ackId || (v.link ? await ackId(v.link) : null);
+    const id = v._ackId || v.pid || (v.link ? await ackId(v.link) : null);
     const hash = id ? `#/record/${id}` : location.hash;
     if (history.state && history.state.tfDetail) history.replaceState({ tfDetail: id }, "", hash);
     else history.pushState({ tfDetail: id }, "", hash);
@@ -699,14 +707,15 @@ function openFromHash() {
 }
 
 // ---- "들었습니다" ----
-let detailLink = null;
+// 데이터가 사람 단위가 된 뒤로는 링크가 사람을 특정하지 못한다(한 기사에 여러 사람).
+// 확인(ack)의 키는 레코드의 pid.
+let detailPid = null;
 
 // 데스크톱 팝업과 모바일 포스트 뷰의 확인 버튼/카운트를 함께 갱신
 const ACK_UI = [["ack-count", "ack-btn"], ["post-ack-count", "post-ack-btn"]];
 
-async function updateAckRow(link) {
-    const id = await ackId(link);
-    if (link !== detailLink) return; // 그 사이 다른 카드가 열렸으면 무시
+function updateAckRow(id) {
+    if (id !== detailPid) return; // 그 사이 다른 카드가 열렸으면 무시
     const n = _acks[id] || 0;
     const acked = hasAcked(id);
 
@@ -728,14 +737,14 @@ async function updateAckRow(link) {
 }
 
 async function onAckClick() {
-    if (!detailLink) return;
-    const id = await ackId(detailLink);
+    if (!detailPid) return;
+    const id = detailPid;
     if (hasAcked(id)) return;
     for (const [, btnId] of ACK_UI) document.getElementById(btnId).disabled = true;
     try {
-        await sendAck(detailLink);
+        await sendAck(id);
         markAcked(id);
-        updateAckRow(detailLink);
+        updateAckRow(id);
         renderStats(victims, pile.settled.length); // '기록된 애도' 즉시 반영
     } catch {
         for (const [, btnId] of ACK_UI) document.getElementById(btnId).disabled = false; // 재시도 가능
@@ -746,9 +755,8 @@ async function onAckClick() {
 // 네이티브 공유 시트(Web Share API)를 우선 쓰고, 미지원 환경은 딥링크 복사로 폴백.
 
 async function onShareClick() {
-    if (!detailLink) return;
-    const id = await ackId(detailLink);
-    const url = `${location.origin}${location.pathname}#/record/${id}`;
+    if (!detailPid) return;
+    const url = `${location.origin}${location.pathname}#/record/${detailPid}`;
     const title = document.getElementById("post-title").textContent;
     const date = document.getElementById("post-date").textContent;
     const text = `${date}. ${title} — The Fallings`;
@@ -823,7 +831,7 @@ function startPolling() {
         if (appState !== "live") return;
         loadAcks().then(() => {
             renderStats(victims, pile.settled.length); // 애도 카운터·통계 주기 갱신
-            if (detailLink) updateAckRow(detailLink);  // 열려 있는 상세 뷰 카운트도 갱신
+            if (detailPid) updateAckRow(detailPid);  // 열려 있는 상세 뷰 카운트도 갱신
         });
         try {
             const next = await loadVictimData();

@@ -31,6 +31,9 @@ const CONFIG = {
     },
 
     COUNT_SINCE_LABEL: "2025년 9월 집계 시작",
+    // 체계적 수집이 시작된 날. 이 이전 사망도 기록에는 있지만(판결·성명 기사로 뒤늦게
+    // 발견된 죽음) 그 기간은 전수 수집이 아니므로 '하루 몇 명' 속도 계산에서 제외한다.
+    COLLECTION_SINCE: "2025-09-01",
 };
 
 function getParam(name) {
