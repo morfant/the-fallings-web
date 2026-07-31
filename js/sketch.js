@@ -260,19 +260,32 @@ function dateOfSettled(i) {
     return s ? victims[s.victimIdx].date : null;
 }
 
-function drawPeriodMarker(label, y, size, strong) {
+function drawPeriodMarker(label, y, size, strong, alpha) {
+    if (alpha <= 0.01) return;
     textStyle(BOLD);
     textSize(size);
     const tw = textWidth(label);
     const ph = size + 14;
-    fill(13, 13, 15, 235);
+    fill(13, 13, 15, 235 * alpha);
     noStroke();
     rect(width / 2 - tw / 2 - 16, y - ph / 2, tw + 32, ph, ph / 2);
     noStroke();
-    fill(255);
+    fill(255, 255, 255, 255 * alpha);
     textAlign(CENTER, CENTER);
     text(label, width / 2, y);
     textStyle(NORMAL);
+}
+
+// 경계가 화면 중앙에 있을 때 가장 진하고, 위아래로 멀어지면 사라진다.
+// 스크롤하면서 그 시기를 지나갈 때만 보이고 블럭을 계속 가리지 않는다 (작가 결정 2026-07-31).
+function markerAlpha(worldY) {
+    const screenY = worldY - cameraY;
+    const d = Math.abs(screenY - height / 2);
+    const full = height * 0.12;  // 이 안에서는 완전 불투명
+    const fade = height * 0.34;  // 여기서 0
+    if (d <= full) return 1;
+    if (d >= fade) return 0;
+    return 1 - (d - full) / (fade - full);
 }
 
 function drawPeriodMarkers(lo, hi) {
@@ -285,11 +298,13 @@ function drawPeriodMarkers(lo, hi) {
 
         // i(위, 새 달)와 i-1(아래, 이전 달) 사이 경계 — 이전 달의 요약을 표시
         const by = pile.yOfCenter(i) + H / 2;
+        const a = markerAlpha(by);
+        if (a <= 0.01) continue;
         const ym = prev.slice(0, 7);
-        drawPeriodMarker(`${parseInt(ym.slice(5, 7), 10)}월 · ${_monthCounts.get(ym) || 0}명`, by, 16, false);
+        drawPeriodMarker(`${parseInt(ym.slice(5, 7), 10)}월 · ${_monthCounts.get(ym) || 0}명`, by, 16, false, a);
         if (cur.slice(0, 4) !== prev.slice(0, 4)) {
             const yy = prev.slice(0, 4);
-            drawPeriodMarker(`${yy}년 · ${_yearCounts.get(yy) || 0}명`, by - 38, 20, true);
+            drawPeriodMarker(`${yy}년 · ${_yearCounts.get(yy) || 0}명`, by - 38, 20, true, markerAlpha(by - 38));
         }
     }
 }
