@@ -123,9 +123,16 @@ function renderStats(victims, uptoCount) {
     if (!el) return;
     const a = aggregateStats(victims, uptoCount);
 
-    // 전체 애도 수 — 라벨 없이 추모 리본 모양 + 숫자만
-    const totalAcks = typeof _acks === "object"
-        ? Object.values(_acks).reduce((s, n) => s + (n | 0), 0) : 0;
+    // 전체 애도 수 — 라벨 없이 추모 리본 모양 + 숫자만.
+    // 카운터 테이블 전체를 더하지 않고 **지금 화면에 있는 기록의 것만** 센다.
+    // 감사에서 잘못된 기록을 지운 적이 있어(2026-07-31) 사라진 id의 카운트가 테이블에
+    // 남아 있고, 그걸 합치면 있지도 않은 죽음에 대한 애도가 숫자에 섞인다.
+    let totalAcks = 0;
+    if (typeof _acks === "object") {
+        for (const v of victims) {
+            if (v._ackId) totalAcks += _acks[v._ackId] | 0;
+        }
+    }
     const acksHtml = `
         <div class="stat-cell">
             <div class="num ack-num">${RIBBON_SVG} ${totalAcks}</div>

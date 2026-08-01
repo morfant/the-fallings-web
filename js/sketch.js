@@ -136,7 +136,9 @@ function draw() {
     if (landedIdx !== null) {
         lastLandAt = now;
         renderStats(victims, pile.settled.length);
-        playThud(); // 착지음 (소리 켜져 있을 때만)
+        // 착지음은 '보고 있는 동안 도착한 죽음'에만 울린다. 페이지를 열 때 과거분이
+        // 다시 떨어지며 소리가 나는 것은 도착이 아니라 재생이다 (작가 결정 2026-08-01).
+        if (appState === "live") playThud();
         shakeStart = now; // 아래 블럭들로 전파되는 충격파
         shakeTopIdx = pile.settled.length - 1;
     }
@@ -882,12 +884,11 @@ function showRevisitBanner(n) {
 function startPolling() {
     const sec = parseInt(getParam("poll") || "0", 10);
     const ms = sec > 0 ? sec * 1000 : CONFIG.POLL_MS;
+    // 확인(ack)은 신규 데이터보다 훨씬 자주 본다 — 누군가 확인한 순간을 소리로
+    // 전하려면 10분 주기로는 너무 늦다.
+    setInterval(pollAcks, sec > 0 ? sec * 1000 : CONFIG.ACK_POLL_MS);
     setInterval(async () => {
         if (appState !== "live") return;
-        loadAcks().then(() => {
-            renderStats(victims, pile.settled.length); // 애도 카운터·통계 주기 갱신
-            if (detailPid) updateAckRow(detailPid);  // 열려 있는 상세 뷰 카운트도 갱신
-        });
         try {
             const next = await loadVictimData();
             const fresh = diffNewVictims(victims, next);
@@ -904,4 +905,13 @@ function startPolling() {
             console.warn("poll failed:", e);
         }
     }, ms);
+}
+
+async function pollAcks() {
+    await loadAcks();
+    renderStats(victims, pile.settled.length); // 애도 카운터·통계 갱신
+    if (detailPid) updateAckRow(detailPid);    // 열려 있는 상세 뷰 카운트도 갱신
+    // 누군가 어떤 죽음을 확인했다 — 페이지가 열려 있으면 소리로 전한다.
+    // (푸시 알림을 걷어내고 그 자리를 이 소리에 넘겼다 — 작가 결정 2026-08-01)
+    if (acksAdded > 0) playAckChime(acksAdded);
 }

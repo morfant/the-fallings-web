@@ -143,10 +143,26 @@ async function computeAckIds(list) {
 }
 
 let _acks = {};
+// 지난 loadAcks 이후 늘어난 확인 수 — 누군가 확인한 순간을 소리로 알리는 데 쓴다.
+// 첫 로드는 기준선만 잡고 0 (그때까지 쌓인 확인은 '방금 일어난 일'이 아니다).
+let acksAdded = 0;
+let _acksTotal = null;
+
+function _ackSum() {
+    let n = 0;
+    for (const k in _acks) n += _acks[k];
+    return n;
+}
+
 async function loadAcks() {
     try {
         const res = await fetch(`${CONFIG.ACK_URL}/acks`);
-        if (res.ok) _acks = await res.json();
+        if (res.ok) {
+            _acks = await res.json();
+            const total = _ackSum();
+            acksAdded = _acksTotal === null ? 0 : Math.max(0, total - _acksTotal);
+            _acksTotal = total;
+        }
     } catch { /* 카운터 서버 불통은 치명적이지 않음 */ }
     return _acks;
 }
@@ -156,6 +172,9 @@ async function sendAck(id) {
     if (!res.ok) throw new Error(`ack ${res.status}`);
     const data = await res.json();
     _acks[id] = data.count;
+    // 내가 누른 확인은 내 화면에서 울리지 않는다 — 소리는 '다른 누군가의 확인'을
+    // 알리는 것이므로 기준선을 여기서 같이 올려 둔다.
+    if (_acksTotal !== null) _acksTotal = _ackSum();
     return data.count;
 }
 

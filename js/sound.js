@@ -200,6 +200,18 @@ function playThud(vol = 1) {
     _categoryLayer(ctx, t, layer, _weather);
 }
 
+// 누군가 죽음을 확인했을 때 — 푸시 알림을 걷어내고 그 자리를 소리에 넘겼다
+// (작가 결정 2026-08-01). 알림은 "전달"이지만 소리는 "지금 함께 있음"이다.
+// 지금은 블럭 착지음을 그대로 빌려 쓴다(작동 확인용) — 소리 자체는 뒤에 바꾼다.
+// 한 주기에 여러 건이 들어오면 겹치지 않게 벌려서 그 수만큼 울린다.
+function playAckChime(n = 1) {
+    if (!soundOn) return;
+    const times = Math.min(n, 3);
+    for (let i = 0; i < times; i++) {
+        setTimeout(() => playThud(0.8), i * 550);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     loadWeather();
     setInterval(loadWeather, 30 * 60 * 1000); // 30분마다 날씨 갱신
