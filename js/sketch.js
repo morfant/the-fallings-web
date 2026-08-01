@@ -386,30 +386,33 @@ function drawRibbonGlyph(cx, cy, hpx) {
 function drawBlockLabels(cx, cy, v) {
     const w = pile.blockW();
 
-    noStroke();
-    textSize(18);
+    // 한 블럭에 2줄 (작가 결정 2026-08-01):
+    //   윗줄 = 언제·어디서 (날짜 요일 장소)
+    //   아랫줄 = 더 구체적인 것 (사인 · 연령 · 이주노동자)
+    // 예전에는 한 줄에 좌(날짜+지역)/우(사인·연령)로 나눠서, 좁은 화면에서 가로가 모자라면
+    // 우측이 통째로 사라졌다 — 사인·나이가 없는 것처럼 보이던 원인.
+    // 사인이 밝혀지지 않은 경우(쓰러진 채 발견·심정지 등)는 그냥 비워둔다.
     const region = displayRegion(v);
     const dow = dayOfWeek(v.date);
-    const dateLabel = dow ? `${v.date} ${dow}` : `${v.date}`;
-    const leftLabel = region ? `${dateLabel}   ${region}` : dateLabel;
-    // 사인이 비어 있는 경우는 데이터 누락이 아니라 '아직 밝혀지지 않음'이다
-    // (쓰러진 채 발견·심정지·온열질환 조사 중 등). 빈칸으로 두면 누락처럼 읽히므로 명시한다.
-    const rightParts = [];
-    rightParts.push(v.accType || "원인 조사 중");
+    const whenWhere = [dow ? `${v.date} ${dow}` : `${v.date}`, region].filter(Boolean).join("   ");
+    const infoParts = [];
+    if (v.accType) infoParts.push(v.accType);
     const dec = ageDecadeLabel(v.age);
-    if (dec) rightParts.push(dec);
-    if (v.immigrant) rightParts.push("이주노동자");
+    if (dec) infoParts.push(dec);
+    if (v.immigrant) infoParts.push("이주노동자");
 
-    fill(...CONFIG.COLORS.text);
-    textAlign(LEFT, CENTER);
-    text(leftLabel, cx - w / 2 + 18, cy);
+    noStroke();
+    const leftX = cx - w / 2 + 18;
+    const lineGap = 22;               // 88px 블럭에 2줄 — 위 -11, 아래 +11
+    const yTop = cy - lineGap / 2;
+    const yBottom = cy + lineGap / 2;
 
-    // 우측: [유형 · 연령 · 이주노동자]  [추모 리본]N (애도 수)
-    textSize(16);
+    // 우측 리본·확인 수는 두 줄 사이 가운데에 둔다 (한 사람에 하나의 표식)
     let rightX = cx + w / 2 - 18;
     const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
-    textAlign(RIGHT, CENTER);
     if (n > 0) {
+        textSize(16);
+        textAlign(RIGHT, CENTER);
         fill(...CONFIG.COLORS.text);
         const numStr = `${n}`;
         text(numStr, rightX, cy);
@@ -417,21 +420,21 @@ function drawBlockLabels(cx, cy, v) {
         drawRibbonGlyph(rightX - 8, cy, 20); // 리본 (흰 테두리 + 검은 심)
         rightX -= 16 + 14;
     }
-    // 좁은 화면에서 공간이 부족하면 예전에는 우측 라벨을 **통째로** 버렸다.
-    // 그래서 "깔림 · 60대"(긴 편)는 아무것도 안 보이고 "50대"(짧음)만 보여서,
-    // 데이터가 없는 것처럼 읽혔다 (2026-08-01 강릉/천안 건에서 발견).
-    // 이제 뒤에서부터 항목을 덜어내며 들어가는 만큼은 보여준다.
-    if (rightParts.length) {
-        textSize(18);
-        const leftEnd = cx - w / 2 + 18 + textWidth(leftLabel);
+
+    // 윗줄: 날짜 요일 장소
+    fill(...CONFIG.COLORS.text);
+    textAlign(LEFT, CENTER);
+    textSize(18);
+    text(whenWhere, leftX, yTop);
+
+    // 아랫줄: 사인 · 연령 · 이주노동자 — 그래도 넘치면 뒤에서부터 덜어낸다
+    if (infoParts.length) {
         textSize(16);
-        const room = () => rightX - (leftEnd + 24);
-        let parts = rightParts.slice();
-        while (parts.length && textWidth(parts.join(" · ")) > room()) parts.pop();
-        if (parts.length) {
-            fill(...CONFIG.COLORS.text);
-            text(parts.join(" · "), rightX, cy);
-        }
+        fill(...CONFIG.COLORS.textDim);
+        const room = rightX - 12 - leftX;
+        let parts = infoParts.slice();
+        while (parts.length > 1 && textWidth(parts.join(" · ")) > room) parts.pop();
+        text(parts.join(" · "), leftX, yBottom);
     }
 }
 
@@ -609,10 +612,8 @@ function showDetail(v) {
     if (dec) parts.push(dec);
     if (v.immigrant) parts.push("이주노동자");
     parts.push("노동자");
-    // 사인 미상은 빈칸이 아니라 명시 — 데이터 누락으로 읽히지 않게
-    const title = v.accType
-        ? `${parts.join(" ")}, ${v.accType} 사고로 사망`
-        : `${parts.join(" ")} 사망 — 원인 조사 중`;
+    // 사인이 밝혀지지 않았으면 그냥 비워둔다 — 채우지 않는다 (작가 결정 2026-08-01)
+    const title = `${parts.join(" ")}${v.accType ? `, ${v.accType} 사고로` : ""} 사망`;
     const realLink = String(v.link || "").split("#s")[0]; // stress 테스트 접미사 제거
     let summary = "";
     if (realLink) {
