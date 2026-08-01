@@ -123,6 +123,11 @@ function draw() {
     if (appState === "replay" && spawnQueue.length === 0 && !pile.falling) {
         appState = "live";
         engine.world.gravity.y = CONFIG.GRAVITY_LIVE;
+        // 리플레이로 떨어진 블럭의 착지 하이라이트를 걷어낸다 — 처음 화면을 열었을 때
+        // 마지막 블럭에 표시가 남아 선택된 것처럼 보였다 (작가 보고 2026-08-01).
+        // 세리머니 하이라이트는 '보고 있는 동안 도착한 죽음'의 것이지 과거분 재생의 것이 아니다.
+        // settledAt 0 = 프리스택(하이라이트 없음)이라는 기존 의미를 그대로 쓴다.
+        for (const s of pile.settled) s.settledAt = 0;
     }
 
     Matter.Engine.update(engine, 1000 / 60);
@@ -413,7 +418,9 @@ function drawBlockLabels(cx, cy, v) {
     noStroke();
     const leftX = cx - w / 2 + 18;
     const lineGap = 22;               // 88px 블럭에 2줄 — 위 -11, 아래 +11
-    const yTop = cy - lineGap / 2;
+    // 아랫줄에 쓸 게 하나도 없으면(사인·나이·이주 모두 미확인) 윗줄을 가운데로 —
+    // 위로 붙어 있으면 아래가 비어 보이는 게 아니라 잘린 것처럼 보인다.
+    const yTop = infoParts.length ? cy - lineGap / 2 : cy;
     const yBottom = cy + lineGap / 2;
 
     // 우측 리본·확인 수는 두 줄 사이 가운데에 둔다 (한 사람에 하나의 표식)
@@ -464,7 +471,13 @@ function drawHUD() {
 
 // =====================[ 인터랙션 ]=====================
 
+// hover는 마우스만의 개념이다. 터치에서는 p5가 합성 마우스 이벤트를 보내 hoverIdx가
+// 설정되고, 손을 떼도 지워지지 않아 블럭에 흰 테두리가 남아 있었다 —
+// 선택 표시로 오인됨 (작가 보고 2026-08-01). 터치를 한 번이라도 쓴 기기에서는 hover를 끈다.
+let usingTouch = false;
+
 function mouseMoved() {
+    if (usingTouch) { hoverIdx = -1; return; }
     if (!overCanvas() || pile === undefined) { hoverIdx = -1; return; }
     hoverIdx = pile.indexAtWorldY(mouseY + cameraY);
     cursor(hoverIdx >= 0 ? "pointer" : "default");
@@ -496,6 +509,8 @@ function setMobileHeader(show) {
 }
 
 function touchStarted(event) {
+    usingTouch = true;   // 이후 hover 테두리를 그리지 않는다
+    hoverIdx = -1;
     if (!isCanvasEvent(event)) return true;
     _touch.lastY = mouseY;
     _touch.moved = 0;
