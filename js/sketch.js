@@ -418,9 +418,7 @@ function drawBlockLabels(cx, cy, v) {
     noStroke();
     const leftX = cx - w / 2 + 18;
     const lineGap = 22;               // 88px 블럭에 2줄 — 위 -11, 아래 +11
-    // 아랫줄에 쓸 게 하나도 없으면(사인·나이·이주 모두 미확인) 윗줄을 가운데로 —
-    // 위로 붙어 있으면 아래가 비어 보이는 게 아니라 잘린 것처럼 보인다.
-    const yTop = infoParts.length ? cy - lineGap / 2 : cy;
+    const yTop = cy - lineGap / 2;
     const yBottom = cy + lineGap / 2;
 
     // 우측 리본·확인 수는 두 줄 사이 가운데에 둔다 (한 사람에 하나의 표식)
