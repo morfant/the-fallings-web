@@ -392,12 +392,13 @@ function drawBlockLabels(cx, cy, v) {
     const dow = dayOfWeek(v.date);
     const dateLabel = dow ? `${v.date} ${dow}` : `${v.date}`;
     const leftLabel = region ? `${dateLabel}   ${region}` : dateLabel;
+    // 사인이 비어 있는 경우는 데이터 누락이 아니라 '아직 밝혀지지 않음'이다
+    // (쓰러진 채 발견·심정지·온열질환 조사 중 등). 빈칸으로 두면 누락처럼 읽히므로 명시한다.
     const rightParts = [];
-    if (v.accType) rightParts.push(v.accType);
+    rightParts.push(v.accType || "원인 조사 중");
     const dec = ageDecadeLabel(v.age);
     if (dec) rightParts.push(dec);
     if (v.immigrant) rightParts.push("이주노동자");
-    const rightLabel = rightParts.join(" · ");
 
     fill(...CONFIG.COLORS.text);
     textAlign(LEFT, CENTER);
@@ -416,13 +417,20 @@ function drawBlockLabels(cx, cy, v) {
         drawRibbonGlyph(rightX - 8, cy, 20); // 리본 (흰 테두리 + 검은 심)
         rightX -= 16 + 14;
     }
-    if (rightLabel) {
-        fill(...CONFIG.COLORS.text);
+    // 좁은 화면에서 공간이 부족하면 예전에는 우측 라벨을 **통째로** 버렸다.
+    // 그래서 "깔림 · 60대"(긴 편)는 아무것도 안 보이고 "50대"(짧음)만 보여서,
+    // 데이터가 없는 것처럼 읽혔다 (2026-08-01 강릉/천안 건에서 발견).
+    // 이제 뒤에서부터 항목을 덜어내며 들어가는 만큼은 보여준다.
+    if (rightParts.length) {
         textSize(18);
         const leftEnd = cx - w / 2 + 18 + textWidth(leftLabel);
         textSize(16);
-        if (rightX - textWidth(rightLabel) > leftEnd + 24) {
-            text(rightLabel, rightX, cy);
+        const room = () => rightX - (leftEnd + 24);
+        let parts = rightParts.slice();
+        while (parts.length && textWidth(parts.join(" · ")) > room()) parts.pop();
+        if (parts.length) {
+            fill(...CONFIG.COLORS.text);
+            text(parts.join(" · "), rightX, cy);
         }
     }
 }
@@ -601,7 +609,10 @@ function showDetail(v) {
     if (dec) parts.push(dec);
     if (v.immigrant) parts.push("이주노동자");
     parts.push("노동자");
-    const title = `${parts.join(" ")}${v.accType ? `, ${v.accType} 사고로` : ""} 사망`;
+    // 사인 미상은 빈칸이 아니라 명시 — 데이터 누락으로 읽히지 않게
+    const title = v.accType
+        ? `${parts.join(" ")}, ${v.accType} 사고로 사망`
+        : `${parts.join(" ")} 사망 — 원인 조사 중`;
     const realLink = String(v.link || "").split("#s")[0]; // stress 테스트 접미사 제거
     let summary = "";
     if (realLink) {
@@ -716,8 +727,13 @@ function openFromHash() {
         setFollow(false);
         cameraY = pile.yOfCenter(si) - height / 2; // 닫았을 때 해당 블럭이 보이도록
     }
-    // 진입 항목 자체에 마커를 심어 popstate 닫기 로직과 일관되게
-    history.replaceState({ tfDetail: m[1] }, "", location.hash);
+    // 딥링크(텔레그램·ntfy 알림, 공유 링크)로 바로 들어온 경우 히스토리에 항목이 하나뿐이라,
+    // 예전에는 뒤로가기가 아무 일도 하지 않았다(back으로 돌아갈 곳이 없음).
+    // 블럭 화면을 밑에 깔고 그 위에 상세를 얹어서, 뒤로가기·닫기 버튼이 블럭 전체 화면으로
+    // 돌아오게 한다 (2026-08-01 텔레그램 실사용 보고).
+    const base = location.pathname + location.search;
+    history.replaceState(null, "", base);            // 아래: 블럭 화면
+    history.pushState({ tfDetail: m[1] }, "", `#/record/${m[1]}`); // 위: 상세
     showDetail(v);
 }
 
