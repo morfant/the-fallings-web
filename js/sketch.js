@@ -10,6 +10,9 @@ let cameraY = 0;
 let followMode = true;
 let hoverIdx = -1;
 let selectedIdx = -1; // 상세 팝업이 열려 있는 블럭
+// 상세를 닫은 뒤에도 "방금 본 블럭"을 표시해 둔다 — 스크롤로 돌아왔을 때 어디까지 봤는지
+// 잃지 않게 (작가 요청 2026-08-01). 선택 표시보다 약하게 그린다.
+let lastViewedIdx = -1;
 
 // 착지 충격파 (렌더 전용 — 물리 바디는 건드리지 않음)
 let shakeStart = -1e9; // millis
@@ -328,6 +331,12 @@ function drawSettledBlocks(now) {
             stroke(...CONFIG.COLORS.accent, 200);
             strokeWeight(1.5);
             rect(width / 2 - w / 2 + 1, cy - H / 2 + 1, w - 2, H - 2, 3);
+        } else if (i === lastViewedIdx) {
+            // 방금 보고 나온 블럭 — 좌측 세로 표식 하나. 테두리를 두르면 선택과 구별이
+            // 안 되고 여러 개가 강조된 것처럼 보이므로, 읽던 자리를 가리키는 정도로만.
+            noStroke();
+            fill(...CONFIG.COLORS.accent, 150);
+            rect(width / 2 - w / 2 + 1, cy - H / 2 + 10, 3, H - 20, 1.5);
         }
 
         const highlight = s.settledAt > 0 && now - s.settledAt < CONFIG.HIGHLIGHT_MS
@@ -471,7 +480,7 @@ function mousePressed(event) {
     if (DEBUG) console.log("[tf] click idx", idx, "settled", pile.settled.length);
     if (idx < 0) return;
     const s = pile.settled[idx];
-    if (s) { selectedIdx = idx; showDetail(victims[s.victimIdx]); }
+    if (s) { selectedIdx = idx; lastViewedIdx = idx; showDetail(victims[s.victimIdx]); }
 }
 
 // ---- 모바일: 캔버스 터치 드래그 스크롤 + 상단 헤더 숨김/표시 ----
@@ -519,7 +528,7 @@ function touchEnded(event) {
     if (_touch.moved < 10 && pile) {
         const idx = pile.indexAtWorldY(mouseY + cameraY);
         const s = idx >= 0 ? pile.settled[idx] : null;
-        if (s) { selectedIdx = idx; showDetail(victims[s.victimIdx]); }
+        if (s) { selectedIdx = idx; lastViewedIdx = idx; showDetail(victims[s.victimIdx]); }
     } else if (Math.abs(_touch.vel) > 1.5) {
         _touch.fling = _touch.vel; // 관성 스크롤 시작 (draw에서 감쇠)
     }
@@ -554,7 +563,7 @@ function setupDOM() {
             e.clientY >= r.top && e.clientY <= r.bottom) {
             const idx = pile.indexAtWorldY((e.clientY - r.top) + cameraY);
             const s = idx >= 0 ? pile.settled[idx] : null;
-            if (s) { selectedIdx = idx; showDetail(victims[s.victimIdx]); return; }
+            if (s) { selectedIdx = idx; lastViewedIdx = idx; showDetail(victims[s.victimIdx]); return; }
         }
         closeDetail();
     });
@@ -725,6 +734,7 @@ function openFromHash() {
     const si = pile.settled.findIndex((s) => victims[s.victimIdx] === v);
     if (si >= 0) {
         selectedIdx = si;
+        lastViewedIdx = si;
         setFollow(false);
         cameraY = pile.yOfCenter(si) - height / 2; // 닫았을 때 해당 블럭이 보이도록
     }
@@ -831,7 +841,7 @@ function flashShareMsg() {
 
 // UI만 닫는다 (히스토리는 건드리지 않음 — popstate에서 호출됨)
 function hideDetailUI() {
-    selectedIdx = -1;
+    selectedIdx = -1;   // lastViewedIdx는 남긴다 — 돌아왔을 때 어디까지 봤는지 보이게
     document.getElementById("detail-overlay").hidden = true;
     document.getElementById("post-view").hidden = true;
 }
