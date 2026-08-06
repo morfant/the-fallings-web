@@ -1,9 +1,9 @@
 {
- "generatedAt": "2026-08-03T11:45:48.565Z",
+ "generatedAt": "2026-08-06T10:51:03.832Z",
  "unit": "person",
  "collectionSince": "2025-09-01",
- "count": 250,
- "accidents": 215,
+ "count": 251,
+ "accidents": 216,
  "victims": [
   {
    "date": "2025-09-20",
@@ -2551,6 +2551,16 @@
    "accSummary": "제주도소방안전본부에 따르면 3일 오후 4시 32분께 제주시 회천동의 한 폐기물 처리업체의 고철 압축기에 작업자의 상반신이 끼었다는 신고가 119를 통해 접수됐다. 소방 당국은 경찰과 공조해 오후 4시 45분께 구급대를 사고 현장에 보냈지만, 이미 작업자가 숨진 상태여서 추가적인 응급조치는 진행되지 않았다고 전했다.",
    "link": "https://www.yna.co.kr/view/AKR20260803157000056",
    "pid": "f3b52072f7e4e6d6"
+  },
+  {
+   "date": "2026-08-06",
+   "region": "경상북도 구미시",
+   "accType": "화재",
+   "age": 20,
+   "immigrant": "이주노동자",
+   "accSummary": "폐기물을 처리·재활용하는 자원순환시설에서 불이 나 20대 이주노동자 1명이 숨졌다. 출동한 소방당국은 시설 내 화학물질 보관 탱크 안에 쓰러져 있던 이주노동자 A씨(20대)를 발견했다. 당시 A씨는 심정지 상태였으며 현장에서 숨진 것으로 확인됐다.",
+   "link": "https://www.khan.co.kr/article/202608061839001/?utm_source=khan_rss&utm_medium=rss&utm_campaign=total_news",
+   "pid": "a68caa5acf52fe43"
   }
  ]
 }
