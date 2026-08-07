@@ -13,6 +13,11 @@ let selectedIdx = -1; // 상세 팝업이 열려 있는 블럭
 // 상세를 닫은 뒤에도 "방금 본 블럭"을 표시해 둔다 — 스크롤로 돌아왔을 때 어디까지 봤는지
 // 잃지 않게 (작가 요청 2026-08-01). 선택 표시보다 약하게 그린다.
 let lastViewedIdx = -1;
+// 알림 딥링크로 왔는데 그 블럭이 아직 낙하 전(리플레이 대기·낙하 중)인 경우의 대기표.
+// 딥링크 시점에는 settled에 없어 선택·카메라를 배정할 수 없다 — 착지하는 순간 draw()가
+// 배정한다. "숨졌습니다"라는 문장을 누르고 들어온 사람 앞에서 바로 그 블럭이 떨어지고,
+// 떨어진 블럭에 표시가 남는다 (2026-08-07, 8/6 구미 건 실사용 보고).
+let pendingDeepLinkVi = -1; // victims 배열 인덱스, -1 = 없음
 
 // 착지 충격파 (렌더 전용 — 물리 바디는 건드리지 않음)
 let shakeStart = -1e9; // millis
@@ -141,6 +146,13 @@ function draw() {
         if (appState === "live") playThud();
         shakeStart = now; // 아래 블럭들로 전파되는 충격파
         shakeTopIdx = pile.settled.length - 1;
+        // 딥링크가 기다리던 블럭이면 이제 선택 표시를 배정한다 (열려 있는 상세 뷰의 블럭).
+        // followMode(기본 켬)가 더미 꼭대기를 따라가므로 낙하는 이미 화면 안에서 일어났다.
+        if (landedIdx === pendingDeepLinkVi) {
+            pendingDeepLinkVi = -1;
+            selectedIdx = pile.settled.length - 1;
+            lastViewedIdx = selectedIdx;
+        }
     }
 
     // 터치 관성(플링) 스크롤 — 손을 뗀 뒤 감쇠하며 이어짐
@@ -752,6 +764,11 @@ function openFromHash() {
         lastViewedIdx = si;
         setFollow(false);
         cameraY = pile.yOfCenter(si) - height / 2; // 닫았을 때 해당 블럭이 보이도록
+    } else {
+        // 아직 착지 전(방금 배포된 최신 기록 = 리플레이 대상) — 예전에는 여기서 아무것도
+        // 못 해서, 알림을 누르고 들어온 사람이 상세를 닫으면 표식 없는 블럭 더미만 보였다.
+        // 착지 시 draw()가 선택을 배정한다. 카메라는 followMode가 꼭대기를 따라가므로 그대로 둔다.
+        pendingDeepLinkVi = victims.indexOf(v);
     }
     // 딥링크(텔레그램·ntfy 알림, 공유 링크)로 바로 들어온 경우 히스토리에 항목이 하나뿐이라,
     // 예전에는 뒤로가기가 아무 일도 하지 않았다(back으로 돌아갈 곳이 없음).
