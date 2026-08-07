@@ -833,9 +833,9 @@ async function onShareClick() {
     const url = `${location.origin}${location.pathname}#/record/${detailPid}`;
     const title = document.getElementById("post-title").textContent;
     const date = document.getElementById("post-date").textContent;
-    const text = `${date}. ${title} — The Fallings`;
+    const text = `${date}. ${title} — 떨어지고, 끼이고, 깔린`;
     if (navigator.share) {
-        try { await navigator.share({ title: "The Fallings", text, url }); }
+        try { await navigator.share({ title: "떨어지고, 끼이고, 깔린", text, url }); }
         catch { /* 사용자가 공유 시트를 닫음 */ }
         return;
     }
