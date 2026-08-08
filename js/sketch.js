@@ -393,24 +393,6 @@ function dayOfWeek(dateStr) {
     return d;
 }
 
-// 캔버스용 추모 리본 (흰 테두리 + 검은 심) — cx,cy 중심, hpx 높이
-function drawRibbonGlyph(cx, cy, hpx) {
-    const s = hpx / 30;
-    push();
-    translate(cx - 12 * s, cy - 15 * s);
-    scale(s);
-    noFill();
-    for (const [col, wgt] of [[[232, 232, 238], 5], [[10, 10, 12], 2.6]]) {
-        stroke(...col);
-        strokeWeight(wgt); // viewBox 단위 — scale과 함께 SVG와 동일 비율
-        bezier(12, 3, 7.5, 5.5, 7.5, 10, 12, 14.5);
-        bezier(12, 14.5, 16.5, 10, 16.5, 5.5, 12, 3);
-        line(9.6, 12.2, 16.6, 27);
-        line(14.4, 12.2, 7.4, 27);
-    }
-    pop();
-}
-
 function drawBlockLabels(cx, cy, v) {
     const w = pile.blockW();
 
@@ -435,7 +417,8 @@ function drawBlockLabels(cx, cy, v) {
     const yTop = cy - lineGap / 2;
     const yBottom = cy + lineGap / 2;
 
-    // 우측 리본·확인 수는 두 줄 사이 가운데에 둔다 (한 사람에 하나의 표식)
+    // 우측에는 확인 수 숫자만 둔다 — 표식(구 리본)은 추모 꽃으로 바뀌면서 통계 패널과
+    // 상세 뷰로 옮겨졌고, 블럭 위에는 붙이지 않는다 (2026-08-08 작가 결정)
     let rightX = cx + w / 2 - 18;
     const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
     if (n > 0) {
@@ -444,9 +427,7 @@ function drawBlockLabels(cx, cy, v) {
         fill(...CONFIG.COLORS.text);
         const numStr = `${n}`;
         text(numStr, rightX, cy);
-        rightX -= textWidth(numStr) + 8;
-        drawRibbonGlyph(rightX - 8, cy, 20); // 리본 (흰 테두리 + 검은 심)
-        rightX -= 16 + 14;
+        rightX -= textWidth(numStr) + 14;
     }
 
     // 윗줄: 날짜 요일 장소
@@ -798,7 +779,7 @@ function updateAckRow(id) {
         n > 0 ? `이 죽음을 ${n}명이 확인했습니다` : "이 죽음을 확인했다면, 눌러주세요";
     const dBtn = document.getElementById("ack-btn");
     dBtn.disabled = acked;
-    dBtn.innerHTML = acked ? `${RIBBON_SVG} ✓` : RIBBON_SVG;
+    dBtn.innerHTML = acked ? `${flowerImgHTML(id, 25)} ✓` : flowerImgHTML(id, 25);
 
     // 모바일 포스트 뷰: 문장 버튼 + 카운트
     document.getElementById("post-ack-count").textContent =
@@ -806,8 +787,8 @@ function updateAckRow(id) {
     const mBtn = document.getElementById("post-ack-btn");
     mBtn.disabled = acked;
     mBtn.innerHTML = acked
-        ? `${RIBBON_SVG} 이 죽음을 확인했습니다 ✓`
-        : `${RIBBON_SVG} 이 죽음을 확인합니다`;
+        ? `${flowerImgHTML(id, 25)} 이 죽음을 확인했습니다 ✓`
+        : `${flowerImgHTML(id, 25)} 이 죽음을 확인합니다`;
 }
 
 async function onAckClick() {

@@ -56,21 +56,7 @@ function aggregateStats(victims, uptoCount) {
     return agg;
 }
 
-// 추모 리본 (흰 테두리 + 검은 심, 2겹 패스) — 통계·팝업 버튼 공용
-const RIBBON_SVG = `<svg class="ribbon-ic" viewBox="0 0 24 30" aria-label="추모 리본" role="img">
-    <g fill="none" stroke-linecap="round">
-        <g stroke="#e8e8ee" stroke-width="5">
-            <path d="M12 3 C7.5 5.5 7.5 10 12 14.5 C16.5 10 16.5 5.5 12 3 Z"/>
-            <path d="M9.6 12.2 L16.6 27"/>
-            <path d="M14.4 12.2 L7.4 27"/>
-        </g>
-        <g stroke="#0a0a0c" stroke-width="2.6">
-            <path d="M12 3 C7.5 5.5 7.5 10 12 14.5 C16.5 10 16.5 5.5 12 3 Z"/>
-            <path d="M9.6 12.2 L16.6 27"/>
-            <path d="M14.4 12.2 L7.4 27"/>
-        </g>
-    </g>
-</svg>`;
+// 애도 표식은 추모 꽃(flower.js — 설치 버전 FloralArc 이식)으로 통일 (2026-08-08, 구 추모 리본 SVG)
 
 function esc(s) {
     return String(s).replace(/[&<>"']/g, (c) =>
@@ -123,7 +109,7 @@ function renderStats(victims, uptoCount) {
     if (!el) return;
     const a = aggregateStats(victims, uptoCount);
 
-    // 전체 애도 수 — 라벨 없이 추모 리본 모양 + 숫자만.
+    // 전체 애도 수 — 라벨 없이 추모 꽃 + 숫자만.
     // 카운터 테이블 전체를 더하지 않고 **지금 화면에 있는 기록의 것만** 센다.
     // 감사에서 잘못된 기록을 지운 적이 있어(2026-07-31) 사라진 id의 카운트가 테이블에
     // 남아 있고, 그걸 합치면 있지도 않은 죽음에 대한 애도가 숫자에 섞인다.
@@ -135,7 +121,7 @@ function renderStats(victims, uptoCount) {
     }
     const acksHtml = `
         <div class="stat-cell">
-            <div class="num ack-num">${RIBBON_SVG} ${totalAcks}</div>
+            <div class="num ack-num">${flowerImgHTML(FLOWER_TOTAL_SEED, 25)} ${totalAcks}</div>
         </div>`;
 
     el.innerHTML = `
