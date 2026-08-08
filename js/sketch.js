@@ -80,7 +80,7 @@ async function initData() {
         renderStats(victims, pile.settled.length);
         if (detailPid) updateAckRow(detailPid); // 딥링크로 먼저 열린 상세 뷰의 카운트 반영
     });
-    computeAckIds(victims).then(openFromHash); // 블럭 위 ♥N 표시용 id 사전 계산 + #/record/<id> 딥링크
+    computeAckIds(victims).then(openFromHash); // 확인 카운터·#/record/<id> 딥링크용 id 사전 계산
     computePeriodCounts(); // 월/연 경계 요약 오버레이용
 
     renderStats(victims, pile.settled.length);
@@ -187,6 +187,9 @@ function updateCamera() {
 }
 
 function mouseWheel(event) {
+    // 모바일 레이아웃은 캔버스가 화면 전체를 덮어 overCanvas()가 늘 참 — 열린 정보 뷰
+    // 위에서의 휠까지 가로채 패널 스크롤이 죽는다. 실제 이벤트 대상으로 판별한다.
+    if (event && event.target && event.target.tagName !== "CANVAS") return true;
     if (!overCanvas()) return true; // 패널 스크롤은 그대로
     cameraY += event.delta;
     setFollow(false);
@@ -417,18 +420,9 @@ function drawBlockLabels(cx, cy, v) {
     const yTop = cy - lineGap / 2;
     const yBottom = cy + lineGap / 2;
 
-    // 우측에는 확인 수 숫자만 둔다 — 표식(구 리본)은 추모 꽃으로 바뀌면서 통계 패널과
-    // 상세 뷰로 옮겨졌고, 블럭 위에는 붙이지 않는다 (2026-08-08 작가 결정)
-    let rightX = cx + w / 2 - 18;
-    const n = v._ackId ? (_acks[v._ackId] || 0) : 0;
-    if (n > 0) {
-        textSize(16);
-        textAlign(RIGHT, CENTER);
-        fill(...CONFIG.COLORS.text);
-        const numStr = `${n}`;
-        text(numStr, rightX, cy);
-        rightX -= textWidth(numStr) + 14;
-    }
+    // 블럭에는 확인 표식·수를 아무것도 올리지 않는다 (2026-08-08 작가 결정) —
+    // 표식(추모 꽃)은 통계 패널과 상세 뷰에, 수는 상세 뷰 문장("N명이 확인했습니다")에 있다.
+    const rightX = cx + w / 2 - 18;
 
     // 윗줄: 날짜 요일 장소
     fill(...CONFIG.COLORS.text);
@@ -580,7 +574,10 @@ function setupDOM() {
         if (document.body.classList.contains("info-open")) closeInfo();
         else closeDetail();
     });
-    document.getElementById("info-btn").addEventListener("click", () => {
+    // 모바일: 제목을 누르면 정보 뷰(공지/통계/구독)가 열린다 — 구 i 버튼 대체 (2026-08-08).
+    // 눌린다는 표시는 모바일 CSS의 밑줄이 담당. 데스크톱은 패널이 항상 펼쳐져 있어 무시.
+    document.querySelector("#panel-header h1").addEventListener("click", () => {
+        if (!isMobileView()) return;
         if (document.body.classList.contains("info-open")) closeInfo();
         else openInfo();
     });
@@ -592,17 +589,15 @@ function setupDOM() {
     });
 }
 
-// ---- 정보(i) 뷰 — 모바일에서 패널 전체(공지/통계/구독)를 펼침 ----
+// ---- 정보 뷰 — 모바일에서 제목을 누르면 패널 전체(공지/통계/구독)를 펼침 ----
 
 function openInfo() {
     document.body.classList.add("info-open");
-    document.getElementById("info-btn").textContent = "×";
     history.pushState({ tfInfo: 1 }, "", "#/about");
 }
 
 function hideInfoUI() {
     document.body.classList.remove("info-open");
-    document.getElementById("info-btn").textContent = "i";
 }
 
 function closeInfo() {

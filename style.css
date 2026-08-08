@@ -440,28 +440,6 @@ html, body {
 
 [hidden] { display: none !important; }
 
-/* ---- 정보(i) 버튼 — 모바일 고정 헤더 우측 (아래 미디어 쿼리에서 표시) ---- */
-#info-btn {
-    display: none; /* 데스크톱에서는 숨김 */
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 30px;
-    height: 30px;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    background: none;
-    color: var(--text);
-    font-size: 15px;
-    font-style: italic;
-    font-family: Georgia, "Times New Roman", serif;
-    line-height: 1;
-    cursor: pointer;
-}
-#info-btn:hover { border-color: var(--accent); }
-
 /* ---- 반응형 ----
    모바일: 화면 전체가 블럭(캔버스). 상단에 제목+태그라인만 얇은 고정 헤더로 남기고
    패널의 나머지(공지/통계/구독)는 숨김. 아래로 스크롤하면 헤더가 위로 숨고,
@@ -491,7 +469,7 @@ html, body {
         transition: transform 0.25s ease;
     }
     body.hdr-hidden #panel { transform: translateY(-100%); }
-    /* 기본: 헤더(제목+태그라인)만. i 버튼(info-open)이면 패널이 전체 화면으로 펼쳐짐 */
+    /* 기본: 헤더(제목+태그라인)만. 제목을 누르면(info-open) 패널이 전체 화면으로 펼쳐짐 */
     body:not(.info-open) #panel > :not(#panel-header) { display: none; }
     body.info-open #panel {
         bottom: 0;
@@ -499,8 +477,15 @@ html, body {
         overflow-y: auto;
         transform: none; /* hdr-hidden 상태여도 열리면 보이게 */
     }
-    #panel-header { position: relative; padding-right: 44px; }
-    #panel-header h1 { font-size: 17px; margin-bottom: 6px; }
+    /* 제목이 정보 뷰 토글 — 밑줄로 "눌린다"는 것을 표시 (구 i 버튼, 2026-08-08 제거) */
+    #panel-header h1 {
+        font-size: 17px;
+        margin-bottom: 6px;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 5px;
+        text-decoration-thickness: 1px;
+        text-decoration-color: var(--text-dim);
+    }
     .tagline { font-size: 12px; line-height: 1.6; }
-    #info-btn { display: flex; }
 }
