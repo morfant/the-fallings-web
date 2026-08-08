@@ -155,9 +155,10 @@ function draw() {
         }
     }
 
-    // 터치 관성(플링) 스크롤 — 손을 뗀 뒤 감쇠하며 이어짐
+    // 터치 관성(플링) 스크롤 — 손을 뗀 뒤 감쇠하며 이어짐. 경계 밖에서는 저항을 받아
+    // 살짝 넘어갔다가 updateCamera의 고무줄로 되돌아온다 (바운스).
     if (_touch.fling !== 0) {
-        cameraY += _touch.fling;
+        cameraY += resistDelta(_touch.fling);
         _touch.fling *= 0.94;
         if (Math.abs(_touch.fling) < 0.3) _touch.fling = 0;
     }
@@ -176,14 +177,35 @@ function draw() {
 
 // =====================[ 카메라 ]=====================
 
+// 카메라 스크롤 경계 — 맨 위(최근)로 끝까지 올려도 블럭이 최소 3개는 화면에 남는다
+// (작가 요청 2026-08-08: 빈 하늘만 남지 않게).
+function camBounds() {
+    const maxY = CONFIG.GROUND_Y - height + 60;
+    const minY = Math.min(pile.topY() - height + 3 * CONFIG.BLOCK_H, maxY);
+    return { minY, maxY };
+}
+
+// 경계 밖으로 당길 때의 저항 — 밀수록 덜 움직인다 (iOS 오버스크롤 감).
+function resistDelta(d) {
+    const { minY, maxY } = camBounds();
+    if ((d < 0 && cameraY < minY) || (d > 0 && cameraY > maxY)) return d * 0.3;
+    return d;
+}
+
 function updateCamera() {
     if (followMode) {
         const target = pile.topY() - height * CONFIG.FOLLOW_ANCHOR;
         cameraY = lerp(cameraY, target, CONFIG.FOLLOW_LERP);
     }
-    const minY = pile.topY() - height * 0.9;
-    const maxY = CONFIG.GROUND_Y - height + 60;
-    cameraY = constrain(cameraY, Math.min(minY, maxY), maxY);
+    // 경계 밖이면 고무줄처럼 되돌아온다 — 당겼다 놓았을 때의 바운스
+    const { minY, maxY } = camBounds();
+    if (cameraY < minY) {
+        cameraY = lerp(cameraY, minY, 0.16);
+        if (minY - cameraY < 0.5) cameraY = minY;
+    } else if (cameraY > maxY) {
+        cameraY = lerp(cameraY, maxY, 0.16);
+        if (cameraY - maxY < 0.5) cameraY = maxY;
+    }
 }
 
 function mouseWheel(event) {
@@ -191,7 +213,7 @@ function mouseWheel(event) {
     // 위에서의 휠까지 가로채 패널 스크롤이 죽는다. 실제 이벤트 대상으로 판별한다.
     if (event && event.target && event.target.tagName !== "CANVAS") return true;
     if (!overCanvas()) return true; // 패널 스크롤은 그대로
-    cameraY += event.delta;
+    cameraY += resistDelta(event.delta);
     setFollow(false);
     return false;
 }
@@ -513,7 +535,7 @@ function touchMoved(event) {
     _touch.lastY = mouseY;
     _touch.moved += Math.abs(dy);
     if (_touch.moved > 4) {
-        cameraY += dy;
+        cameraY += resistDelta(dy); // 경계 밖에서는 저항 — 놓으면 updateCamera가 되돌림
         setFollow(false);
         _touch.vel = 0.7 * dy + 0.3 * _touch.vel; // 놓았을 때 관성으로 이어질 속도
         // 스크롤 방향에 따라 헤더 토글 — 방향이 바뀌면 누적을 리셋 (히스테리시스)

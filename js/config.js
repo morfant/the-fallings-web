@@ -28,7 +28,7 @@ const CONFIG = {
         blockLine: [42, 42, 48],
         text: [207, 207, 214],
         textDim: [124, 124, 136],
-        accent: [201, 106, 90],
+        accent: [95, 125, 156],
         ground: [58, 58, 66],
     },
 

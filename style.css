@@ -5,7 +5,7 @@
     --line: #2a2a30;
     --text: #cfcfd6;
     --text-dim: #7c7c88;
-    --accent: #c96a5a;
+    --accent: #5f7d9c;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -61,6 +61,7 @@ html, body {
     line-height: 1.75;
     color: var(--text-dim);
     word-break: keep-all;
+    text-align: justify;
 }
 #data-notice p + p { margin-top: 8px; }
 #data-notice .notice-strong {
@@ -69,8 +70,8 @@ html, body {
 }
 
 #revisit-banner {
-    background: rgba(201, 106, 90, 0.12);
-    border: 1px solid rgba(201, 106, 90, 0.4);
+    background: rgba(95, 125, 156, 0.12);
+    border: 1px solid rgba(95, 125, 156, 0.4);
     border-radius: 6px;
     padding: 10px 14px;
     font-size: 13px;
@@ -190,17 +191,17 @@ html, body {
     padding-top: 20px;
     border-top: 1px solid var(--line);
 }
+/* 버튼이 아니라 밑줄 텍스트 — 모바일 제목(정보 뷰 토글)과 같은 어법 */
 .about-go {
     display: inline-block;
-    background: var(--block);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 9px 16px;
     font-size: 13px;
     color: var(--text);
-    text-decoration: none;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--text-dim);
 }
-.about-go:hover { border-color: var(--accent); }
+.about-go:hover { text-decoration-color: var(--accent); }
 
 /* ---- 현재로 버튼 ---- */
 #follow-btn {
@@ -332,7 +333,7 @@ body.info-open #follow-btn { display: none; }
     text-decoration: none;
 }
 #post-subscribe:hover,
-#panel-subscribe:hover { background: rgba(201, 106, 90, 0.12); }
+#panel-subscribe:hover { background: rgba(95, 125, 156, 0.12); }
 
 /* 패널 우상단 알림받기 — 상세(포스트 뷰) 상단바와 같은 자리.
    데스크톱은 패널이 늘 열려 있으므로 항상 표시. 모바일은 정보 뷰가 열려 있는
