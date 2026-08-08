@@ -1,9 +1,9 @@
 {
- "generatedAt": "2026-08-08T14:30:27.215Z",
+ "generatedAt": "2026-08-08T14:38:28.884Z",
  "unit": "person",
  "collectionSince": "2025-09-01",
- "count": 254,
- "accidents": 218,
+ "count": 255,
+ "accidents": 219,
  "victims": [
   {
    "date": "2025-09-20",
@@ -126,6 +126,16 @@
    "accSummary": "2025년 10월 3일, 전라북도 완주군 봉동읍 현대자동차 전주공장 도장공장에서 바닥 철거 작업을 하던 50대 하청 노동자가 추락해 숨졌다.",
    "link": "https://www.hani.co.kr/arti/society/labor/1222227.html",
    "pid": "db5859f4797c919c"
+  },
+  {
+   "date": "2025-10-04",
+   "region": "경기도 시흥시",
+   "accType": "기타",
+   "age": 60,
+   "immigrant": null,
+   "accSummary": "2025년 10월 4일, 경기도 시흥시 SPC삼립 시화공장에서 일하던 60대 생산직 노동자가 6일 연속 야간근무를 마친 뒤 집에서 숨졌다. 이 죽음은 한 달여 뒤 고용노동부가 SPC삼립 대표를 면담한 사실이 보도되며 뒤늦게 알려졌다. 같은 공장에서는 5월에도 크림빵 생산라인에서 노동자가 숨진 바 있다.",
+   "link": "https://www.yna.co.kr/view/AKR20251114044500530?victim=2",
+   "pid": "5187d3071c1cefde"
   },
   {
    "date": "2025-10-05",
