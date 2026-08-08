@@ -185,13 +185,10 @@ html, body {
     color: var(--text-dim);
 }
 
-/* ---- 작품 소개 (패널 맨 아래 — 구 알림 받기 자리, 2026-08-08) ---- */
-#about-sec {
-    margin-top: auto;
-    padding-top: 20px;
-    padding-bottom: 40px; /* 패널의 마지막 줄 — 아래 여백이 없으면 눈에 안 들어온다 */
-    border-top: 1px solid var(--line);
-}
+/* ---- 이 작업에 대하여 (패널 상단 — '이 숫자는 전부가 아닙니다' 공지 위, 2026-08-08 이동) ----
+   데스크톱은 패널이 늘 펼쳐져 있어 항상 보이고, 모바일은 정보 뷰를 열었을 때만 보인다
+   (헤더 밖 패널 자식은 info-open이 아니면 숨겨지는 기존 규칙을 그대로 탄다). */
+#about-sec { margin-top: -8px; /* 패널 gap(24px)이 헤더와 공지 사이에 두 번 들어가 벌어지는 것을 보정 */ }
 /* 버튼이 아니라 밑줄 텍스트 — 모바일 제목(정보 뷰 토글)과 같은 어법 */
 .about-go {
     display: inline-block;
@@ -352,11 +349,20 @@ body.info-open #follow-btn { display: none; }
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    position: relative; /* 카드 이미지(#post-card)의 기준 */
     padding: 30px 26px;
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02) 18%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.26)),
         linear-gradient(90deg, hsl(228, 6%, 11%), hsl(228, 7%, 27%) 50%, hsl(228, 6%, 11%));
     border-bottom: 1px solid var(--line);
+}
+/* 사고 경위를 그대로 그린 카드 이미지 — 길게 누르면 네이티브 '이미지 저장' 메뉴가 뜬다.
+   밑의 #post-summary(DOM 텍스트)는 스크린리더용으로 남는다 (sharecard.js). */
+#post-card {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 #post-summary {
     font-size: 16px;
@@ -470,8 +476,8 @@ body.info-open #follow-btn { display: none; }
        상세를 보다가 온 사람이 같은 위치에서 같은 버튼을 만난다. 닫으면 사라짐. */
     body:not(.info-open) #panel-subscribe { display: none; }
     body.info-open #panel-header { padding-right: 90px; }
-    /* 정보 뷰의 맨 끝 여백 — 홈 인디케이터 영역까지 감안 */
-    body.info-open #about-sec { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+    /* 정보 뷰의 맨 끝 여백 — 홈 인디케이터 영역까지 감안 (마지막 요소가 무엇이든) */
+    body.info-open #panel { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
     /* 제목이 정보 뷰 토글 — 밑줄로 "눌린다"는 것을 표시 (구 i 버튼, 2026-08-08 제거).
        열려 있는 동안은 밑줄이 강조색 — 다시 누르면 닫힌다는 신호. */
     #panel-header h1 {

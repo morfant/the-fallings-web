@@ -689,6 +689,9 @@ function populateDetailCard(v, title, summary, realLink) {
 function populatePostView(v, title, summary, realLink) {
     const summaryEl = document.getElementById("post-summary");
     summaryEl.textContent = summary;
+    // 이전 기록의 카드 이미지가 새 기록 위에 잠깐 보이지 않게 — 새 카드가 완성되면 다시 표시
+    const staleCard = document.getElementById("post-card");
+    if (staleCard) staleCard.hidden = true;
     document.getElementById("post-title").textContent = title;
     // 여럿이 숨진 사고는 그 사실을 밝힌다 — 블럭 하나가 한 사람이므로,
     // 같은 사고의 다른 블럭들이 왜 나란히 쌓여 있는지 여기서만 알 수 있다.
@@ -711,8 +714,11 @@ function populatePostView(v, title, summary, realLink) {
     document.getElementById("post-view").hidden = false;
 
     // 글자 크기는 고정 — 레이아웃이 잡힌 뒤 공간에 맞춰 텍스트를 자름
-    requestAnimationFrame(() =>
-        fitSummary(summaryEl, document.getElementById("post-image"), summary));
+    requestAnimationFrame(() => {
+        fitSummary(summaryEl, document.getElementById("post-image"), summary);
+        // 같은 내용을 캔버스로 그려 <img>로 얹는다 — 길게 누르면 '이미지 저장' (sharecard.js)
+        updatePostCard(v, summary);
+    });
 }
 
 // 이미지 영역에 들어가지 않는 요약은 텍스트를 잘라 " …"로 마무리.
@@ -843,7 +849,13 @@ async function onShareClick() {
     const date = document.getElementById("post-date").textContent;
     const text = `${date}. ${title} — 떨어지고, 끼이고, 깔린`;
     if (navigator.share) {
-        try { await navigator.share({ title: "떨어지고, 끼이고, 깔린", text, url }); }
+        // 카드 이미지가 있으면 파일로 첨부 — 링크만이 아니라 사고 경위 카드가 함께 퍼진다
+        let files;
+        try {
+            const f = typeof getCardFile === "function" ? await getCardFile() : null;
+            if (f && navigator.canShare && navigator.canShare({ files: [f] })) files = [f];
+        } catch { /* 첨부 실패는 링크 공유로 폴백 */ }
+        try { await navigator.share({ title: "떨어지고, 끼이고, 깔린", text, url, ...(files ? { files } : {}) }); }
         catch { /* 사용자가 공유 시트를 닫음 */ }
         return;
     }
