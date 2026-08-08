@@ -189,6 +189,7 @@ html, body {
 #about-sec {
     margin-top: auto;
     padding-top: 20px;
+    padding-bottom: 40px; /* 패널의 마지막 줄 — 아래 여백이 없으면 눈에 안 들어온다 */
     border-top: 1px solid var(--line);
 }
 /* 버튼이 아니라 밑줄 텍스트 — 모바일 제목(정보 뷰 토글)과 같은 어법 */
@@ -469,7 +470,10 @@ body.info-open #follow-btn { display: none; }
        상세를 보다가 온 사람이 같은 위치에서 같은 버튼을 만난다. 닫으면 사라짐. */
     body:not(.info-open) #panel-subscribe { display: none; }
     body.info-open #panel-header { padding-right: 90px; }
-    /* 제목이 정보 뷰 토글 — 밑줄로 "눌린다"는 것을 표시 (구 i 버튼, 2026-08-08 제거) */
+    /* 정보 뷰의 맨 끝 여백 — 홈 인디케이터 영역까지 감안 */
+    body.info-open #about-sec { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+    /* 제목이 정보 뷰 토글 — 밑줄로 "눌린다"는 것을 표시 (구 i 버튼, 2026-08-08 제거).
+       열려 있는 동안은 밑줄이 강조색 — 다시 누르면 닫힌다는 신호. */
     #panel-header h1 {
         font-size: 17px;
         margin-bottom: 6px;
@@ -479,5 +483,6 @@ body.info-open #follow-btn { display: none; }
         text-decoration-thickness: 1px;
         text-decoration-color: var(--text-dim);
     }
+    body.info-open #panel-header h1 { text-decoration-color: var(--accent); }
     .tagline { font-size: 12px; line-height: 1.6; }
 }

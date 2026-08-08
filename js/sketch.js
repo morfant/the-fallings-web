@@ -188,7 +188,7 @@ function camBounds() {
 // 경계 밖으로 당길 때의 저항 — 밀수록 덜 움직인다 (iOS 오버스크롤 감).
 function resistDelta(d) {
     const { minY, maxY } = camBounds();
-    if ((d < 0 && cameraY < minY) || (d > 0 && cameraY > maxY)) return d * 0.3;
+    if ((d < 0 && cameraY < minY) || (d > 0 && cameraY > maxY)) return d * 0.55;
     return d;
 }
 
@@ -200,10 +200,10 @@ function updateCamera() {
     // 경계 밖이면 고무줄처럼 되돌아온다 — 당겼다 놓았을 때의 바운스
     const { minY, maxY } = camBounds();
     if (cameraY < minY) {
-        cameraY = lerp(cameraY, minY, 0.16);
+        cameraY = lerp(cameraY, minY, 0.3);
         if (minY - cameraY < 0.5) cameraY = minY;
     } else if (cameraY > maxY) {
-        cameraY = lerp(cameraY, maxY, 0.16);
+        cameraY = lerp(cameraY, maxY, 0.3);
         if (cameraY - maxY < 0.5) cameraY = maxY;
     }
 }
