@@ -730,6 +730,16 @@ async function pushDetailHistory(v) {
 }
 
 function openFromHash() {
+    // #/about — 정보 뷰가 열린 채 새로 로드된 경우(알림 안내 페이지의 '돌아가기'가
+    // history.back()으로 돌아왔는데 bfcache 미스) 정보 뷰를 복원한다.
+    // 아래 딥링크와 같은 구조: 블럭 화면을 밑에 깔아 뒤로가기가 그리로 돌아가게 한다.
+    if (/^#\/about/.test(location.hash || "")) {
+        const base = location.pathname + location.search;
+        history.replaceState(null, "", base);
+        history.pushState({ tfInfo: 1 }, "", "#/about");
+        document.body.classList.add("info-open");
+        return;
+    }
     const m = /^#\/record\/([0-9a-f]{16})/.exec(location.hash || "");
     if (!m) return;
     const v = victims.find((x) => x._ackId === m[1]);

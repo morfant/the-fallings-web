@@ -184,24 +184,14 @@ html, body {
     color: var(--text-dim);
 }
 
-/* ---- 알림 구독 ---- */
-#subscribe {
+/* ---- 작품 소개 (패널 맨 아래 — 구 알림 받기 자리, 2026-08-08) ---- */
+#about-sec {
     margin-top: auto;
     padding-top: 20px;
     border-top: 1px solid var(--line);
 }
-#subscribe h3 {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-dim);
-    letter-spacing: 0.08em;
-    margin-bottom: 8px;
-}
-#subscribe > p { font-size: 13px; color: var(--text-dim); margin-bottom: 12px; }
-.sub-channels { display: flex; flex-direction: column; gap: 10px; }
-.sub-btn {
+.about-go {
     display: inline-block;
-    align-self: flex-start;
     background: var(--block);
     border: 1px solid var(--line);
     border-radius: 6px;
@@ -210,21 +200,7 @@ html, body {
     color: var(--text);
     text-decoration: none;
 }
-.sub-btn:hover { border-color: var(--accent); }
-.sub-detail { font-size: 13px; color: var(--text-dim); }
-.sub-detail summary { cursor: pointer; color: var(--text); }
-.sub-detail ol { margin: 8px 0 8px 20px; line-height: 1.8; }
-.sub-detail a { color: #7ea7cc; }
-.sub-topic {
-    display: inline-block;
-    background: #1d1d22;
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 4px 10px;
-    font-size: 13px;
-    color: var(--text);
-    user-select: all;
-}
+.about-go:hover { border-color: var(--accent); }
 
 /* ---- 현재로 버튼 ---- */
 #follow-btn {
@@ -241,6 +217,8 @@ html, body {
     z-index: 20;
 }
 #follow-btn:hover { border-color: var(--accent); color: #fff; }
+/* 정보 뷰가 열려 있는 동안은 블럭 화면이 아니므로 '현재로'가 떠 있을 이유가 없다 */
+body.info-open #follow-btn { display: none; }
 
 /* ---- 추모 꽃 아이콘 (flower.js — 설치 버전 FloralArc 이식, pid 시드로 사람마다 고정) ---- */
 .ack-num { display: flex; align-items: center; gap: 8px; }
@@ -344,7 +322,8 @@ html, body {
     cursor: pointer;
 }
 #post-back:hover { color: #fff; }
-#post-subscribe {
+#post-subscribe,
+#panel-subscribe {
     border: 1px solid var(--accent);
     border-radius: 6px;
     padding: 7px 14px;
@@ -352,7 +331,15 @@ html, body {
     color: var(--text);
     text-decoration: none;
 }
-#post-subscribe:hover { background: rgba(201, 106, 90, 0.12); }
+#post-subscribe:hover,
+#panel-subscribe:hover { background: rgba(201, 106, 90, 0.12); }
+
+/* 패널 우상단 알림받기 — 상세(포스트 뷰) 상단바와 같은 자리.
+   데스크톱은 패널이 늘 열려 있으므로 항상 표시. 모바일은 정보 뷰가 열려 있는
+   동안만 보인다 (아래 미디어 쿼리에서 닫힘 상태를 숨김). 패널 하단에 있던
+   '알림 받기' 섹션은 이 버튼으로 통합하며 제거 (2026-08-08 작가 결정). */
+#panel-header { position: relative; }
+#panel-subscribe { position: absolute; top: -3px; right: 0; }
 
 /* 이미지 영역 — 사진 없이 사고 요약이 초상 역할.
    배경은 캔버스 금속 블럭과 동일 공식(가로 미러 그라데이션 + 수직 베벨). */
@@ -477,6 +464,10 @@ html, body {
         overflow-y: auto;
         transform: none; /* hdr-hidden 상태여도 열리면 보이게 */
     }
+    /* 정보 뷰가 열려 있는 동안만 우상단에 알림받기 — 포스트 뷰 상단바와 같은 자리라
+       상세를 보다가 온 사람이 같은 위치에서 같은 버튼을 만난다. 닫으면 사라짐. */
+    body:not(.info-open) #panel-subscribe { display: none; }
+    body.info-open #panel-header { padding-right: 90px; }
     /* 제목이 정보 뷰 토글 — 밑줄로 "눌린다"는 것을 표시 (구 i 버튼, 2026-08-08 제거) */
     #panel-header h1 {
         font-size: 17px;

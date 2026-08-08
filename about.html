@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>떨어지고, 끼이고, 깔린 — 작품 소개</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        body { overflow-y: auto; }
+        #about-page {
+            max-width: 620px;
+            margin: 0 auto;
+            padding: 48px 24px 40px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100dvh;
+            box-sizing: border-box;
+        }
+        #about-page h1 { font-size: 22px; font-weight: 700; margin-bottom: 36px; line-height: 1.5; }
+        #about-page h2 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            margin-bottom: 18px;
+        }
+        .note p {
+            font-size: 14.5px;
+            line-height: 1.95;
+            color: var(--text);
+            margin-bottom: 22px;
+            word-break: keep-all;
+            text-align: justify;
+        }
+        .note em { font-style: italic; }
+        .sign { text-align: right; margin-top: 16px; }
+        .sign .date { font-size: 14px; color: var(--text); margin-bottom: 28px; }
+        .sign p { font-size: 13.5px; line-height: 1.9; }
+        .sign a { color: #7ea7cc; text-decoration: none; }
+        .sign a:hover { text-decoration: underline; }
+        .back { display: inline-block; margin-top: 36px; font-size: 13px; color: #7ea7cc; text-decoration: none; }
+        #about-footer {
+            margin-top: auto;
+            padding-top: 40px;
+            font-size: 11.5px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <main id="about-page">
+        <div style="width:40px;height:3px;background:var(--accent);margin-bottom:20px"></div>
+        <h1>&ldquo;지금 이 순간의 가장 큰 비극&rdquo;</h1>
+
+        <h2>Artist&rsquo;s Note</h2>
+        <div class="note">
+            <p>GPT 이전 시기, 그러니까 나같은 기술/예술계의 사람들에게 인공지능이라는 것이
+                막 주목받기 시작했을 무렵 내가 떠올렸던 프로젝트의 제목은
+                <em>지금 이 순간의 가장 큰 비극</em> 이었다. 온라인 상의 어딘가에 존재하는
+                인공지능이 우리가 살고 있는 이 세계에 뿌려지는 수많은 정보들을 읽고 분석해서,
+                바로 지금 이 순간에 벌어지고 있는 가장 큰 비극이 무엇인지를 찾아 보여줄 수
+                있을까. 그 질문이 인간성의 단면을 드러내 보여 줄 수 있을 거라고 생각했다.</p>
+            <p>웹페이지 형식으로 구현된 <em>떨어지고, 끼이고, 깔린(Fallen, Caught,
+                Crushed)</em> 은 그렇게 오래 전 시작된 프로젝트의 첫 번째 작업이다.
+                인공지능은 수집된 신문기사를 분석해 그것이 산재사망 사고에 대한 것인지를
+                판별하고 분류한다.</p>
+            <p>사람이 언젠가 죽는 것은 당연하지만 이 죽음들이 특별한 이유는 그 중 꽤 많은
+                것들은 발생하지 않아도 되었을 것들이기 때문이다. 우리가 관여하는 시스템,
+                나의 세계가 구조적으로 그러한 죽음들을 만들어 내고 있는 것이기 때문이다.
+                마치 세상의 기본값인 것처럼 당연하게 여겨지며 쉽게 잊혀지는 죽음들.</p>
+            <p>잊혀지는 죽음들 역시 이 세계의 어딘가에서는 계속 발생되고 있으므로 잊혀지는
+                것 역시 죽는 것 만큼이나 당연한 것 일수도 있지만, 그러한 죽음에 대한 알림은
+                우리가 잊고 있다는 것, 산다는 것이 늘 무언가를 잊는 것 위에서만 가능하다는
+                것에 대해서만은 작동하는 무언가 일거라고 믿는다. 그리고 그 알림이 언제 어느
+                때에든, 비록 아주 짧은 순간 나타났다 사라질 경험에 가까운 것이라고 해도 그
+                순간 만큼은 크기를 가늠하기 어려운 매섭고 슬프고 비열하고 사무치는 강렬한
+                울림이 될 수 있었으면 한다.</p>
+            <p><em>떨어지고, 끼이고, 깔린</em> 은 소리를 내는 물리적 오브제의 형태로
+                만들어 질 예정이다.</p>
+        </div>
+
+        <div class="sign">
+            <p class="date">2026년 8월, 이강일</p>
+            <p><a href="mailto:giy.hands@gmail.com">giy.hands@gmail.com</a></p>
+            <p><a href="https://instagram.com/giy.hands" target="_blank" rel="noopener">@giy.hands</a></p>
+        </div>
+
+        <a class="back" id="back-link" href="./">← 돌아가기</a>
+
+        <footer id="about-footer">© 2026 이강일(Gangil, Yi). All rights reserved.</footer>
+    </main>
+    <script>
+        // subscribe.html과 같은 규칙 — 앱에서 왔으면 그 화면(정보 뷰/상세)으로 되돌아간다.
+        document.getElementById("back-link").addEventListener("click", (e) => {
+            let fromApp = false;
+            try { fromApp = new URL(document.referrer).origin === location.origin; } catch { }
+            if (fromApp && history.length > 1) {
+                e.preventDefault();
+                history.back();
+            }
+        });
+    </script>
+</body>
+</html>
