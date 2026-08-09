@@ -33,6 +33,21 @@ function _wrapKorean(ctx, text, maxW) {
     return lines;
 }
 
+// 양쪽 정렬 — DOM(#post-summary)의 text-align: justify와 같은 인상. 마지막 줄과
+// 지나치게 벌어지는 줄은 왼쪽 정렬로 둔다 (CSS justify와 같은 규칙).
+function _drawJustified(ctx, line, x, y, maxW, isLast) {
+    const words = line.split(" ");
+    if (isLast || words.length < 2) { ctx.fillText(line, x, y); return; }
+    const wordsW = words.reduce((s, w) => s + ctx.measureText(w).width, 0);
+    const gap = (maxW - wordsW) / (words.length - 1);
+    if (gap <= 0 || gap > ctx.measureText("가").width * 2) { ctx.fillText(line, x, y); return; }
+    let cx = x;
+    for (const w of words) {
+        ctx.fillText(w, cx, y);
+        cx += ctx.measureText(w).width + gap;
+    }
+}
+
 // #post-image와 같은 시각 규격으로 카드를 그린다 (금속 그라데이션 + 16px/줄간 2.0 텍스트)
 async function buildPostCard(v, summary, cssW, cssH) {
     const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 2));
@@ -73,10 +88,10 @@ async function buildPostCard(v, summary, cssW, cssH) {
     }
     let y = pad + Math.max(0, (availH - lines.length * lh) / 2);
     ctx.fillStyle = "#e8e8ee";
-    for (const ln of lines) {
-        ctx.fillText(ln, x0, y + (lh - fs) / 2);
+    lines.forEach((ln, i) => {
+        _drawJustified(ctx, ln, x0, y + (lh - fs) / 2, maxW, i === lines.length - 1);
         y += lh;
-    }
+    });
 
     _cardCanvas = c;
     return c.toDataURL("image/png");
