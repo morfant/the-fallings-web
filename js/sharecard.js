@@ -54,15 +54,9 @@ async function buildPostCard(v, summary, cssW, cssH) {
     g.addColorStop(1, "rgba(0,0,0,0.26)");
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
+    // 내용(사고 경위)만 담는다 — 날짜·꽃·작품명 없이 (작가 결정 2026-08-09)
     const pad = 26 * scale;
     ctx.textBaseline = "top";
-
-    // 상단: 날짜·요일·지역
-    const dow = typeof dayOfWeek === "function" ? dayOfWeek(v.date) : "";
-    const region = typeof displayRegion === "function" ? (displayRegion(v) || "") : (v.region || "");
-    ctx.font = `${12.5 * scale}px ${_CARD_FONT}`;
-    ctx.fillStyle = "rgba(207,207,214,0.75)";
-    ctx.fillText(`${v.date}${dow ? ` ${dow}` : ""}   ${region}`, pad, pad * 0.72);
 
     // 본문 — 넘치면 마지막 줄을 " …"로 마무리 (fitSummary와 같은 규칙)
     const fs = 16 * scale;
@@ -70,37 +64,19 @@ async function buildPostCard(v, summary, cssW, cssH) {
     ctx.font = `${fs}px ${_CARD_FONT}`;
     const maxW = Math.min(W - pad * 2, fs * 32);
     const x0 = (W - maxW) / 2;
-    const topY = pad * 0.72 + 13 * scale + pad * 0.6;
-    const footH = 22 * scale + pad * 1.4;
-    const availH = H - topY - footH;
+    const availH = H - pad * 2;
     let lines = _wrapKorean(ctx, summary, maxW);
     const maxLines = Math.max(1, Math.floor(availH / lh));
     if (lines.length > maxLines) {
         lines = lines.slice(0, maxLines);
         lines[lines.length - 1] = lines[lines.length - 1].replace(/[\s.,]*$/, "") + " …";
     }
-    let y = topY + Math.max(0, (availH - lines.length * lh) / 2);
+    let y = pad + Math.max(0, (availH - lines.length * lh) / 2);
     ctx.fillStyle = "#e8e8ee";
     for (const ln of lines) {
         ctx.fillText(ln, x0, y + (lh - fs) / 2);
         y += lh;
     }
-
-    // 하단: 그 사람의 추모 꽃 + 작품명 (저장된 이미지의 서명)
-    const fSize = 22 * scale;
-    const fy = H - pad - fSize;
-    try {
-        const seed = v.pid || v._ackId || v.link || "flower";
-        await new Promise((res) => {
-            const img = new Image();
-            img.onload = () => { ctx.drawImage(img, pad, fy, fSize, fSize); res(); };
-            img.onerror = res;
-            img.src = flowerDataURL(seed, fSize);
-        });
-    } catch { /* 꽃이 없어도 카드는 만든다 */ }
-    ctx.font = `${11.5 * scale}px ${_CARD_FONT}`;
-    ctx.fillStyle = "rgba(207,207,214,0.6)";
-    ctx.fillText("떨어지고, 끼이고, 깔린", pad + fSize + 8 * scale, fy + (fSize - 11.5 * scale) / 2);
 
     _cardCanvas = c;
     return c.toDataURL("image/png");
