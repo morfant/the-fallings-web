@@ -1,9 +1,9 @@
 {
- "generatedAt": "2026-08-09T11:53:38.985Z",
+ "generatedAt": "2026-08-10T02:36:31.892Z",
  "unit": "person",
  "collectionSince": "2025-09-01",
- "count": 256,
- "accidents": 220,
+ "count": 257,
+ "accidents": 221,
  "victims": [
   {
    "date": "2025-09-20",
@@ -2581,6 +2581,16 @@
    "accSummary": "2026년 8월 7일 새벽, 서울 종로구의 골목에서 혼자 폐기물 수거 작업을 하던 60대 청소노동자가 수거용 화물차에 부딪혀 숨졌다. 벽에 부딪힌 화물차 옆에 쓰러진 채 발견돼 병원으로 이송됐지만 사망했다. 세워둔 차가 움직이며 사고가 난 것으로 경찰은 추정했다.",
    "link": "https://www.khan.co.kr/article/202608081603001/?utm_source=khan_rss&utm_medium=rss&utm_campaign=total_news",
    "pid": "8601c9265b41aa9e"
+  },
+  {
+   "date": "2026-08-07",
+   "region": "경기 여주시",
+   "accType": "기타",
+   "age": 30,
+   "immigrant": "외국인",
+   "accSummary": "2026년 8월 7일, 경기 여주시에서 이주노동자가 일하다 숨졌다.",
+   "link": "https://www.yna.co.kr/view/AKR20260810066400061",
+   "pid": "2ccd2a9239481309"
   },
   {
    "date": "2026-08-08",
