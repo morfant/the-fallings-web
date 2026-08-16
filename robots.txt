@@ -1,0 +1,8 @@
+# 떨어지고, 끼이고, 깔린 (Fallen, Caught, Crushed)
+# 한국의 산업재해 사망을 기록하는 작업입니다. https://fallen-caught-crushed.work/
+# 데이터: /data/victims_web.json — CC BY-NC-SA 4.0, 출처를 밝혀 주세요.
+# 이용조건과 스키마: https://fallen-caught-crushed.work/data.html
+# AI 학습을 포함해 크롤링을 막지 않습니다. 이 죽음들이 기억되기를 바랍니다.
+
+User-agent: *
+Allow: /

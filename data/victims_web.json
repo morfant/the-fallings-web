@@ -1,5 +1,15 @@
 {
- "generatedAt": "2026-08-14T22:42:44.370Z",
+ "meta": {
+  "project": "떨어지고, 끼이고, 깔린 (Fallen, Caught, Crushed)",
+  "author": "이강일 (Gangil Yi)",
+  "url": "https://fallen-caught-crushed.work/",
+  "docs": "https://fallen-caught-crushed.work/data.html",
+  "license": "CC BY-NC-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko",
+  "attribution": "떨어지고, 끼이고, 깔린 (이강일) — fallen-caught-crushed.work",
+  "note": "언론 보도에 기반한 기록으로 전수가 아닙니다. 2025-09-01 이후 확인된 사망만 공개합니다. 각 레코드의 요약(accSummary)은 이 프로젝트가 사실만으로 새로 쓴 문장입니다."
+ },
+ "generatedAt": "2026-08-16T14:28:56.569Z",
  "unit": "person",
  "collectionSince": "2025-09-01",
  "count": 259,

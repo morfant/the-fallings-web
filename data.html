@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>떨어지고, 끼이고, 깔린 — 데이터 안내</title>
+    <meta name="description" content="산업재해 사망 기록 공개 데이터 — 스키마, 이용조건(CC BY-NC-SA 4.0), 받는 방법">
+    <link rel="stylesheet" href="style.css?v=d47c665d" />
+    <style>
+        body { overflow-y: auto; }
+        #data-page {
+            max-width: 620px;
+            margin: 0 auto;
+            padding: 48px 24px 40px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100dvh;
+            box-sizing: border-box;
+        }
+        #data-page h1 { font-size: 22px; font-weight: 700; margin-bottom: 36px; line-height: 1.5; }
+        #data-page h2 { font-size: 15px; font-weight: 700; margin: 34px 0 14px; color: var(--text); }
+        .note p {
+            font-size: 14.5px;
+            line-height: 1.95;
+            color: var(--text);
+            margin-bottom: 18px;
+            word-break: keep-all;
+            text-align: justify;
+        }
+        .note a { color: #7ea7cc; text-decoration: none; }
+        .note a:hover { text-decoration: underline; }
+        .endpoint {
+            display: block;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 12.5px;
+            padding: 12px 14px;
+            border: 1px solid var(--text-dim);
+            border-radius: 6px;
+            color: var(--text);
+            margin-bottom: 18px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .schema-wrap { overflow-x: auto; margin-bottom: 18px; }
+        table.schema {
+            border-collapse: collapse;
+            font-size: 13px;
+            line-height: 1.7;
+            min-width: 480px;
+            width: 100%;
+        }
+        table.schema th, table.schema td {
+            text-align: left;
+            padding: 7px 10px;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+            vertical-align: top;
+        }
+        table.schema th { color: var(--text-dim); font-weight: 400; white-space: nowrap; }
+        table.schema td:first-child {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .back { display: inline-block; margin-top: 36px; font-size: 13px; color: #7ea7cc; text-decoration: none; }
+        #data-footer {
+            margin-top: auto;
+            padding-top: 40px;
+            font-size: 11.5px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <main id="data-page">
+        <div style="width:40px;height:3px;background:var(--accent);margin-bottom:20px"></div>
+        <h1>이 기록을 데이터로 받기</h1>
+
+        <div class="note">
+            <p>이 사이트가 보여주는 모든 기록은 하나의 공개 파일에 담겨 있습니다.</p>
+
+            <h2>받기</h2>
+            <code class="endpoint">https://fallen-caught-crushed.work/data/victims_web.json</code>
+            <p>2시간마다 갱신됩니다. 새 기록이 생길 때마다 받아보고 싶다면 <a href="subscribe.html">알림 구독</a>(ntfy·텔레그램)을 이용하세요.</p>
+
+            <h2>무엇이 담겨 있나</h2>
+            <p>레코드는 최상위 <code>victims</code> 배열에 담겨 있고, 레코드 하나가 한 명의 사망자입니다.</p>
+            <div class="schema-wrap">
+                <table class="schema">
+                    <tr><th>필드</th><th>의미</th></tr>
+                    <tr><td>date</td><td>사고일 (기사 보도일이 아닙니다)</td></tr>
+                    <tr><td>region</td><td>지역 (시도+시군구까지만)</td></tr>
+                    <tr><td>accType</td><td>사고 유형 (떨어짐, 끼임, 깔림, …)</td></tr>
+                    <tr><td>age</td><td>나이 (null이면 알려지지 않음)</td></tr>
+                    <tr><td>immigrant</td><td>이주노동자 여부·국적 (null이면 알려지지 않음)</td></tr>
+                    <tr><td>accSummary</td><td>사고 요약 (기사 발췌가 아니라 사실만으로 새로 쓴 문장)</td></tr>
+                    <tr><td>link</td><td>근거가 된 대표 기사 원문 링크</td></tr>
+                    <tr><td>pid</td><td>사람 식별자 (사고의 0번째 사람은 sha256(link) 앞 16자,
+                        i번째 사람은 sha256(link + ":" + i) 앞 16자)</td></tr>
+                    <tr><td>ofDeaths</td><td>그 사고의 전체 사망자 수 (1명이면 생략)</td></tr>
+                </table>
+            </div>
+
+            <h2>이 숫자는 전부가 아닙니다</h2>
+            <p>한겨레·연합뉴스·경향신문의 보도를 수집해 인공지능이 분류한 기록입니다.
+                언론이 보도하지 않은 죽음은 여기에 없고, 집계는 2025년 9월 1일부터입니다.
+                분류에는 오류가 있을 수 있습니다. 기사 원문은 공개하지 않으며,
+                요약은 이 프로젝트가 사실만으로 새로 쓴 문장입니다.
+                각 기록은 원문 기사로 링크됩니다.</p>
+
+            <h2>이용조건</h2>
+            <p>이 데이터는 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko"
+                target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>으로 공개합니다.
+                출처를 밝히고, 영리 목적으로 사용하지 말아 주세요. 가공해 공개하려면 같은 조건을 유지해 주세요.
+                출처는 이렇게 밝혀 주시면 됩니다:</p>
+            <code class="endpoint">떨어지고, 끼이고, 깔린 (이강일) — fallen-caught-crushed.work, CC BY-NC-SA 4.0</code>
+            <p>이 데이터의 한 줄 한 줄은 누군가의 죽음입니다.
+                소비의 방식으로 다루는 것을 지양해주세요.</p>
+        </div>
+
+        <a class="back" id="back-link" href="./">← 돌아가기</a>
+
+        <footer id="data-footer">© 2026 이강일(Gangil, Yi) · 데이터: CC BY-NC-SA 4.0</footer>
+    </main>
+    <script>
+        // about.html과 같은 규칙 — 앱에서 왔으면 그 화면(정보 뷰/상세)으로 되돌아간다.
+        document.getElementById("back-link").addEventListener("click", (e) => {
+            let fromApp = false;
+            try { fromApp = new URL(document.referrer).origin === location.origin; } catch { }
+            if (fromApp && history.length > 1) {
+                e.preventDefault();
+                history.back();
+            }
+        });
+    </script>
+</body>
+</html>
