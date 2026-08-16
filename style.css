@@ -340,21 +340,29 @@ body.info-open #follow-btn { display: none; }
 #panel-header { position: relative; }
 #panel-subscribe { position: absolute; top: -3px; right: 0; }
 
-/* 이미지 영역 — 사진 없이 사고 요약이 초상 역할.
+/* 이미지 무대 — 상단바와 버튼 사이 공간 전체. 카드는 이 안에 세로 중앙으로 뜬다. */
+#post-stage {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+    border-bottom: 1px solid var(--line);
+}
+/* 이미지 영역 — 사진 없이 사고 요약이 초상 역할. 무대 높이의 4/5 (작가 결정 2026-08-16 —
+   요약이 재서술로 짧아진 뒤 화면을 다 채우면 위아래가 너무 비어 보인다).
    배경은 캔버스 금속 블럭과 동일 공식(가로 미러 그라데이션 + 수직 베벨). */
 #post-image {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 1;
-    min-height: 0;
+    width: 100%;
+    height: 80%;
     overflow: hidden;
     position: relative; /* 카드 이미지(#post-card)의 기준 */
     padding: 30px 26px;
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02) 18%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.26)),
         linear-gradient(90deg, hsl(228, 6%, 11%), hsl(228, 7%, 27%) 50%, hsl(228, 6%, 11%));
-    border-bottom: 1px solid var(--line);
 }
 /* 사고 경위를 그대로 그린 카드 이미지 — 길게 누르면 네이티브 '이미지 저장' 메뉴가 뜬다.
    밑의 #post-summary(DOM 텍스트)는 스크린리더용으로 남는다 (sharecard.js). */
