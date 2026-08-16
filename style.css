@@ -340,16 +340,14 @@ body.info-open #follow-btn { display: none; }
 #panel-header { position: relative; }
 #panel-subscribe { position: absolute; top: -3px; right: 0; }
 
-/* 이미지 영역 — 사진 없이 사고 요약이 초상 역할. 남는 공간의 4/5만 쓰고(작가 결정
-   2026-08-16 — 요약이 재서술로 짧아진 뒤 화면을 다 채우면 위아래가 너무 비어 보인다),
-   나머지 1/5은 #post-view::after 스페이서가 화면 맨 아래로 가져간다 — 카드는 상단바와
-   버튼 줄에 밀착한 채 줄어든다 (작가 요청 2026-08-16, standalone 확인 후).
-   배경은 캔버스 금속 블럭과 동일 공식(가로 미러 그라데이션 + 수직 베벨). */
+/* 이미지 영역 — 사진 없이 사고 요약이 초상 역할.
+   배경은 캔버스 금속 블럭과 동일 공식(가로 미러 그라데이션 + 수직 베벨).
+   (2026-08-16 한때 4/5 축소를 시도했다가 원래 크기로 복귀 — 작가 결정) */
 #post-image {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 4 1 0;
+    flex: 1;
     min-height: 0;
     overflow: hidden;
     position: relative; /* 카드 이미지(#post-card)의 기준 */
@@ -358,11 +356,6 @@ body.info-open #follow-btn { display: none; }
         linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02) 18%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.26)),
         linear-gradient(90deg, hsl(228, 6%, 11%), hsl(228, 7%, 27%) 50%, hsl(228, 6%, 11%));
     border-bottom: 1px solid var(--line);
-}
-/* 카드가 쓰지 않는 1/5 — 캡션 아래, 화면 맨 아래의 빈 숨 */
-#post-view::after {
-    content: "";
-    flex: 1 1 0;
 }
 /* 사고 경위를 그대로 그린 카드 이미지 — 길게 누르면 네이티브 '이미지 저장' 메뉴가 뜬다.
    밑의 #post-summary(DOM 텍스트)는 스크린리더용으로 남는다 (sharecard.js). */
