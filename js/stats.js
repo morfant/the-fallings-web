@@ -13,6 +13,7 @@ function aggregateStats(victims, uptoCount) {
         daysSinceLast: null,
         byType: new Map(),
         byDecade: new Map(),
+        byRegion: new Map(), // 시도 단위
         monthly: new Map(), // "YYYY-MM" -> count
         immigrant: 0,
     };
@@ -29,6 +30,9 @@ function aggregateStats(victims, uptoCount) {
 
         const dec = ageDecadeLabel(v.age) || "미상";
         agg.byDecade.set(dec, (agg.byDecade.get(dec) || 0) + 1);
+
+        const sido = sidoLabel(v.region);
+        agg.byRegion.set(sido, (agg.byRegion.get(sido) || 0) + 1);
 
         const ym = d.slice(0, 7);
         if (ym) agg.monthly.set(ym, (agg.monthly.get(ym) || 0) + 1);
@@ -54,6 +58,24 @@ function aggregateStats(victims, uptoCount) {
         if (spanDays > 0) agg.deathsPerDay = inWindow.length / spanDays;
     }
     return agg;
+}
+
+// region의 첫 토큰을 시도 표준 약칭으로 정규화 — 데이터에 "경기도/경기", "서울특별시/서울",
+// "강원도/강원특별자치도" 같은 표기가 혼재해 그대로 세면 같은 시도가 쪼개진다.
+// 첫 토큰이 시도인 것은 추출 규칙(시도+시군구)의 전제 — displayRegion도 같은 가정을 쓴다.
+function sidoLabel(region) {
+    const t = String(region || "").trim().split(/\s+/)[0];
+    if (!t) return "미상";
+    const map = [
+        ["서울", "서울"], ["부산", "부산"], ["대구", "대구"], ["인천", "인천"],
+        ["광주", "광주"], ["대전", "대전"], ["울산", "울산"], ["세종", "세종"],
+        ["경기", "경기"], ["강원", "강원"], ["제주", "제주"],
+        ["충청북", "충북"], ["충북", "충북"], ["충청남", "충남"], ["충남", "충남"],
+        ["전라북", "전북"], ["전북", "전북"], ["전라남", "전남"], ["전남", "전남"],
+        ["경상북", "경북"], ["경북", "경북"], ["경상남", "경남"], ["경남", "경남"],
+    ];
+    for (const [prefix, label] of map) if (t.startsWith(prefix)) return label;
+    return "미상";
 }
 
 // 애도 표식은 추모 꽃(flower.js — 설치 버전 FloralArc 이식)으로 통일 (2026-08-08, 구 추모 리본 SVG)
@@ -145,6 +167,10 @@ function renderStats(victims, uptoCount) {
         <div class="stat-section">
             <h3>연령대</h3>
             ${barRows(a.byDecade, { unknownKey: "미상" })}
+        </div>
+        <div class="stat-section">
+            <h3>지역</h3>
+            ${barRows(a.byRegion, { unknownKey: "미상", max: 18 })}
         </div>
         <div class="stat-section wide">
             <h3>최근 12개월</h3>
