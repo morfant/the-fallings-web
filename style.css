@@ -522,32 +522,25 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
        상세를 보다가 온 사람이 같은 위치에서 같은 버튼을 만난다. 닫으면 사라짐. */
     body:not(.info-open) #panel-subscribe { display: none; }
     body.info-open #panel-header { padding-right: 90px; }
-    /* 우상단 '정보' — 정보 뷰를 여는 명시적 손잡이 (2026-08-16, 구 i 버튼의 재래).
-       열리면 같은 자리가 ✕(닫기)가 되고 알림받기가 그 왼쪽으로 들어온다. */
+    /* 우상단 + — 정보 뷰를 여는 명시적 손잡이 (2026-08-16, 구 i 버튼→'정보'→+).
+       열리면 45° 돌아 그대로 ✕(닫기)가 된다 — 같은 글리프라 두 상태의 크기가 같다.
+       열림 상태에서는 알림받기가 그 왼쪽으로 들어온다. */
     #info-toggle {
         display: block;
         position: absolute;
-        top: 0;
-        right: 0;
+        top: -4px;
+        right: -6px;
         background: none;
         border: none;
-        padding: 2px 0 6px 12px; /* 터치 여유 */
+        padding: 4px 8px 8px; /* 터치 여유 */
         cursor: pointer;
-        font-size: 13px;
-        color: var(--text);
-        text-decoration: underline;
-        text-underline-offset: 5px;
-        text-decoration-thickness: 1px;
-        text-decoration-color: var(--text-dim);
-    }
-    body.info-open #info-toggle {
-        text-decoration: none;
-        font-size: 18px;
+        font-size: 22px;
         line-height: 1;
-        top: 3px;
         color: var(--text);
+        transition: transform 0.2s ease;
     }
-    body.info-open #panel-subscribe { right: 38px; }
+    body.info-open #info-toggle { transform: rotate(45deg); }
+    body.info-open #panel-subscribe { right: 36px; }
     /* 정보 뷰의 맨 끝 여백 — 홈 인디케이터 영역까지 감안 (마지막 요소가 무엇이든) */
     body.info-open #panel { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
     /* 제목은 장식 없이 제목으로 — 여닫는 신호는 우상단 '정보'/✕가 담당 (2026-08-16,

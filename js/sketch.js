@@ -618,12 +618,11 @@ function setupDOM() {
 
 // ---- 정보 뷰 — 모바일에서 제목을 누르면 패널 전체(공지/통계/구독)를 펼침 ----
 
-// '정보' 버튼의 라벨을 상태에 맞춘다 — 닫힘: "정보", 열림: "✕"
+// 정보(+) 버튼의 접근성 라벨을 상태에 맞춘다 — 시각적으로는 CSS가 +를 45° 돌려 ✕로 만든다
 function syncInfoToggle() {
     const btn = document.getElementById("info-toggle");
     if (!btn) return;
     const open = document.body.classList.contains("info-open");
-    btn.textContent = open ? "✕" : "정보";
     btn.setAttribute("aria-label", open ? "정보 닫기" : "정보 열기");
 }
 
