@@ -648,9 +648,11 @@ function closeInfo() {
     }
 }
 
-// 모바일 여부는 열리는 시점에 판정 (회전/리사이즈 대응)
+// 항상 모바일(포스트 뷰) 경로 — 데스크톱도 같은 레이아웃을 가운데 480px 기둥으로
+// 세우기로 하면서 별도 데스크톱 뷰(팝업 상세)를 폐지 (작가 결정 2026-08-16).
+// 함수와 데스크톱 경로 코드는 되돌리기 쉽게 남겨 둔다.
 function isMobileView() {
-    return window.matchMedia("(max-width: 800px)").matches;
+    return true;
 }
 
 function showDetail(v) {
