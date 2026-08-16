@@ -644,10 +644,12 @@ function showDetail(v) {
     const dec = ageDecadeLabel(v.age);
     const parts = [];
     if (dec) parts.push(dec);
-    if (v.immigrant) parts.push("이주노동자");
-    parts.push("노동자");
+    // "이주노동자"는 이미 노동자를 포함 — 병기하면 "이주노동자 노동자"가 된다
+    // (notify_subscribers.mjs buildBody와 같은 규칙: 택일, accType "기타"는 정보가 없으므로 생략)
+    parts.push(v.immigrant ? "이주노동자" : "노동자");
     // 사인이 밝혀지지 않았으면 그냥 비워둔다 — 채우지 않는다 (작가 결정 2026-08-01)
-    const title = `${parts.join(" ")}${v.accType ? `, ${v.accType} 사고로` : ""} 사망`;
+    const showType = v.accType && v.accType !== "기타";
+    const title = `${parts.join(" ")}${showType ? `, ${v.accType} 사고로` : ""} 사망`;
     const realLink = String(v.link || "").split("#s")[0]; // stress 테스트 접미사 제거
     let summary = "";
     if (realLink) {

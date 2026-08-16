@@ -42,4 +42,9 @@ function getParam(name) {
     return new URLSearchParams(location.search).get(name);
 }
 
+// iOS 홈화면 추가(standalone) 감지 — display-mode 미디어 쿼리가 매니페스트 없는
+// A2HS에서 매치되지 않는 경우가 있어 레거시 신호(navigator.standalone)도 함께 본다.
+// style.css의 html.standalone 규칙이 이 클래스를 받아 카드 크기를 보정한다.
+if (navigator.standalone === true) document.documentElement.classList.add("standalone");
+
 const DEBUG = getParam("debug") === "1";

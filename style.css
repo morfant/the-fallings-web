@@ -366,6 +366,9 @@ body.info-open #follow-btn { display: none; }
     #post-image { flex: 4 1 0; }
     #post-view::after { content: ""; flex: 1 1 0; }
 }
+/* 같은 보정의 iOS 폴백 — 미디어 쿼리가 안 매치되는 A2HS에서 config.js가 클래스를 단다 */
+html.standalone #post-image { flex: 4 1 0; }
+html.standalone #post-view::after { content: ""; flex: 1 1 0; }
 /* 사고 경위를 그대로 그린 카드 이미지 — 길게 누르면 네이티브 '이미지 저장' 메뉴가 뜬다.
    밑의 #post-summary(DOM 텍스트)는 스크린리더용으로 남는다 (sharecard.js). */
 #post-card {
