@@ -53,6 +53,17 @@ html, body {
     gap: 24px;
 }
 
+#panel-footer {
+    margin-top: auto; /* 통계가 짧을 때도 패널 바닥에 붙는다 */
+    padding-top: 16px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    text-align: center;
+}
+#panel-footer a { color: #7ea7cc; text-decoration: none; }
+#panel-footer a:hover { text-decoration: underline; }
+
 #panel-header h1 {
     font-size: 22px;
     font-weight: 700;
