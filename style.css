@@ -148,9 +148,17 @@ html, body {
 }
 #charts-toggle:hover,
 #stats-content.charts-open #charts-toggle { text-decoration-color: var(--accent); }
-/* 펼침/접힘 캐럿 — ▾ = 누르면 펼쳐짐, ▴ = 다시 누르면 접힘 (모바일 제목 토글과 같은 어법) */
-#charts-toggle::after { content: " ▾"; color: var(--text-dim); }
-#stats-content.charts-open #charts-toggle::after { content: " ▴"; color: var(--accent); }
+/* 펼침/접힘 캐럿 — 아래 = 누르면 펼쳐짐, 위 = 다시 누르면 접힘.
+   ▾ 글리프가 폰트에서 ▴보다 작게 그려져, 같은 ▴를 회전시켜 크기를 통일한다. */
+#charts-toggle::after {
+    content: "▴";
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+    transform: rotate(180deg);
+}
+#stats-content.charts-open #charts-toggle::after { transform: none; color: var(--accent); }
 #stats-content:not(.charts-open) > .stat-section { display: none; }
 
 .stat-section h3 {
@@ -526,13 +534,13 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
         text-decoration-color: var(--text-dim);
     }
     body.info-open #panel-header h1 { text-decoration-color: var(--accent); }
-    /* 눌린다는 신호를 밑줄보다 분명히 — ▾ = 누르면 열림, ▴ = 다시 누르면 접힘
-       ('통계' 토글과 같은 어법, 2026-08-16). 캐럿은 제목의 일부가 아니라 상태 표시라 작게. */
+    /* 눌린다는 신호를 밑줄보다 분명히 — → = 누르면 들어감, ← = 다시 누르면 돌아감(접힘).
+       ←는 포스트 뷰 상단의 돌아가기와 같은 어법 (작가 결정 2026-08-16 — 캐럿은 제목에 어색). */
     #panel-header h1::after {
-        content: " ▾";
-        font-size: 13px;
+        content: " →";
+        font-size: 14px;
         color: var(--text-dim);
     }
-    body.info-open #panel-header h1::after { content: " ▴"; color: var(--accent); }
+    body.info-open #panel-header h1::after { content: " ←"; color: var(--accent); }
     .tagline { font-size: 12px; line-height: 1.6; }
 }
