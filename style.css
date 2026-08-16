@@ -148,6 +148,9 @@ html, body {
 }
 #charts-toggle:hover,
 #stats-content.charts-open #charts-toggle { text-decoration-color: var(--accent); }
+/* 펼침/접힘 캐럿 — ▾ = 누르면 펼쳐짐, ▴ = 다시 누르면 접힘 (모바일 제목 토글과 같은 어법) */
+#charts-toggle::after { content: " ▾"; color: var(--text-dim); }
+#stats-content.charts-open #charts-toggle::after { content: " ▴"; color: var(--accent); }
 #stats-content:not(.charts-open) > .stat-section { display: none; }
 
 .stat-section h3 {
@@ -523,5 +526,13 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
         text-decoration-color: var(--text-dim);
     }
     body.info-open #panel-header h1 { text-decoration-color: var(--accent); }
+    /* 눌린다는 신호를 밑줄보다 분명히 — ▾ = 누르면 열림, ▴ = 다시 누르면 접힘
+       ('통계' 토글과 같은 어법, 2026-08-16). 캐럿은 제목의 일부가 아니라 상태 표시라 작게. */
+    #panel-header h1::after {
+        content: " ▾";
+        font-size: 13px;
+        color: var(--text-dim);
+    }
+    body.info-open #panel-header h1::after { content: " ▴"; color: var(--accent); }
     .tagline { font-size: 12px; line-height: 1.6; }
 }
