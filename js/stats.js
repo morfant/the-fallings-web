@@ -163,7 +163,7 @@ function renderStats(victims, uptoCount) {
             </div>` : ""}
             ${acksHtml}
         </div>
-        <button id="charts-toggle" aria-expanded="${_chartsOpen}">통계(수집된 데이터 기준)<svg class="chart-ico" viewBox="0 0 14 12" aria-hidden="true"><rect x="1" y="6.5" width="2.6" height="5"/><rect x="5.7" y="3.5" width="2.6" height="8"/><rect x="10.4" y="0.5" width="2.6" height="11"/></svg></button>
+        <button id="charts-toggle" aria-expanded="${_chartsOpen}">통계<svg class="chart-ico" viewBox="0 0 14 12" aria-hidden="true"><rect x="1" y="6.5" width="2.6" height="5"/><rect x="5.7" y="3.5" width="2.6" height="8"/><rect x="10.4" y="0.5" width="2.6" height="11"/></svg></button>
         <div class="stat-section">
             <h3>사고 유형</h3>
             ${barRows(a.byType, { unknownKey: "확인 안 됨" })}
