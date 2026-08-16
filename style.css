@@ -512,7 +512,11 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
         height: 100dvh;
         overflow-y: auto;
         transform: none; /* hdr-hidden 상태여도 열리면 보이게 */
+        /* 스크롤바 숨김 — 통계를 펼치면 내용이 길어져 나타나는데, 기둥의 인상을 깬다
+           (2026-08-16 작가 요청). 스크롤 자체는 그대로 동작. */
+        scrollbar-width: none;
     }
+    body.info-open #panel::-webkit-scrollbar { display: none; }
     /* 정보 뷰가 열려 있는 동안만 우상단에 알림받기 — 포스트 뷰 상단바와 같은 자리라
        상세를 보다가 온 사람이 같은 위치에서 같은 버튼을 만난다. 닫으면 사라짐. */
     body:not(.info-open) #panel-subscribe { display: none; }
