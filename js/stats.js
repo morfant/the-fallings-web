@@ -126,6 +126,9 @@ function monthChart(monthly) {
     </div>`;
 }
 
+// 그래프 섹션 접힘 상태 — renderStats가 innerHTML을 새로 그려도 유지 (기본 접힘)
+let _chartsOpen = false;
+
 function renderStats(victims, uptoCount) {
     const el = document.getElementById("stats-content");
     if (!el) return;
@@ -160,6 +163,7 @@ function renderStats(victims, uptoCount) {
             <div class="speed-value">${a.deathsPerDay.toFixed(1)}명<span class="per">/</span>1일</div>
             <div class="label">산재 사망의 평균 속도 (수집된 데이터 기준)</div>
         </div>` : ""}
+        <button id="charts-toggle" aria-expanded="${_chartsOpen}">통계</button>
         <div class="stat-section">
             <h3>사고 유형</h3>
             ${barRows(a.byType, { unknownKey: "확인 안 됨" })}
@@ -177,4 +181,14 @@ function renderStats(victims, uptoCount) {
             ${monthChart(a.monthly)}
         </div>
     `;
+
+    // '통계'를 누르면 그래프 섹션이 펼쳐진다 (작가 요청 2026-08-16) —
+    // 접힘/펼침은 CSS(.charts-open)가 담당, 상태는 _chartsOpen이 재렌더를 넘어 유지.
+    el.classList.toggle("charts-open", _chartsOpen);
+    const toggle = document.getElementById("charts-toggle");
+    toggle.addEventListener("click", () => {
+        _chartsOpen = !_chartsOpen;
+        el.classList.toggle("charts-open", _chartsOpen);
+        toggle.setAttribute("aria-expanded", String(_chartsOpen));
+    });
 }

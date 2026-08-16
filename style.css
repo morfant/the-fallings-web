@@ -130,6 +130,26 @@ html, body {
 }
 .stat-cell .label { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 
+/* '통계' 토글 — 그래프 섹션(사고 유형/연령대/지역/최근 12개월)은 눌러야 펼쳐진다.
+   밑줄 텍스트 어법은 제목(정보 뷰 토글)·'이 작업에 대하여'와 동일, 열리면 밑줄이 강조색. */
+#charts-toggle {
+    grid-column: 1 / -1;
+    justify-self: start;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--text-dim);
+}
+#charts-toggle:hover,
+#stats-content.charts-open #charts-toggle { text-decoration-color: var(--accent); }
+#stats-content:not(.charts-open) > .stat-section { display: none; }
+
 .stat-section h3 {
     font-size: 12.5px;
     font-weight: 600;
