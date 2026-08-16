@@ -157,13 +157,13 @@ function renderStats(victims, uptoCount) {
         <div class="stat-row">
             <div class="stat-cell"><div class="num">${a.thisYear}</div><div class="label">올해</div></div>
             <div class="stat-cell"><div class="num">${a.thisMonth}</div><div class="label">이번 달</div></div>
+            ${a.deathsPerDay ? `<div class="stat-cell">
+                <div class="num">${a.deathsPerDay.toFixed(1)}명<span class="per">/</span>1일</div>
+                <div class="label">산재 사망의 평균 속도</div>
+            </div>` : ""}
             ${acksHtml}
         </div>
-        ${a.deathsPerDay ? `<div class="stat-speed">
-            <div class="speed-value">${a.deathsPerDay.toFixed(1)}명<span class="per">/</span>1일</div>
-            <div class="label">산재 사망의 평균 속도 (수집된 데이터 기준)</div>
-        </div>` : ""}
-        <button id="charts-toggle" aria-expanded="${_chartsOpen}">통계</button>
+        <button id="charts-toggle" aria-expanded="${_chartsOpen}">통계<svg class="chart-ico" viewBox="0 0 14 12" aria-hidden="true"><rect x="1" y="6.5" width="2.6" height="5"/><rect x="5.7" y="3.5" width="2.6" height="8"/><rect x="10.4" y="0.5" width="2.6" height="11"/></svg></button>
         <div class="stat-section">
             <h3>사고 유형</h3>
             ${barRows(a.byType, { unknownKey: "확인 안 됨" })}

@@ -86,27 +86,10 @@ html, body {
 }
 #stats-content > .stat-big,
 #stats-content > .stat-row,
-#stats-content > .stat-speed,
 #stats-content > .stat-section.wide { grid-column: 1 / -1; }
 @media (max-width: 1100px) {
     #stats-content { grid-template-columns: 1fr; }
 }
-
-/* 평균 속도 */
-.stat-speed {
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 18px 22px;
-    background: var(--block);
-}
-.stat-speed .speed-value {
-    font-size: 30px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    color: #fff;
-}
-.stat-speed .speed-value .per { color: var(--text-dim); font-weight: 400; margin: 0 6px; }
-.stat-speed .label { font-size: 12.5px; color: var(--text-dim); margin-top: 6px; }
 
 .stat-big { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .stat-big .num {
@@ -129,6 +112,8 @@ html, body {
     font-variant-numeric: tabular-nums;
 }
 .stat-cell .label { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+/* 평균 속도 — 별도 박스에서 stat-row의 한 칸으로 (2026-08-16 작가 요청) */
+.stat-cell .per { color: var(--text-dim); font-weight: 400; margin: 0 4px; }
 
 /* '통계' 토글 — 그래프 섹션(사고 유형/연령대/지역/최근 12개월)은 눌러야 펼쳐진다.
    밑줄 텍스트 어법은 제목(정보 뷰 토글)·'이 작업에 대하여'와 동일, 열리면 밑줄이 강조색. */
@@ -148,17 +133,16 @@ html, body {
 }
 #charts-toggle:hover,
 #stats-content.charts-open #charts-toggle { text-decoration-color: var(--accent); }
-/* 펼침/접힘 캐럿 — 아래 = 누르면 펼쳐짐, 위 = 다시 누르면 접힘.
-   ▾ 글리프가 폰트에서 ▴보다 작게 그려져, 같은 ▴를 회전시켜 크기를 통일한다. */
-#charts-toggle::after {
-    content: "▴";
-    display: inline-block;
-    margin-left: 6px;
-    font-size: 11px;
-    color: var(--text-dim);
-    transform: rotate(180deg);
+/* 막대그래프 아이콘 — 누르면 그래프가 나온다는 예고 (2026-08-16, 구 ▾/▴ 캐럿 대체).
+   열려 있는 동안은 강조색. */
+#charts-toggle .chart-ico {
+    width: 13px;
+    height: 11px;
+    margin-left: 7px;
+    fill: var(--text-dim);
+    vertical-align: -1px;
 }
-#stats-content.charts-open #charts-toggle::after { transform: none; color: var(--accent); }
+#stats-content.charts-open #charts-toggle .chart-ico { fill: var(--accent); }
 #stats-content:not(.charts-open) > .stat-section { display: none; }
 
 .stat-section h3 {
@@ -501,7 +485,7 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
         right: 0;
         z-index: 10;
         border-left: none;
-        border-bottom: 1px solid var(--line);
+        /* 헤더와 블럭 화면 사이 구분선 없음 — 고정 영역이 화면에 녹아들게 (2026-08-16 작가 요청) */
         background: rgba(13, 13, 15, 0.92);
         backdrop-filter: blur(6px);
         padding: 14px 16px 12px;
