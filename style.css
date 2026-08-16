@@ -188,7 +188,7 @@ html, body {
 /* ---- 이 작업에 대하여 (헤더 안 — 태그라인 '…떨어져 쌓입니다' 바로 아랫줄, 2026-08-16 재배치) ----
    공지와의 간격은 패널 gap(24px)이 담당. 데스크톱은 항상 보이고, 모바일 접힘 상태에서는
    숨긴다 (아래 미디어 쿼리 — 접힌 헤더는 제목+태그라인만). */
-#about-sec { margin-top: 6px; }
+#about-sec { margin-top: 6px; text-align: right; /* 오른쪽 정렬 — 작가 요청 2026-08-16 */ }
 /* 버튼이 아니라 밑줄 텍스트 — 모바일 제목(정보 뷰 토글)과 같은 어법 */
 .about-go {
     display: inline-block;
@@ -491,6 +491,9 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
     /* 접힌 헤더는 제목+태그라인만 — '이 작업에 대하여'는 정보 뷰를 열었을 때만 */
     body:not(.info-open) #about-sec { display: none; }
     body.info-open #panel-header { padding-right: 90px; }
+    /* 우측 정렬된 '이 작업에 대하여'는 버튼 자리 패딩(90px)과 무관하게 오른쪽 끝까지 —
+       알림받기 버튼은 헤더 최상단이라 세로로 겹치지 않는다 */
+    body.info-open #about-sec { margin-right: -90px; }
     /* 정보 뷰의 맨 끝 여백 — 홈 인디케이터 영역까지 감안 (마지막 요소가 무엇이든) */
     body.info-open #panel { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
     /* 제목이 정보 뷰 토글 — 밑줄로 "눌린다"는 것을 표시 (구 i 버튼, 2026-08-08 제거).
