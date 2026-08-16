@@ -55,8 +55,8 @@ html, body {
 }
 
 #data-notice {
-    border-left: 2px solid var(--accent);
-    padding: 4px 0 4px 14px;
+    /* 세로 바(border-left)·들여쓰기 제거 — 2026-08-16 작가 요청 */
+    padding: 0;
     font-size: 13px;
     line-height: 1.75;
     color: var(--text-dim);
@@ -185,10 +185,10 @@ html, body {
     color: var(--text-dim);
 }
 
-/* ---- 이 작업에 대하여 (패널 상단 — '이 숫자는 전부가 아닙니다' 공지 위, 2026-08-08 이동) ----
-   데스크톱은 패널이 늘 펼쳐져 있어 항상 보이고, 모바일은 정보 뷰를 열었을 때만 보인다
-   (헤더 밖 패널 자식은 info-open이 아니면 숨겨지는 기존 규칙을 그대로 탄다). */
-#about-sec { margin-top: -8px; /* 패널 gap(24px)이 헤더와 공지 사이에 두 번 들어가 벌어지는 것을 보정 */ }
+/* ---- 이 작업에 대하여 (헤더 안 — 태그라인 '…떨어져 쌓입니다' 바로 아랫줄, 2026-08-16 재배치) ----
+   공지와의 간격은 패널 gap(24px)이 담당. 데스크톱은 항상 보이고, 모바일 접힘 상태에서는
+   숨긴다 (아래 미디어 쿼리 — 접힌 헤더는 제목+태그라인만). */
+#about-sec { margin-top: 6px; }
 /* 버튼이 아니라 밑줄 텍스트 — 모바일 제목(정보 뷰 토글)과 같은 어법 */
 .about-go {
     display: inline-block;
@@ -488,6 +488,8 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
     /* 정보 뷰가 열려 있는 동안만 우상단에 알림받기 — 포스트 뷰 상단바와 같은 자리라
        상세를 보다가 온 사람이 같은 위치에서 같은 버튼을 만난다. 닫으면 사라짐. */
     body:not(.info-open) #panel-subscribe { display: none; }
+    /* 접힌 헤더는 제목+태그라인만 — '이 작업에 대하여'는 정보 뷰를 열었을 때만 */
+    body:not(.info-open) #about-sec { display: none; }
     body.info-open #panel-header { padding-right: 90px; }
     /* 정보 뷰의 맨 끝 여백 — 홈 인디케이터 영역까지 감안 (마지막 요소가 무엇이든) */
     body.info-open #panel { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
