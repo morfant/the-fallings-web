@@ -596,8 +596,13 @@ function setupDOM() {
         if (document.body.classList.contains("info-open")) closeInfo();
         else closeDetail();
     });
-    // 모바일: 제목을 누르면 정보 뷰(공지/통계/구독)가 열린다 — 구 i 버튼 대체 (2026-08-08).
-    // 눌린다는 표시는 모바일 CSS의 밑줄이 담당. 데스크톱은 패널이 항상 펼쳐져 있어 무시.
+    // 모바일: 우상단 '정보' 버튼이 정보 뷰(공지/통계/구독)를 연다 — 열리면 ✕(닫기)로 바뀜
+    // (2026-08-16 작가 결정: 제목에 캐럿·화살표를 붙이는 시도가 다 어색해 명시적 손잡이로).
+    // 제목 클릭도 여전히 같은 토글로 동작한다.
+    document.getElementById("info-toggle").addEventListener("click", () => {
+        if (document.body.classList.contains("info-open")) closeInfo();
+        else openInfo();
+    });
     document.querySelector("#panel-header h1").addEventListener("click", () => {
         if (!isMobileView()) return;
         if (document.body.classList.contains("info-open")) closeInfo();
@@ -613,13 +618,24 @@ function setupDOM() {
 
 // ---- 정보 뷰 — 모바일에서 제목을 누르면 패널 전체(공지/통계/구독)를 펼침 ----
 
+// '정보' 버튼의 라벨을 상태에 맞춘다 — 닫힘: "정보", 열림: "✕"
+function syncInfoToggle() {
+    const btn = document.getElementById("info-toggle");
+    if (!btn) return;
+    const open = document.body.classList.contains("info-open");
+    btn.textContent = open ? "✕" : "정보";
+    btn.setAttribute("aria-label", open ? "정보 닫기" : "정보 열기");
+}
+
 function openInfo() {
     document.body.classList.add("info-open");
+    syncInfoToggle();
     history.pushState({ tfInfo: 1 }, "", "#/about");
 }
 
 function hideInfoUI() {
     document.body.classList.remove("info-open");
+    syncInfoToggle();
 }
 
 function closeInfo() {
@@ -768,6 +784,7 @@ function openFromHash() {
         history.replaceState(null, "", base);
         history.pushState({ tfInfo: 1 }, "", "#/about");
         document.body.classList.add("info-open");
+        syncInfoToggle();
         return;
     }
     const m = /^#\/record\/([0-9a-f]{16})/.exec(location.hash || "");

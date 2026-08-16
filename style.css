@@ -370,6 +370,8 @@ body.info-open #follow-btn { display: none; }
    '알림 받기' 섹션은 이 버튼으로 통합하며 제거 (2026-08-08 작가 결정). */
 #panel-header { position: relative; }
 #panel-subscribe { position: absolute; top: -3px; right: 0; }
+/* '정보' 토글은 모바일 전용 — 데스크톱은 패널이 늘 펼쳐져 있어 필요 없다 */
+#info-toggle { display: none; }
 
 /* 이미지 영역 — 사진 없이 사고 요약이 초상 역할.
    배경은 캔버스 금속 블럭과 동일 공식(가로 미러 그라데이션 + 수직 베벨).
@@ -520,27 +522,40 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
        상세를 보다가 온 사람이 같은 위치에서 같은 버튼을 만난다. 닫으면 사라짐. */
     body:not(.info-open) #panel-subscribe { display: none; }
     body.info-open #panel-header { padding-right: 90px; }
-    /* 정보 뷰의 맨 끝 여백 — 홈 인디케이터 영역까지 감안 (마지막 요소가 무엇이든) */
-    body.info-open #panel { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
-    /* 제목이 정보 뷰 토글 — 밑줄로 "눌린다"는 것을 표시 (구 i 버튼, 2026-08-08 제거).
-       열려 있는 동안은 밑줄이 강조색 — 다시 누르면 닫힌다는 신호. */
-    #panel-header h1 {
-        font-size: 17px;
-        margin-bottom: 6px;
+    /* 우상단 '정보' — 정보 뷰를 여는 명시적 손잡이 (2026-08-16, 구 i 버튼의 재래).
+       열리면 같은 자리가 ✕(닫기)가 되고 알림받기가 그 왼쪽으로 들어온다. */
+    #info-toggle {
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: none;
+        border: none;
+        padding: 2px 0 6px 12px; /* 터치 여유 */
         cursor: pointer;
+        font-size: 13px;
+        color: var(--text);
         text-decoration: underline;
         text-underline-offset: 5px;
         text-decoration-thickness: 1px;
         text-decoration-color: var(--text-dim);
     }
-    body.info-open #panel-header h1 { text-decoration-color: var(--accent); }
-    /* 눌린다는 신호를 밑줄보다 분명히 — → = 누르면 들어감, ← = 다시 누르면 돌아감(접힘).
-       ←는 포스트 뷰 상단의 돌아가기와 같은 어법 (작가 결정 2026-08-16 — 캐럿은 제목에 어색). */
-    #panel-header h1::after {
-        content: " →";
-        font-size: 14px;
-        color: var(--text-dim);
+    body.info-open #info-toggle {
+        text-decoration: none;
+        font-size: 18px;
+        line-height: 1;
+        top: 3px;
+        color: var(--text);
     }
-    body.info-open #panel-header h1::after { content: " ←"; color: var(--accent); }
+    body.info-open #panel-subscribe { right: 38px; }
+    /* 정보 뷰의 맨 끝 여백 — 홈 인디케이터 영역까지 감안 (마지막 요소가 무엇이든) */
+    body.info-open #panel { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+    /* 제목은 장식 없이 제목으로 — 여닫는 신호는 우상단 '정보'/✕가 담당 (2026-08-16,
+       캐럿·화살표를 붙이는 시도가 다 어색했음). 클릭하면 여전히 정보 뷰가 토글된다. */
+    #panel-header h1 {
+        font-size: 17px;
+        margin-bottom: 6px;
+        cursor: pointer;
+    }
     .tagline { font-size: 12px; line-height: 1.6; }
 }
