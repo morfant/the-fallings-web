@@ -293,18 +293,97 @@ function bevelGradient(H) { // 입체감: 윗면 하이라이트 → 아랫면 �
     return _bevelGrad;
 }
 
+// ---- 화강암 모자이크 프로토타입 (?granite=1, 작가 결정 2026-08-17) ----
+// "죽음의 데이터를 디지털적인 처리를 통해 고유한 것으로 만들어 보관" — 무늬는 장식이
+// 아니라 안치(安置). 앞쪽 셀들에 기록의 정본 문자열(pid|사고일|유형|나이)이 2비트/셀로
+// 새겨지고(팔레트 4단계 = 2비트), 나머지는 pid 시드 PRNG로 같은 팔레트에서 채워진다.
+// 표준 스캐너는 못 읽지만 규칙을 알면 화면 캡처에서도 기록을 복원할 수 있는 비문(銘文).
+// 진짜 QR은 넣지 않는다 (작가 확정 — 파인더·대비가 곧 'QR스러움'이라 화강암과 양립 불가).
+const GRANITE_ON = typeof getParam === "function" && !!getParam("granite");
+const GRANITE = {
+    CELL: 6, // px — 셀 크기
+    // 은은한 4단계 회색 (현재 금속 톤 hsl 228 주변) — 인덱스가 곧 2비트 값
+    SHADES: ["hsl(228, 6%, 9%)", "hsl(228, 6%, 13%)", "hsl(228, 5%, 17%)", "hsl(226, 5%, 21%)"],
+    CACHE_MAX: 80, // 보이는 범위 + 여유 (LRU)
+};
+
+// 기록의 정본 문자열 → 비트열. 이 규칙이 공개될 '비문의 문법'이다 (data.html, 2단계).
+function _recordBits(v) {
+    const s = `${v?.pid || ""}|${v?.date || ""}|${v?.accType || ""}|${v?.age ?? ""}`;
+    const bytes = new TextEncoder().encode(s);
+    const bits = [];
+    for (const b of bytes) for (let i = 7; i >= 0; i--) bits.push((b >> i) & 1);
+    return bits;
+}
+
+const _graniteCache = new Map(); // "victimIdx:w" -> offscreen canvas (LRU)
+function graniteCanvas(victimIdx, w, H) {
+    const key = `${victimIdx}:${Math.round(w)}`;
+    let c = _graniteCache.get(key);
+    if (c) { // LRU 갱신
+        _graniteCache.delete(key);
+        _graniteCache.set(key, c);
+        return c;
+    }
+    const v = victims[victimIdx];
+    const rand = _mulberry32(_flowerHash(String(v?.pid || v?.link || victimIdx)));
+    const bits = _recordBits(v);
+    const cell = GRANITE.CELL;
+    const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
+    // 데이터는 잘리지 않은 온전한 셀에만 새긴다 — 가장자리의 부분 셀은 화면 캡처
+    // 해독이 불안정하므로 채움 전용 (해독 규칙: 온전한 셀만, 행 우선, 좌상단부터)
+    const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
+    const scale = 2; // 레티나
+    c = document.createElement("canvas");
+    c.width = Math.ceil(w * scale);
+    c.height = Math.ceil(H * scale);
+    const ctx = c.getContext("2d");
+    ctx.scale(scale, scale);
+    let bi = 0;
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const isFull = col < fullCols && row < fullRows;
+            const shade = isFull && bi + 1 < bits.length
+                ? (bits[bi++] << 1) | bits[bi++]
+                : Math.floor(rand() * 4);
+            ctx.fillStyle = GRANITE.SHADES[shade];
+            ctx.fillRect(col * cell, row * cell, cell, cell);
+        }
+    }
+    if (_graniteCache.size >= GRANITE.CACHE_MAX) {
+        _graniteCache.delete(_graniteCache.keys().next().value); // 가장 오래된 것 제거
+    }
+    _graniteCache.set(key, c);
+    return c;
+}
+
 // depthN(0~1): 위에서 얼마나 깊이 묻혔나 — 깊을수록 살짝 어둡고 모서리가 눌린다
 // (오래 쌓인 지층이 압착되는 느낌, 작가 선택 2026-08-17). 랜덤이 아니라 규칙.
-function drawMetalBlock(cx, cy, lum = 2, depthN = 0) {
+function drawMetalBlock(cx, cy, lum = 2, depthN = 0, victimIdx = -1) {
     const w = pile.blockW();
     const H = CONFIG.BLOCK_H;
     const r = 3 + depthN * 2; // 아래로 갈수록 모서리가 조금 더 둥글게 — 닳은 켜
     push();
     translate(cx, cy);
-    drawingContext.fillStyle = metalGradient(w, lum);
-    stroke(0, 110); // 켜 사이 가는 어두운 경계
-    strokeWeight(1);
-    rect(-w / 2, -H / 2, w, H, r);
+    if (GRANITE_ON && victimIdx >= 0) {
+        // 화강암 모자이크 — 둥근 모서리로 클리핑해 오프스크린 캐시를 얹는다
+        const dc = drawingContext;
+        dc.save();
+        dc.beginPath();
+        dc.roundRect(-w / 2, -H / 2, w, H, r);
+        dc.clip();
+        dc.drawImage(graniteCanvas(victimIdx, w, H), -w / 2, -H / 2, w, H);
+        dc.restore();
+        stroke(0, 110); // 켜 사이 가는 어두운 경계 (금속과 동일)
+        strokeWeight(1);
+        noFill();
+        rect(-w / 2, -H / 2, w, H, r);
+    } else {
+        drawingContext.fillStyle = metalGradient(w, lum);
+        stroke(0, 110); // 켜 사이 가는 어두운 경계
+        strokeWeight(1);
+        rect(-w / 2, -H / 2, w, H, r);
+    }
     drawingContext.fillStyle = bevelGradient(H);
     noStroke();
     rect(-w / 2 + 0.5, -H / 2 + 0.5, w - 1, H - 1, r);
@@ -399,7 +478,7 @@ function drawSettledBlocks(now) {
         // 깊이 = 위에 쌓인 블럭 수. 150켜쯤이면 완전히 '오래된 층'
         const depthN = Math.min(1, (pile.settled.length - 1 - i) / 150);
 
-        drawMetalBlock(bx, cy, bv.lum, depthN);
+        drawMetalBlock(bx, cy, bv.lum, depthN, s.victimIdx);
 
         // 선택된 블럭: 은은한 앰버 틴트 + 테두리
         if (i === selectedIdx) {
@@ -435,7 +514,7 @@ function drawFallingBlock() {
     const v = victims[pile.falling.victimIdx];
     const p = pile.falling.body.position;
     const bv = blockVariation(pile.falling.victimIdx); // 떨어질 때부터 착지 후와 같은 모양
-    drawMetalBlock(p.x + bv.jx, p.y, bv.lum, 0); // 갓 떨어진 블럭은 깊이 0
+    drawMetalBlock(p.x + bv.jx, p.y, bv.lum, 0, pile.falling.victimIdx); // 갓 떨어진 블럭은 깊이 0
     drawBlockLabels(p.x + bv.jx, p.y, v);
 }
 
