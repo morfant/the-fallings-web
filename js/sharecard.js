@@ -60,10 +60,12 @@ async function buildPostCard(v, summary, cssW, cssH) {
     // 화강암 모드(?granite=1)에서는 그 사람의 데이터 모자이크 확대판이 배경이 된다 —
     // 블럭과 같은 돌 (graniteRender는 sketch.js, 로드 순서상 호출 시점엔 존재).
     const graniteMode = typeof GRANITE_ON !== "undefined" && GRANITE_ON;
+    const darkStone = typeof STONE_DARK !== "undefined" && STONE_DARK;
     if (graniteMode) {
         const stone = stoneRender(v, cssW, cssH, GRANITE.CELL_CARD, scale);
         ctx.drawImage(stone, 0, 0, W, H);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.26)"; // 밝은 돌 — 결을 눌러 글자를 띄우는 장막
+        // 글자를 띄우는 얇은 장막 — 밝은 돌엔 흰 장막, 어두운 돌엔 검은 장막
+        ctx.fillStyle = darkStone ? "rgba(0, 0, 0, 0.30)" : "rgba(255, 255, 255, 0.26)";
         ctx.fillRect(0, 0, W, H);
     } else {
         let g0 = ctx.createLinearGradient(0, 0, W, 0);
@@ -78,6 +80,9 @@ async function buildPostCard(v, summary, cssW, cssH) {
     g.addColorStop(0.55, "rgba(0,0,0,0)");
     g.addColorStop(1, "rgba(0,0,0,0.26)");
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    // 글자를 얹기 전의 '맨 돌' 스냅샷 — 카드를 탭하면 글/돌을 오가는 토글용 (작가 요청 2026-08-17)
+    const bareUrl = c.toDataURL("image/png");
 
     // 내용(사고 경위)만 담는다 — 날짜·꽃·작품명 없이 (작가 결정 2026-08-09)
     const pad = 26 * scale;
@@ -97,15 +102,15 @@ async function buildPostCard(v, summary, cssW, cssH) {
         lines[lines.length - 1] = lines[lines.length - 1].replace(/[\s.,]*$/, "") + " …";
     }
     let y = pad + Math.max(0, (availH - lines.length * lh) / 2);
-    // 밝은 돌에는 어두운 글자 — 비석의 음각처럼 (화강암 모드)
-    ctx.fillStyle = graniteMode ? "#17171b" : "#e8e8ee";
+    // 밝은 돌에는 어두운 글자(비석의 음각), 어두운 돌·금속에는 밝은 글자
+    ctx.fillStyle = graniteMode && !darkStone ? "#17171b" : "#e8e8ee";
     lines.forEach((ln, i) => {
         _drawJustified(ctx, ln, x0, y + (lh - fs) / 2, maxW, i === lines.length - 1);
         y += lh;
     });
 
     _cardCanvas = c;
-    return c.toDataURL("image/png");
+    return { full: c.toDataURL("image/png"), bare: bareUrl };
 }
 
 // 포스트 뷰가 열릴 때 호출 — 사고 경위 영역 위에 카드 이미지를 얹는다
@@ -119,15 +124,26 @@ async function updatePostCard(v, summary) {
     }
     const token = ++_cardToken;
     try {
-        const url = await buildPostCard(v, summary, box.clientWidth, box.clientHeight);
+        const urls = await buildPostCard(v, summary, box.clientWidth, box.clientHeight);
         if (token !== _cardToken) return; // 그 사이 다른 기록이 열림
         if (!img) {
             img = document.createElement("img");
             img.id = "post-card";
             img.alt = ""; // 실제 내용은 밑의 #post-summary가 담당
             box.appendChild(img);
+            // 카드를 탭하면 글이 사라지고 돌만 남는다 — 다시 탭하면 글이 돌아온다
+            // (작가 요청 2026-08-17). 공유·저장은 항상 글이 있는 쪽(_cardCanvas).
+            // 돌 프로토타입(?stone=)에서만 — 기본 금속 화면에서는 혼란 방지로 끔.
+            img.addEventListener("click", () => {
+                const bare = img.dataset.bare, full = img.dataset.full;
+                if (!bare || !full) return;
+                img.src = img.src === full ? bare : full;
+            });
         }
-        img.src = url;
+        const stoneMode = typeof GRANITE_ON !== "undefined" && GRANITE_ON;
+        img.dataset.full = stoneMode ? urls.full : "";
+        img.dataset.bare = stoneMode ? urls.bare : "";
+        img.src = urls.full; // 열릴 때는 항상 글이 보이는 상태로
         img.hidden = false;
     } catch {
         if (img) img.hidden = true;

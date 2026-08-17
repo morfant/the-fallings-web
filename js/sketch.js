@@ -304,6 +304,8 @@ function bevelGradient(H) { // 입체감: 윗면 하이라이트 → 아랫면 �
 const STONE_STYLE = (typeof getParam === "function" &&
     (getParam("stone") || (getParam("granite") ? "mosaic" : ""))) || "";
 const GRANITE_ON = !!STONE_STYLE;
+// 어두운 돌 변형(밝은 선·흰 글자) — 그 외 스타일은 밝은 돌 + 어두운 글자(음각)
+const STONE_DARK = STONE_STYLE === "hatchdark";
 const GRANITE = {
     CELL: 6, // px — 블럭 셀 크기
     CELL_CARD: 12, // px — 상세 카드 배경 셀 (같은 돌의 확대판)
@@ -381,16 +383,18 @@ function _stoneRand(v) {
 }
 
 // 사선 해칭 — 빗금의 방향이 값 (작가 제안). 석공이 정으로 쪼은 잔다듬 자국.
-// 2비트/셀: 0=╱ 1=╲ 2=─ 3=│
-function _stoneHatch(v, w, H, cell, scale) {
-    const [c, ctx] = _stoneCanvas(w, H, scale, "hsl(224, 7%, 74%)");
+// 2비트/셀: 0=╱ 1=╲ 2=─ 3=│. 선이 셀 모서리까지 닿아 이웃과 이어진다
+// (작가 요청 2026-08-17 — Truchet처럼 미로 같은 결이 생긴다).
+// dark=true면 어두운 돌 + 밝은 선 (흰 글자를 위한 반전 변형, ?stone=hatchdark)
+function _stoneHatch(v, w, H, cell, scale, dark = false) {
+    const [c, ctx] = _stoneCanvas(w, H, scale, dark ? "hsl(228, 8%, 15%)" : "hsl(224, 7%, 74%)");
     const bits = _recordBits(v), rand = _stoneRand(v);
     const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
     const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
-    ctx.strokeStyle = "hsl(228, 8%, 34%)";
+    ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : "hsl(228, 8%, 34%)";
     ctx.lineWidth = Math.max(1, cell * 0.18);
     ctx.lineCap = "round";
-    const m = cell * 0.24;
+    const m = 0; // 선 끝이 셀 모서리에 닿는다
     let bi = 0;
     for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
         const isFull = col < fullCols && row < fullRows;
@@ -499,6 +503,7 @@ function _stoneWave(v, w, H, cell, scale) {
 function stoneRender(v, w, H, cell, scale) {
     switch (STONE_STYLE) {
         case "hatch": return _stoneHatch(v, w, H, cell, scale);
+        case "hatchdark": return _stoneHatch(v, w, H, cell, scale, true);
         case "weave": return _stoneWeave(v, w, H, cell, scale);
         case "braille": return _stoneBraille(v, w, H, cell, scale);
         case "morse": return _stoneMorse(v, w, H, cell, scale);
@@ -726,8 +731,8 @@ function drawBlockLabels(cx, cy, v) {
     // 표식(추모 꽃)은 통계 패널과 상세 뷰에, 수는 상세 뷰 문장("N명이 확인했습니다")에 있다.
     const rightX = cx + w / 2 - 18;
 
-    // 윗줄: 날짜 요일 장소 — 화강암(밝은 돌)에는 어둡게 새긴다 (비석의 음각처럼)
-    if (GRANITE_ON) fill(18, 18, 22);
+    // 윗줄: 날짜 요일 장소 — 밝은 돌에는 어둡게 새긴다 (비석의 음각처럼)
+    if (GRANITE_ON && !STONE_DARK) fill(18, 18, 22);
     else fill(...CONFIG.COLORS.text);
     textAlign(LEFT, CENTER);
     textSize(18);
@@ -736,7 +741,7 @@ function drawBlockLabels(cx, cy, v) {
     // 아랫줄: 사인 · 연령 · 이주노동자 — 그래도 넘치면 뒤에서부터 덜어낸다
     if (infoParts.length) {
         textSize(16);
-        if (GRANITE_ON) fill(45, 46, 52);
+        if (GRANITE_ON && !STONE_DARK) fill(45, 46, 52);
         else fill(...CONFIG.COLORS.textDim);
         const room = rightX - 12 - leftX;
         let parts = infoParts.slice();
