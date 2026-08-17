@@ -35,15 +35,17 @@ function _wrapKorean(ctx, text, maxW) {
 
 // 양쪽 정렬 — DOM(#post-summary)의 text-align: justify와 같은 인상. 마지막 줄과
 // 지나치게 벌어지는 줄은 왼쪽 정렬로 둔다 (CSS justify와 같은 규칙).
-function _drawJustified(ctx, line, x, y, maxW, isLast) {
+function _drawJustified(ctx, line, x, y, maxW, isLast, halo = false) {
+    // halo: 밝은 글자를 어두운 테두리로 감싸 바쁜(밝은) 돌 위에서도 읽히게
+    const put = (t, px) => { if (halo) ctx.strokeText(t, px, y); ctx.fillText(t, px, y); };
     const words = line.split(" ");
-    if (isLast || words.length < 2) { ctx.fillText(line, x, y); return; }
+    if (isLast || words.length < 2) { put(line, x); return; }
     const wordsW = words.reduce((s, w) => s + ctx.measureText(w).width, 0);
     const gap = (maxW - wordsW) / (words.length - 1);
-    if (gap <= 0 || gap > ctx.measureText("가").width * 2) { ctx.fillText(line, x, y); return; }
+    if (gap <= 0 || gap > ctx.measureText("가").width * 2) { put(line, x); return; }
     let cx = x;
     for (const w of words) {
-        ctx.fillText(w, cx, y);
+        put(w, cx);
         cx += ctx.measureText(w).width + gap;
     }
 }
@@ -102,8 +104,17 @@ async function buildPostCard(v, summary, cssW, cssH) {
         lines[lines.length - 1] = lines[lines.length - 1].replace(/[\s.,]*$/, "") + " …";
     }
     let y = pad + Math.max(0, (availH - lines.length * lh) / 2);
-    // 밝은 돌에는 어두운 글자(비석의 음각), 어두운 돌·금속에는 밝은 글자
-    ctx.fillStyle = graniteMode && !darkStone ? "#17171b" : "#e8e8ee";
+    // 밝은 글자 통일 (작가 결정 2026-08-17) — 밝은 돌 위에서는 본문 뒤에 어두운
+    // 반투명 판을 깔고 흰 글자를 얹는다 (외곽선·글로우는 획을 삼켜 실패, 실측).
+    if (graniteMode && !darkStone && lines.length) {
+        const padP = 16 * scale;
+        const top = y - padP, hgt = lines.length * lh + padP * 2;
+        ctx.fillStyle = "rgba(10, 10, 13, 0.62)";
+        ctx.beginPath();
+        ctx.roundRect(x0 - padP, top, maxW + padP * 2, hgt, 10 * scale);
+        ctx.fill();
+    }
+    ctx.fillStyle = "#f2f2f5";
     lines.forEach((ln, i) => {
         _drawJustified(ctx, ln, x0, y + (lh - fs) / 2, maxW, i === lines.length - 1);
         y += lh;

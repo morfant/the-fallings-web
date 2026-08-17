@@ -779,22 +779,41 @@ function drawBlockLabels(cx, cy, v) {
     // 표식(추모 꽃)은 통계 패널과 상세 뷰에, 수는 상세 뷰 문장("N명이 확인했습니다")에 있다.
     const rightX = cx + w / 2 - 18;
 
-    // 윗줄: 날짜 요일 장소 — 밝은 돌에는 어둡게 새긴다 (비석의 음각처럼)
-    if (GRANITE_ON && !STONE_DARK) fill(18, 18, 22);
-    else fill(...CONFIG.COLORS.text);
+    // 밝은 글자 통일 (작가 결정 2026-08-17) — 밝은 돌 위에서는 글자 뒤에 어두운
+    // 반투명 띠를 깔고 흰 글자를 얹는다 (외곽선·글로우는 획을 삼켜 실패, 실측).
+    const lightStone = GRANITE_ON && !STONE_DARK;
     textAlign(LEFT, CENTER);
+
+    // 윗줄: 날짜 요일 장소
     textSize(18);
+    if (lightStone) {
+        const tw = textWidth(whenWhere);
+        noStroke();
+        fill(10, 10, 13, 165);
+        rect(leftX - 9, yTop - 14, tw + 18, 28, 14);
+        fill(245, 245, 248);
+    } else {
+        noStroke();
+        fill(...CONFIG.COLORS.text);
+    }
     text(whenWhere, leftX, yTop);
 
     // 아랫줄: 사인 · 연령 · 이주노동자 — 그래도 넘치면 뒤에서부터 덜어낸다
     if (infoParts.length) {
         textSize(16);
-        if (GRANITE_ON && !STONE_DARK) fill(45, 46, 52);
-        else fill(...CONFIG.COLORS.textDim);
         const room = rightX - 12 - leftX;
         let parts = infoParts.slice();
         while (parts.length > 1 && textWidth(parts.join(" · ")) > room) parts.pop();
-        text(parts.join(" · "), leftX, yBottom);
+        const line = parts.join(" · ");
+        if (lightStone) {
+            const tw = textWidth(line);
+            fill(10, 10, 13, 145);
+            rect(leftX - 8, yBottom - 12, tw + 16, 24, 12);
+            fill(228, 228, 233);
+        } else {
+            fill(...CONFIG.COLORS.textDim);
+        }
+        text(line, leftX, yBottom);
     }
 }
 
