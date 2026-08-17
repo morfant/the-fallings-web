@@ -602,7 +602,10 @@ function windowResized() {
 
 function setupDOM() {
     const followBtn = document.getElementById("follow-btn");
-    followBtn.addEventListener("click", () => setFollow(true));
+    followBtn.addEventListener("click", () => {
+        setFollow(true);
+        setMobileHeader(true); // 현재로 돌아오면 상단 바도 함께 돌아온다 (작가 요청 2026-08-17)
+    });
     document.getElementById("ack-btn").addEventListener("click", onAckClick);
     document.getElementById("post-ack-btn").addEventListener("click", onAckClick);
     document.getElementById("post-share-btn").addEventListener("click", onShareClick);
