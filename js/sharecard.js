@@ -9,7 +9,9 @@
 let _cardCanvas = null; // 마지막으로 그린 카드 — 공유 첨부용
 let _cardToken = 0;     // 연타로 다른 기록을 열었을 때 늦게 도착한 렌더를 버리는 표
 
-const _CARD_FONT = '"Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif';
+const _CARD_FONT = typeof APP_FONT !== "undefined"
+    ? APP_FONT
+    : '"Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif';
 
 // 어절 단위 줄바꿈 — 한 줄에 안 들어가는 긴 어절은 글자 단위로 쪼갠다
 function _wrapKorean(ctx, text, maxW) {
@@ -106,6 +108,8 @@ async function buildPostCard(v, summary, cssW, cssH) {
     const lh = fs * 2.0;
     // 밝은 돌 위 검은 글자는 볼드 (작가 조율 2026-08-17) — 줄바꿈 측정 전에 폰트 확정
     ctx.font = `${graniteMode && !darkStone ? "700 " : ""}${fs}px ${_CARD_FONT}`;
+    // 웹폰트(?font=) 로드 대기 — 카드는 1회 렌더라 폰트가 준비된 뒤 그려야 한다
+    try { await document.fonts.load(ctx.font, summary.slice(0, 8)); } catch { /* 폴백 폰트로 진행 */ }
     const maxW = Math.min(W - pad * 2, fs * 32);
     const x0 = (W - maxW) / 2;
     const availH = H - pad * 2;
@@ -141,25 +145,32 @@ async function updatePostCard(v, summary) {
     try {
         const urls = await buildPostCard(v, summary, box.clientWidth, box.clientHeight);
         if (token !== _cardToken) return; // 그 사이 다른 기록이 열림
+        let bareImg = document.getElementById("post-card-bare");
         if (!img) {
             img = document.createElement("img");
             img.id = "post-card";
             img.alt = ""; // 실제 내용은 밑의 #post-summary가 담당
             box.appendChild(img);
-            // 카드를 탭하면 글이 사라지고 돌만 남는다 — 다시 탭하면 글이 돌아온다
-            // (작가 요청 2026-08-17). 공유·저장은 항상 글이 있는 쪽(_cardCanvas).
+            // 맨 돌(진한 획) 레이어 — 본문 위에 겹쳐 두고 탭 토글 시 크로스페이드
+            // (작가 요청 2026-08-17: 페이드인/아웃). 공유·저장은 항상 글이 있는 쪽.
             // 돌 프로토타입(?stone=)에서만 — 기본 금속 화면에서는 혼란 방지로 끔.
+            bareImg = document.createElement("img");
+            bareImg.id = "post-card-bare";
+            bareImg.alt = "";
+            box.appendChild(bareImg);
             img.addEventListener("click", () => {
-                const bare = img.dataset.bare, full = img.dataset.full;
-                if (!bare || !full) return;
-                img.src = img.src === full ? bare : full;
+                if (!bareImg.src) return;
+                bareImg.classList.toggle("shown");
             });
         }
         const stoneMode = typeof GRANITE_ON !== "undefined" && GRANITE_ON;
-        img.dataset.full = stoneMode ? urls.full : "";
-        img.dataset.bare = stoneMode ? urls.bare : "";
-        img.src = urls.full; // 열릴 때는 항상 글이 보이는 상태로
+        img.src = urls.full;
         img.hidden = false;
+        if (bareImg) {
+            if (stoneMode) bareImg.src = urls.bare;
+            else bareImg.removeAttribute("src");
+            bareImg.classList.remove("shown"); // 열릴 때는 항상 글이 보이는 상태로
+        }
     } catch {
         if (img) img.hidden = true;
         _cardCanvas = null; // 실패하면 DOM 텍스트가 그대로 보인다

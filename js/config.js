@@ -48,3 +48,26 @@ function getParam(name) {
 if (navigator.standalone === true) document.documentElement.classList.add("standalone");
 
 const DEBUG = getParam("debug") === "1";
+
+// ---- 서체 비교 프로토타입 (?font=maru|pretendard|plex, 2026-08-17) ----
+// 비교 단계에서만 CDN 로드 — 선정되면 web/fonts/에 자체 호스팅으로 전환(p5 로컬화와 같은 원칙).
+// APP_FONT는 DOM(body)·캔버스(블럭 라벨 textFont)·카드(_CARD_FONT)가 함께 쓴다.
+const _FONT_CHOICES = {
+    maru: { css: "https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css", family: '"MaruBuri"' },
+    pretendard: { css: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css", family: '"Pretendard Variable", Pretendard' },
+    plex: { css: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;700&display=swap", family: '"IBM Plex Sans KR"' },
+};
+let APP_FONT = '"Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif';
+{
+    const pick = _FONT_CHOICES[getParam("font")];
+    if (pick) {
+        const l = document.createElement("link");
+        l.rel = "stylesheet";
+        l.href = pick.css;
+        document.head.appendChild(l);
+        APP_FONT = `${pick.family}, ${APP_FONT}`;
+        const apply = () => { document.body.style.fontFamily = APP_FONT; };
+        if (document.body) apply();
+        else document.addEventListener("DOMContentLoaded", apply);
+    }
+}

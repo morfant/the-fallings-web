@@ -431,6 +431,18 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
     width: 100%;
     height: 100%;
 }
+/* 맨 돌(진한 획) 레이어 — 본문 카드 위에 겹쳐 두고 탭 토글 시 크로스페이드.
+   pointer-events 없음: 탭은 항상 아래의 #post-card가 받는다. */
+#post-card-bare {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+#post-card-bare.shown { opacity: 1; }
 #post-summary {
     font-size: 16px;
     line-height: 2.0;

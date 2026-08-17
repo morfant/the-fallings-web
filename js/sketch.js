@@ -51,7 +51,8 @@ function setup() {
     pile = new Pile(engine, width);
     cameraY = CONFIG.GROUND_Y - height + 60;
 
-    textFont('"Apple SD Gothic Neo", "Noto Sans KR", sans-serif');
+    textFont(typeof APP_FONT !== "undefined" ? APP_FONT : '"Apple SD Gothic Neo", "Noto Sans KR", sans-serif');
+    // 웹폰트(?font=)가 늦게 로드되면 그때부터 캔버스에도 적용된다 (매 프레임 렌더라 자동)
     setupDOM();
     initData();
 }
