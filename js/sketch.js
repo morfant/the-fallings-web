@@ -245,17 +245,38 @@ function drawGround() {
 // 채움색이 가로 방향 가운데를 기준으로 양쪽으로 어두워지는 그라데이션 —
 // 무광 금속 막대가 쌓이는 느낌. (캔버스 네이티브 linearGradient, 폭 기준 캐시)
 
-let _metalGrad = null, _metalGradW = 0;
-function metalGradient(w) { // translate된 좌표계(-w/2 ~ w/2) 기준 — 모든 블럭이 공유
-    if (_metalGradW !== w) {
-        const g = drawingContext.createLinearGradient(-w / 2, 0, w / 2, 0);
-        g.addColorStop(0.0, "hsl(228, 6%, 11%)");
-        g.addColorStop(0.5, "hsl(228, 7%, 30%)"); // 중앙 하이라이트
-        g.addColorStop(1.0, "hsl(228, 6%, 11%)");
-        _metalGrad = g;
-        _metalGradW = w;
+// ---- 블럭별 미세 변주 (렌더 전용, 작가 결정 2026-08-17) ----
+// 수평 ±1.5px 오프셋 + 금속 밝기 5단계: 기계로 찍은 스택이 아니라 손으로 쌓은
+// 석판처럼 가장자리와 결이 켜마다 미세하게 어긋난다. 시드는 pid — 꽃(flower.js)과
+// 같은 원리로, 이 미세한 어긋남과 결이 그 사람 고유의 형태가 된다 (작가 승인).
+// 물리·격자(yOfCenter, 히트테스트)는 건드리지 않는다 — shakeOffset과 같은
+// 렌더 전용 레이어.
+const _blockVarCache = new Map(); // victimIdx -> {jx, lum}
+function blockVariation(victimIdx) {
+    let bv = _blockVarCache.get(victimIdx);
+    if (!bv) {
+        const v = victims[victimIdx];
+        const seed = String(v?.pid || v?.link || victimIdx);
+        const rand = _mulberry32(_flowerHash(seed));
+        bv = { jx: (rand() - 0.5) * 3, lum: Math.floor(rand() * 5) };
+        _blockVarCache.set(victimIdx, bv);
     }
-    return _metalGrad;
+    return bv;
+}
+
+let _metalGrads = [], _metalGradW = 0;
+function metalGradient(w, lum = 2) { // translate된 좌표계(-w/2 ~ w/2) 기준 — 밝기 단계별 캐시
+    if (_metalGradW !== w) { _metalGrads = []; _metalGradW = w; }
+    let g = _metalGrads[lum];
+    if (!g) {
+        const d = (lum - 2) * 1.5; // 켜마다 결이 미세하게 다르게 — 밝기 ±3%
+        g = drawingContext.createLinearGradient(-w / 2, 0, w / 2, 0);
+        g.addColorStop(0.0, `hsl(228, 6%, ${11 + d}%)`);
+        g.addColorStop(0.5, `hsl(228, 7%, ${30 + d}%)`); // 중앙 하이라이트
+        g.addColorStop(1.0, `hsl(228, 6%, ${11 + d}%)`);
+        _metalGrads[lum] = g;
+    }
+    return g;
 }
 
 let _bevelGrad = null, _bevelGradH = 0;
@@ -272,18 +293,25 @@ function bevelGradient(H) { // 입체감: 윗면 하이라이트 → 아랫면 �
     return _bevelGrad;
 }
 
-function drawMetalBlock(cx, cy) {
+// depthN(0~1): 위에서 얼마나 깊이 묻혔나 — 깊을수록 살짝 어둡고 모서리가 눌린다
+// (오래 쌓인 지층이 압착되는 느낌, 작가 선택 2026-08-17). 랜덤이 아니라 규칙.
+function drawMetalBlock(cx, cy, lum = 2, depthN = 0) {
     const w = pile.blockW();
     const H = CONFIG.BLOCK_H;
+    const r = 3 + depthN * 2; // 아래로 갈수록 모서리가 조금 더 둥글게 — 닳은 켜
     push();
     translate(cx, cy);
-    drawingContext.fillStyle = metalGradient(w);
+    drawingContext.fillStyle = metalGradient(w, lum);
     stroke(0, 110); // 켜 사이 가는 어두운 경계
     strokeWeight(1);
-    rect(-w / 2, -H / 2, w, H, 3);
+    rect(-w / 2, -H / 2, w, H, r);
     drawingContext.fillStyle = bevelGradient(H);
     noStroke();
-    rect(-w / 2 + 0.5, -H / 2 + 0.5, w - 1, H - 1, 3);
+    rect(-w / 2 + 0.5, -H / 2 + 0.5, w - 1, H - 1, r);
+    if (depthN > 0) { // 깊이 그늘 — 최대 12% 어둡게
+        fill(0, 0, 0, 30 * depthN);
+        rect(-w / 2, -H / 2, w, H, r);
+    }
     pop();
 }
 
@@ -366,21 +394,25 @@ function drawSettledBlocks(now) {
         if (!s) continue;
         const v = victims[s.victimIdx];
         const cy = pile.yOfCenter(i) + shakeOffset(i, now); // 착지 충격파 (렌더 전용)
+        const bv = blockVariation(s.victimIdx);
+        const bx = width / 2 + bv.jx; // 블럭별 수평 변주 — 오버레이도 같이 따라간다
+        // 깊이 = 위에 쌓인 블럭 수. 150켜쯤이면 완전히 '오래된 층'
+        const depthN = Math.min(1, (pile.settled.length - 1 - i) / 150);
 
-        drawMetalBlock(width / 2, cy);
+        drawMetalBlock(bx, cy, bv.lum, depthN);
 
         // 선택된 블럭: 은은한 앰버 틴트 + 테두리
         if (i === selectedIdx) {
             fill(...CONFIG.COLORS.accent, 34);
             stroke(...CONFIG.COLORS.accent, 200);
             strokeWeight(1.5);
-            rect(width / 2 - w / 2 + 1, cy - H / 2 + 1, w - 2, H - 2, 3);
+            rect(bx - w / 2 + 1, cy - H / 2 + 1, w - 2, H - 2, 3);
         } else if (i === lastViewedIdx) {
             // 방금 보고 나온 블럭 — 좌측 세로 표식 하나. 테두리를 두르면 선택과 구별이
             // 안 되고 여러 개가 강조된 것처럼 보이므로, 읽던 자리를 가리키는 정도로만.
             noStroke();
             fill(...CONFIG.COLORS.accent, 150);
-            rect(width / 2 - w / 2 + 1, cy - H / 2 + 10, 3, H - 20, 1.5);
+            rect(bx - w / 2 + 1, cy - H / 2 + 10, 3, H - 20, 1.5);
         }
 
         const highlight = s.settledAt > 0 && now - s.settledAt < CONFIG.HIGHLIGHT_MS
@@ -389,10 +421,10 @@ function drawSettledBlocks(now) {
             noFill();
             if (i === hoverIdx) { stroke(...CONFIG.COLORS.text); strokeWeight(1.2); }
             else { stroke(...CONFIG.COLORS.accent, 90 + 165 * highlight); strokeWeight(1.5); }
-            rect(width / 2 - w / 2 + 2, cy - H / 2 + 2, w - 4, H - 4, 4);
+            rect(bx - w / 2 + 2, cy - H / 2 + 2, w - 4, H - 4, 4);
         }
 
-        drawBlockLabels(width / 2, cy, v);
+        drawBlockLabels(bx, cy, v);
     }
 
     drawPeriodMarkers(lo, hi); // 월/연 경계 요약 (블럭 위에 오버랩)
@@ -402,8 +434,9 @@ function drawFallingBlock() {
     if (!pile.falling) return;
     const v = victims[pile.falling.victimIdx];
     const p = pile.falling.body.position;
-    drawMetalBlock(p.x, p.y);
-    drawBlockLabels(p.x, p.y, v);
+    const bv = blockVariation(pile.falling.victimIdx); // 떨어질 때부터 착지 후와 같은 모양
+    drawMetalBlock(p.x + bv.jx, p.y, bv.lum, 0); // 갓 떨어진 블럭은 깊이 0
+    drawBlockLabels(p.x + bv.jx, p.y, v);
 }
 
 const _DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];

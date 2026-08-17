@@ -68,6 +68,7 @@ html, body {
 #data-notice {
     /* 세로 바(border-left)·들여쓰기 제거 — 2026-08-16 작가 요청 */
     padding: 0;
+    margin-bottom: 46px; /* 아래 사망자 숫자와 본문 두 줄만큼 띄움 (작가 요청 2026-08-17) */
     font-size: 13px;
     line-height: 1.75;
     color: var(--text-dim);

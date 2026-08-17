@@ -15,6 +15,7 @@ function aggregateStats(victims, uptoCount) {
         byDecade: new Map(),
         byRegion: new Map(), // 시도 단위
         monthly: new Map(), // "YYYY-MM" -> count
+        byYear: new Map(), // "YYYY" -> count (연도별 차트 — 해가 쌓일수록 의미가 커진다)
         immigrant: 0,
     };
 
@@ -36,6 +37,8 @@ function aggregateStats(victims, uptoCount) {
 
         const ym = d.slice(0, 7);
         if (ym) agg.monthly.set(ym, (agg.monthly.get(ym) || 0) + 1);
+        const yr = d.slice(0, 4);
+        if (yr) agg.byYear.set(yr, (agg.byYear.get(yr) || 0) + 1);
 
         if (v.immigrant) agg.immigrant++;
     }
@@ -126,6 +129,28 @@ function monthChart(monthly) {
     </div>`;
 }
 
+// 연도별 — barRows와 달리 많은 순이 아니라 연대순. 부분 집계 연도(수집 시작 해,
+// 진행 중인 올해)는 라벨에 명시해 완전한 해와 그대로 비교되는 오독을 막는다.
+function yearRows(byYear) {
+    const thisYear = String(new Date().getFullYear());
+    const since = CONFIG.COLLECTION_SINCE || "";
+    const firstYear = since.slice(0, 4);
+    const firstMonth = parseInt(since.slice(5, 7), 10);
+    const entries = [...byYear.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    const maxV = Math.max(1, ...entries.map(([, c]) => c));
+    return entries.map(([y, count]) => {
+        let label = `${y}년`; // 라벨 칸(96px)에 맞게 압축형 표기
+        if (y === firstYear && firstMonth) label = `${y} (${firstMonth}월~)`;
+        else if (y === thisYear) label = `${y} (진행 중)`;
+        const w = Math.round((count / maxV) * 100);
+        return `<div class="bar-row">
+            <span class="bar-label">${esc(label)}</span>
+            <span class="bar-track"><span class="bar-fill" style="width:${w}%"></span></span>
+            <span class="bar-count">${count}</span>
+        </div>`;
+    }).join("");
+}
+
 // 그래프 섹션 접힘 상태 — renderStats가 innerHTML을 새로 그려도 유지 (기본 접힘)
 let _chartsOpen = false;
 
@@ -179,6 +204,10 @@ function renderStats(victims, uptoCount) {
         <div class="stat-section wide">
             <h3>최근 12개월</h3>
             ${monthChart(a.monthly)}
+        </div>
+        <div class="stat-section">
+            <h3>연도별</h3>
+            ${yearRows(a.byYear)}
         </div>
     `;
 
