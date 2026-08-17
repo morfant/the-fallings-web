@@ -12,7 +12,7 @@
     <meta property="og:url" content="https://fallen-caught-crushed.work/subscribe.html">
     <meta property="og:image" content="https://fallen-caught-crushed.work/img/og-card.png">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="stylesheet" href="style.css?v=8b3d3a4e" />
+    <link rel="stylesheet" href="style.css?v=1c6e131f" />
     <style>
         body { overflow-y: auto; }
         #sub-page {
@@ -204,6 +204,19 @@
             });
         }
         initPush().catch((e) => setStatus(`초기화 실패: ${e.message || e}`));
+
+        // 알림 클릭 딥링크 — 이 페이지가 열려 있는 채로 알림을 누르면 서비스 워커가
+        // 여기로 메시지를 보낸다 (iOS가 navigate를 거부하는 경우, sw.js 참고). 기록으로 이동.
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.addEventListener("message", (e) => {
+                const d = e.data || {};
+                if (d.type !== "open-url" || typeof d.url !== "string") return;
+                try {
+                    const u = new URL(d.url, location.href);
+                    if (u.origin === location.origin) location.href = u.href;
+                } catch { /* 무시 */ }
+            });
+        }
     </script>
 </body>
 </html>

@@ -655,6 +655,24 @@ function setupDOM() {
         if (!st.tfDetail) hideDetailUI();
         if (!st.tfInfo) hideInfoUI();
     });
+    // 알림 클릭 딥링크 — 서비스 워커(sw.js notificationclick)가 이미 열려 있는 이 창에
+    // 보내는 메시지. iOS가 WindowClient.navigate를 거부하는 경우의 경로 (2026-08-17).
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.addEventListener("message", (e) => {
+            const d = e.data || {};
+            if (d.type !== "open-url" || typeof d.url !== "string") return;
+            let u;
+            try { u = new URL(d.url, location.href); } catch { return; }
+            if (u.origin !== location.origin) return;
+            if (u.pathname === location.pathname) {
+                // 같은 페이지면 리로드 없이 해시만 바꿔 그 기록을 연다 (데이터는 이미 로드됨)
+                history.replaceState(null, "", u.hash || "#");
+                openFromHash();
+            } else {
+                location.href = u.href;
+            }
+        });
+    }
 }
 
 // ---- 정보 뷰 — 모바일에서 제목을 누르면 패널 전체(공지/통계/구독)를 펼침 ----
