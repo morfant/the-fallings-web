@@ -518,9 +518,12 @@ function _stoneWave(v, w, H, cell, scale) {
 function _stoneStrata(v, w, H, cell, scale) {
     const [c, ctx] = _stoneCanvas(w, H, scale, "hsl(220, 12%, 88%)");
     const bits = _recordBits(v), rand = _stoneRand(v);
-    const segW = cell, rowH = cell * 1.3;
+    // 수평 우세 — 구간을 길게(2.5셀), 구간의 60%는 그 층의 높이로 평평하게 흐르고
+    // 끝 40%에서만 경사로 다음 높이로 넘어간다. 짧은 구간의 연속 꺾임은 파형처럼
+    // 읽혔다(작가 피드백 "너무 웨이브 같다") — 층계 모양이 지층의 문법.
+    const segW = cell * 2.5, rowH = cell * 1.15;
     const segs = Math.floor(w / segW);
-    const lvStep = rowH * 0.22; // 단계 간격 — 행 높이의 22%씩, 최대 ±0.33행
+    const lvStep = rowH * 0.2;
     ctx.strokeStyle = "hsl(228, 12%, 12%)";
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
@@ -528,12 +531,15 @@ function _stoneStrata(v, w, H, cell, scale) {
     for (let base = rowH * 0.7; base + rowH * 0.35 < H; base += rowH) {
         ctx.lineWidth = Math.max(1, cell * 0.14) * (0.85 + rand() * 0.3); // 행마다 굵기 미세 변주
         ctx.beginPath();
-        ctx.moveTo(0, base); // 시작은 기준선
+        let yPrev = base; // 시작은 기준선
+        ctx.moveTo(0, yPrev);
         for (let sIdx = 0; sIdx < segs; sIdx++) {
             const lv = bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rand() * 4);
-            // 미세 떨림은 단계 간격의 ±9% — 판독 여유(±50%) 안
-            const y1 = base + (lv - 1.5) * lvStep + (rand() - 0.5) * lvStep * 0.18;
-            ctx.lineTo((sIdx + 1) * segW, y1);
+            const y1 = base + (lv - 1.5) * lvStep + (rand() - 0.5) * lvStep * 0.16; // 미세 떨림
+            const x0 = sIdx * segW, x1 = (sIdx + 1) * segW;
+            ctx.lineTo(x0 + segW * 0.6, yPrev); // 평평한 층
+            ctx.lineTo(x1, y1);                 // 경사 전이
+            yPrev = y1;
         }
         ctx.stroke();
     }
