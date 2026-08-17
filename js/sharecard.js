@@ -59,10 +59,11 @@ async function buildPostCard(v, summary, cssW, cssH) {
     // 배경 — 블럭과 동일 공식: 가로 미러 그라데이션 + 수직 광 오버레이 (style.css #post-image).
     // 화강암 모드(?granite=1)에서는 그 사람의 데이터 모자이크 확대판이 배경이 된다 —
     // 블럭과 같은 돌 (graniteRender는 sketch.js, 로드 순서상 호출 시점엔 존재).
-    if (typeof GRANITE_ON !== "undefined" && GRANITE_ON) {
-        const stone = graniteRender(v, cssW, cssH, GRANITE.CELL_CARD, scale);
+    const graniteMode = typeof GRANITE_ON !== "undefined" && GRANITE_ON;
+    if (graniteMode) {
+        const stone = stoneRender(v, cssW, cssH, GRANITE.CELL_CARD, scale);
         ctx.drawImage(stone, 0, 0, W, H);
-        ctx.fillStyle = "rgba(0, 0, 0, 0.22)"; // 텍스트 가독을 위한 얇은 장막
+        ctx.fillStyle = "rgba(255, 255, 255, 0.26)"; // 밝은 돌 — 결을 눌러 글자를 띄우는 장막
         ctx.fillRect(0, 0, W, H);
     } else {
         let g0 = ctx.createLinearGradient(0, 0, W, 0);
@@ -96,7 +97,8 @@ async function buildPostCard(v, summary, cssW, cssH) {
         lines[lines.length - 1] = lines[lines.length - 1].replace(/[\s.,]*$/, "") + " …";
     }
     let y = pad + Math.max(0, (availH - lines.length * lh) / 2);
-    ctx.fillStyle = "#e8e8ee";
+    // 밝은 돌에는 어두운 글자 — 비석의 음각처럼 (화강암 모드)
+    ctx.fillStyle = graniteMode ? "#17171b" : "#e8e8ee";
     lines.forEach((ln, i) => {
         _drawJustified(ctx, ln, x0, y + (lh - fs) / 2, maxW, i === lines.length - 1);
         y += lh;

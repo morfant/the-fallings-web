@@ -299,23 +299,41 @@ function bevelGradient(H) { // 입체감: 윗면 하이라이트 → 아랫면 �
 // 새겨지고(팔레트 4단계 = 2비트), 나머지는 pid 시드 PRNG로 같은 팔레트에서 채워진다.
 // 표준 스캐너는 못 읽지만 규칙을 알면 화면 캡처에서도 기록을 복원할 수 있는 비문(銘文).
 // 진짜 QR은 넣지 않는다 (작가 확정 — 파인더·대비가 곧 'QR스러움'이라 화강암과 양립 불가).
-const GRANITE_ON = typeof getParam === "function" && !!getParam("granite");
+// ?stone=mosaic|hatch|weave|braille|morse|wave 로 표면 문법을 갈아끼운다 (전부 비교용 프로토타입).
+// ?granite=1은 mosaic의 별칭 (기존 링크 호환).
+const STONE_STYLE = (typeof getParam === "function" &&
+    (getParam("stone") || (getParam("granite") ? "mosaic" : ""))) || "";
+const GRANITE_ON = !!STONE_STYLE;
 const GRANITE = {
     CELL: 6, // px — 블럭 셀 크기
     CELL_CARD: 12, // px — 상세 카드 배경 셀 (같은 돌의 확대판)
     // 4단계 회색 (금속 톤 hsl 228 주변) — 인덱스가 곧 2비트 값.
-    // 조율 이력: 9~21%(은은) → 7~30%("좀 더 또렷하게") → 12~40%("밝은 색이 주가 되게")
-    SHADES: ["hsl(228, 6%, 12%)", "hsl(228, 5%, 22%)", "hsl(226, 5%, 30%)", "hsl(226, 4%, 40%)"],
+    // 조율 이력: 9~21%(은은) → 7~30%(또렷하게) → 12~40%(밝게) → 30~85%("흰색에 가깝게").
+    // 밝은 돌에는 글자를 어둡게 새긴다 (drawBlockLabels·sharecard의 GRANITE_ON 분기).
+    SHADES: ["hsl(228, 5%, 30%)", "hsl(228, 5%, 50%)", "hsl(226, 6%, 68%)", "hsl(220, 8%, 85%)"],
     CACHE_MAX: 80, // 보이는 범위 + 여유 (LRU)
 };
 
 // 기록의 정본 문자열 → 비트열. 이 규칙이 공개될 '비문의 문법'이다 (data.html, 2단계).
+// 작가 결정(2026-08-17): 공개 기록 전체를 새긴다 — 요약문까지. 공간이 모자라면
+// 앞에서부터 들어가는 만큼 새겨지고(잘림), 남으면 pid 시드 채움이 잇는다.
 function _recordBits(v) {
-    const s = `${v?.pid || ""}|${v?.date || ""}|${v?.accType || ""}|${v?.age ?? ""}`;
+    const s = [v?.pid, v?.date, v?.region, v?.accType, v?.age ?? "", v?.immigrant || "",
+        v?.ofDeaths || "", v?.accSummary || ""].map((x) => x ?? "").join("|");
     const bytes = new TextEncoder().encode(s);
     const bits = [];
     for (const b of bytes) for (let i = 7; i >= 0; i--) bits.push((b >> i) & 1);
     return bits;
+}
+function _recordBytes(v) { // 바이트 단위 문법(점자·파형)용
+    const bits = _recordBits(v);
+    const bytes = [];
+    for (let i = 0; i + 7 < bits.length; i += 8) {
+        let b = 0;
+        for (let j = 0; j < 8; j++) b = (b << 1) | bits[i + j];
+        bytes.push(b);
+    }
+    return bytes;
 }
 
 // 핵심 렌더 — 블럭과 상세 카드 배경이 공유한다 (같은 돌, 셀 크기만 다름).
@@ -345,6 +363,150 @@ function graniteRender(v, w, H, cell, scale) {
     return c;
 }
 
+// ---- 대안 표면 문법들 (?stone=…, 전부 비교용 프로토타입 2026-08-17) ----
+// 공통: 밝은 돌 기조(어두운 글자 유지), 데이터를 앞에서부터 새기고 남으면 pid 시드 채움.
+
+function _stoneCanvas(w, H, scale, base) {
+    const c = document.createElement("canvas");
+    c.width = Math.ceil(w * scale);
+    c.height = Math.ceil(H * scale);
+    const ctx = c.getContext("2d");
+    ctx.scale(scale, scale);
+    ctx.fillStyle = base;
+    ctx.fillRect(0, 0, w, H);
+    return [c, ctx];
+}
+function _stoneRand(v) {
+    return _mulberry32(_flowerHash(String(v?.pid || v?.link || "")));
+}
+
+// 사선 해칭 — 빗금의 방향이 값 (작가 제안). 석공이 정으로 쪼은 잔다듬 자국.
+// 2비트/셀: 0=╱ 1=╲ 2=─ 3=│
+function _stoneHatch(v, w, H, cell, scale) {
+    const [c, ctx] = _stoneCanvas(w, H, scale, "hsl(224, 7%, 74%)");
+    const bits = _recordBits(v), rand = _stoneRand(v);
+    const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
+    const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
+    ctx.strokeStyle = "hsl(228, 8%, 34%)";
+    ctx.lineWidth = Math.max(1, cell * 0.18);
+    ctx.lineCap = "round";
+    const m = cell * 0.24;
+    let bi = 0;
+    for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
+        const isFull = col < fullCols && row < fullRows;
+        const o = isFull && bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rand() * 4);
+        const x = col * cell, y = row * cell;
+        ctx.beginPath();
+        if (o === 0) { ctx.moveTo(x + m, y + cell - m); ctx.lineTo(x + cell - m, y + m); }
+        else if (o === 1) { ctx.moveTo(x + m, y + m); ctx.lineTo(x + cell - m, y + cell - m); }
+        else if (o === 2) { ctx.moveTo(x + m, y + cell / 2); ctx.lineTo(x + cell - m, y + cell / 2); }
+        else { ctx.moveTo(x + cell / 2, y + m); ctx.lineTo(x + cell / 2, y + cell - m); }
+        ctx.stroke();
+    }
+    return c;
+}
+
+// 직조 — 씨실·날실의 교차(어느 실이 위인가)가 값. 1비트/셀. 수의(壽衣)의 삼베.
+function _stoneWeave(v, w, H, cell, scale) {
+    const [c, ctx] = _stoneCanvas(w, H, scale, "hsl(225, 6%, 56%)"); // 실 사이 그늘
+    const bits = _recordBits(v), rand = _stoneRand(v);
+    const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
+    const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
+    const t = cell * 0.72, g = (cell - t) / 2;
+    const HOR = "hsl(224, 8%, 78%)", VER = "hsl(226, 6%, 66%)";
+    let bi = 0;
+    for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
+        const isFull = col < fullCols && row < fullRows;
+        const over = isFull && bi < bits.length ? bits[bi++] : (rand() < 0.5 ? 0 : 1);
+        const x = col * cell, y = row * cell;
+        if (over === 0) { // 세로 실이 위
+            ctx.fillStyle = HOR; ctx.fillRect(x, y + g, cell, t);
+            ctx.fillStyle = VER; ctx.fillRect(x + g, y, t, cell);
+        } else {          // 가로 실이 위
+            ctx.fillStyle = VER; ctx.fillRect(x + g, y, t, cell);
+            ctx.fillStyle = HOR; ctx.fillRect(x, y + g, cell, t);
+        }
+    }
+    return c;
+}
+
+// 점자 — 바이트 하나 = 8점(2×4) 점자 셀. 기계가 아니라 인간의 촉각 문자 문법.
+// (프로토타입은 바이트 점자 — 실제 한글 점자 변환은 확정 후.)
+function _stoneBraille(v, w, H, cell, scale) {
+    const [c, ctx] = _stoneCanvas(w, H, scale, "hsl(224, 7%, 76%)");
+    const bytes = _recordBytes(v), rand = _stoneRand(v);
+    const bw = cell, bh = cell * 2;
+    const cols = Math.ceil(w / bw), rows = Math.ceil(H / bh);
+    ctx.fillStyle = "hsl(228, 9%, 32%)";
+    const r = cell * 0.13, s = cell * 0.5, off = cell * 0.25;
+    let i = 0;
+    for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
+        const byte = i < bytes.length ? bytes[i++] : Math.floor(rand() * 256);
+        for (let k = 0; k < 8; k++) {
+            if (!((byte >> (7 - k)) & 1)) continue;
+            ctx.beginPath();
+            ctx.arc(col * bw + off + (k % 2) * s, row * bh + off + ((k / 2) | 0) * s, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    return c;
+}
+
+// 모스 — 점(0)과 선(1)의 행. 부고 전보(訃告電報)의 문자.
+function _stoneMorse(v, w, H, cell, scale) {
+    const [c, ctx] = _stoneCanvas(w, H, scale, "hsl(224, 7%, 76%)");
+    const bits = _recordBits(v), rand = _stoneRand(v);
+    const u = Math.max(2, cell * 0.5), th = Math.max(2, cell * 0.45), rowH = cell * 1.5;
+    ctx.fillStyle = "hsl(228, 9%, 32%)";
+    let bi = 0;
+    for (let y = rowH * 0.4; y + th <= H; y += rowH) {
+        let x = u;
+        while (x < w - u) {
+            const b = bi < bits.length ? bits[bi++] : (rand() < 0.5 ? 1 : 0);
+            const len = b ? u * 3 : u;
+            if (x + len > w - u * 0.4) break;
+            ctx.beginPath();
+            ctx.roundRect(x, y, len, th, th / 2);
+            ctx.fill();
+            x += len + u;
+        }
+    }
+    return c;
+}
+
+// 파형 — 바이트가 진폭. 심전도이자 소리의 모양 (사운드 오브제와 같은 데이터).
+function _stoneWave(v, w, H, cell, scale) {
+    const [c, ctx] = _stoneCanvas(w, H, scale, "hsl(224, 7%, 76%)");
+    const bytes = _recordBytes(v), rand = _stoneRand(v);
+    const rowH = cell * 2.6, amp = rowH * 0.42, step = Math.max(3, cell * 0.5);
+    ctx.strokeStyle = "hsl(228, 9%, 32%)";
+    ctx.lineWidth = 1.4;
+    ctx.lineJoin = "round";
+    let i = 0;
+    for (let yc = rowH * 0.6; yc + amp * 0.5 < H; yc += rowH) {
+        ctx.beginPath();
+        for (let x = 0; x <= w; x += step) {
+            const byte = i < bytes.length ? bytes[i++] : Math.floor(rand() * 256);
+            const y = yc + ((byte - 127.5) / 127.5) * amp * 0.5;
+            if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    }
+    return c;
+}
+
+// 문법 선택 — sharecard.js(상세 카드 배경)도 이 함수를 쓴다
+function stoneRender(v, w, H, cell, scale) {
+    switch (STONE_STYLE) {
+        case "hatch": return _stoneHatch(v, w, H, cell, scale);
+        case "weave": return _stoneWeave(v, w, H, cell, scale);
+        case "braille": return _stoneBraille(v, w, H, cell, scale);
+        case "morse": return _stoneMorse(v, w, H, cell, scale);
+        case "wave": return _stoneWave(v, w, H, cell, scale);
+        default: return graniteRender(v, w, H, cell, scale); // mosaic
+    }
+}
+
 const _graniteCache = new Map(); // "victimIdx:w" -> offscreen canvas (LRU)
 function graniteCanvas(victimIdx, w, H) {
     const key = `${victimIdx}:${Math.round(w)}`;
@@ -354,7 +516,7 @@ function graniteCanvas(victimIdx, w, H) {
         _graniteCache.set(key, c);
         return c;
     }
-    c = graniteRender(victims[victimIdx], w, H, GRANITE.CELL, 2);
+    c = stoneRender(victims[victimIdx], w, H, GRANITE.CELL, 2);
     if (_graniteCache.size >= GRANITE.CACHE_MAX) {
         _graniteCache.delete(_graniteCache.keys().next().value); // 가장 오래된 것 제거
     }
@@ -379,8 +541,9 @@ function drawMetalBlock(cx, cy, lum = 2, depthN = 0, victimIdx = -1) {
         dc.clip();
         dc.drawImage(graniteCanvas(victimIdx, w, H), -w / 2, -H / 2, w, H);
         dc.restore();
-        stroke(0, 110); // 켜 사이 가는 어두운 경계 (금속과 동일)
-        strokeWeight(1);
+        // 밝은 돌들 사이의 줄눈 — 배경색의 굵은 경계로 켜를 분리 (작가: 경계가 안 보임)
+        stroke(...CONFIG.COLORS.bg);
+        strokeWeight(3);
         noFill();
         rect(-w / 2, -H / 2, w, H, r);
     } else {
@@ -563,8 +726,9 @@ function drawBlockLabels(cx, cy, v) {
     // 표식(추모 꽃)은 통계 패널과 상세 뷰에, 수는 상세 뷰 문장("N명이 확인했습니다")에 있다.
     const rightX = cx + w / 2 - 18;
 
-    // 윗줄: 날짜 요일 장소
-    fill(...CONFIG.COLORS.text);
+    // 윗줄: 날짜 요일 장소 — 화강암(밝은 돌)에는 어둡게 새긴다 (비석의 음각처럼)
+    if (GRANITE_ON) fill(18, 18, 22);
+    else fill(...CONFIG.COLORS.text);
     textAlign(LEFT, CENTER);
     textSize(18);
     text(whenWhere, leftX, yTop);
@@ -572,7 +736,8 @@ function drawBlockLabels(cx, cy, v) {
     // 아랫줄: 사인 · 연령 · 이주노동자 — 그래도 넘치면 뒤에서부터 덜어낸다
     if (infoParts.length) {
         textSize(16);
-        fill(...CONFIG.COLORS.textDim);
+        if (GRANITE_ON) fill(45, 46, 52);
+        else fill(...CONFIG.COLORS.textDim);
         const room = rightX - 12 - leftX;
         let parts = infoParts.slice();
         while (parts.length > 1 && textWidth(parts.join(" · ")) > room) parts.pop();
