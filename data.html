@@ -130,15 +130,15 @@
             <div class="schema-wrap">
                 <table class="schema">
                     <tr><th>필드</th><th>의미</th></tr>
-                    <tr><td>date</td><td>사고일 (기사 보도일이 아닙니다)</td></tr>
-                    <tr><td>region</td><td>지역 (시도+시군구까지만)</td></tr>
+                    <tr><td>date</td><td>사고일 (기사 보도일이 아님)</td></tr>
+                    <tr><td>region</td><td>지역 (시도 + 시군구까지만)</td></tr>
                     <tr><td>accType</td><td>사고 유형 (떨어짐, 끼임, 깔림, …)</td></tr>
-                    <tr><td>age</td><td>나이 (null이면 알려지지 않음)</td></tr>
-                    <tr><td>immigrant</td><td>이주노동자 여부·국적 (null이면 알려지지 않음)</td></tr>
+                    <tr><td>age</td><td>나이 (알려지지 않은 경우 null)</td></tr>
+                    <tr><td>immigrant</td><td>이주노동자 여부·국적 (알려지지 않은 경우 null)</td></tr>
                     <tr><td>accSummary</td><td>사고 요약 (기사 발췌가 아니라 사실만으로 새로 쓴 문장)</td></tr>
                     <tr><td>link</td><td>근거가 된 대표 기사 원문 링크</td></tr>
-                    <tr><td>pid</td><td>이 사람을 가리키는 고유한 값 — 대표 기사 링크에서
-                        만들어지며, 같은 사람에게는 언제나 같은 값이 붙습니다</td></tr>
+                    <tr><td>pid</td><td>피해자를 가리키는 고유한 값 (대표 기사 링크에서
+                        만들어지며, 같은 사람에게는 언제나 같은 값)</td></tr>
                     <tr><td>ofDeaths</td><td>그 사고의 전체 사망자 수 (1명이면 생략)</td></tr>
                 </table>
             </div>
