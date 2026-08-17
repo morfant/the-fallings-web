@@ -360,15 +360,16 @@ body.info-open #follow-btn { display: none; }
 }
 #post-subscribe:hover,
 #panel-subscribe:hover { text-decoration-color: var(--accent); }
-/* 정보 뷰의 알림받기(✕ 왼쪽, right 36px)와 같은 지점에 오도록 상세 뷰 쪽을 보정 */
-#post-subscribe { position: relative; top: -8px; margin-right: 38px; }
+/* 정보 뷰의 알림받기(✕ 왼쪽, right 36px)와 같은 가로 지점에 오도록 상세 뷰 쪽을 보정.
+   세로는 같은 줄의 ←와 맞추는 게 우선이라 보정하지 않는다 (작가 피드백 2026-08-17). */
+#post-subscribe { margin-right: 38px; }
 
 /* 패널 우상단 알림받기 — 상세(포스트 뷰) 상단바와 같은 자리.
    데스크톱은 패널이 늘 열려 있으므로 항상 표시. 모바일은 정보 뷰가 열려 있는
    동안만 보인다 (아래 미디어 쿼리에서 닫힘 상태를 숨김). 패널 하단에 있던
    '알림 받기' 섹션은 이 버튼으로 통합하며 제거 (2026-08-08 작가 결정). */
 #panel-header { position: relative; }
-#panel-subscribe { position: absolute; top: -3px; right: 0; }
+#panel-subscribe { position: absolute; top: 3px; right: 0; } /* 제목·✕와 같은 줄에 오도록 (작가 피드백 2026-08-17) */
 /* '정보' 토글은 모바일 전용 — 데스크톱은 패널이 늘 펼쳐져 있어 필요 없다 */
 #info-toggle { display: none; }
 
