@@ -104,17 +104,9 @@ async function buildPostCard(v, summary, cssW, cssH) {
         lines[lines.length - 1] = lines[lines.length - 1].replace(/[\s.,]*$/, "") + " …";
     }
     let y = pad + Math.max(0, (availH - lines.length * lh) / 2);
-    // 밝은 글자 통일 (작가 결정 2026-08-17) — 밝은 돌 위에서는 본문 뒤에 어두운
-    // 반투명 판을 깔고 흰 글자를 얹는다 (외곽선·글로우는 획을 삼켜 실패, 실측).
-    if (graniteMode && !darkStone && lines.length) {
-        const padP = 16 * scale;
-        const top = y - padP, hgt = lines.length * lh + padP * 2;
-        ctx.fillStyle = "rgba(10, 10, 13, 0.62)";
-        ctx.beginPath();
-        ctx.roundRect(x0 - padP, top, maxW + padP * 2, hgt, 10 * scale);
-        ctx.fill();
-    }
-    ctx.fillStyle = "#f2f2f5";
+    // 잉크 위계 (작가 선택 2026-08-17) — 획은 중간 회색, 글자가 가장 진한 검정.
+    // 띠·판 없이 글자 색만으로 읽힌다. 어두운 돌·금속은 밝은 글자.
+    ctx.fillStyle = graniteMode && !darkStone ? "#0a0a0d" : "#e8e8ee";
     lines.forEach((ln, i) => {
         _drawJustified(ctx, ln, x0, y + (lh - fs) / 2, maxW, i === lines.length - 1);
         y += lh;

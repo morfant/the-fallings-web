@@ -388,28 +388,28 @@ function _stoneRand(v) {
 // (작가 요청 2026-08-17 — Truchet처럼 미로 같은 결이 생긴다).
 // dark=true면 어두운 돌 + 밝은 선 (흰 글자를 위한 반전 변형, ?stone=hatchdark)
 function _stoneHatch(v, w, H, cell, scale, dark = false) {
-    // 흰 돌에 검은 획 (작가 조율 2026-08-17: 배경 더 희게, 선 더 검게).
-    // 값 3(비트 11) = 빈 셀 — 획 밀도가 ~25% 낮아지고, 비어 있음 자체가 값이라 복원 유지.
+    // 흰 돌 위 다섯 값: ╱ ╲ ─ │ 빈칸 (작가 결정 2026-08-17 — 세로줄 복귀 + 5값).
+    // 5값은 2비트에 안 떨어지므로 7셀 = 16비트(5^7 ≥ 2^16, base-5 묶음)로 새긴다 —
+    // 셀당 2.29비트, 용량 +14%. 획은 중간 회색(잉크 위계 — 화면에서 가장 어두운 것은
+    // 글자여야 라벨이 띠 없이 읽힌다), 글자가 가장 진한 검정.
     const [c, ctx] = _stoneCanvas(w, H, scale, dark ? "hsl(228, 8%, 15%)" : "hsl(220, 12%, 88%)");
     const bits = _recordBits(v), rand = _stoneRand(v);
     const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
     const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
-    ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : "hsl(228, 12%, 12%)";
+    ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : "hsl(228, 8%, 42%)";
     ctx.lineCap = "round";
     const baseW = Math.max(1, cell * 0.18);
-    // 손떨림 — 의미(방향)는 양자화되어 있으므로 표현은 흔들려도 복원이 유지된다
-    // (작가 피드백 2026-08-17: 기계적으로 정확해서 금방 단조로움). 판독은 범주만 읽는다.
-    const jEnd = cell * 0.07, jCurve = cell * 0.10; // 판독 여유 안에서의 떨림 (0.09/0.13도 ~550셀당 1셀 오독)
-    let bi = 0;
-    for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
-        const isFull = col < fullCols && row < fullRows;
-        const o = isFull && bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rand() * 4);
-        if (o === 3) continue; // 빈 셀 = 값 3
-        const x = col * cell, y = row * cell;
+    // 손떨림 — 의미(방향)는 양자화되어 있으므로 표현은 흔들려도 복원이 유지된다.
+    const jEnd = cell * 0.07, jCurve = cell * 0.10;
+
+    // 온전한 셀들의 좌표 목록 (행 우선) — 7셀 그룹이 여기에 순서대로 놓인다
+    const glyphAt = (x, y, o) => {
+        if (o === 4) return; // 빈 셀
         let x1, y1, x2, y2;
-        if (o === 0) { x1 = x; y1 = y + cell; x2 = x + cell; y2 = y; }
-        else if (o === 1) { x1 = x; y1 = y; x2 = x + cell; y2 = y + cell; }
-        else { x1 = x; y1 = y + cell / 2; x2 = x + cell; y2 = y + cell / 2; }
+        if (o === 0) { x1 = x; y1 = y + cell; x2 = x + cell; y2 = y; }        // ╱
+        else if (o === 1) { x1 = x; y1 = y; x2 = x + cell; y2 = y + cell; }   // ╲
+        else if (o === 2) { x1 = x; y1 = y + cell / 2; x2 = x + cell; y2 = y + cell / 2; } // ─
+        else { x1 = x + cell / 2; y1 = y; x2 = x + cell / 2; y2 = y + cell; } // │
         const j = () => (rand() - 0.5) * 2 * jEnd;
         const mx = (x1 + x2) / 2 + (rand() - 0.5) * 2 * jCurve;
         const my = (y1 + y2) / 2 + (rand() - 0.5) * 2 * jCurve;
@@ -418,6 +418,20 @@ function _stoneHatch(v, w, H, cell, scale, dark = false) {
         ctx.moveTo(x1 + j(), y1 + j());
         ctx.quadraticCurveTo(mx, my, x2 + j(), y2 + j());
         ctx.stroke();
+    };
+
+    // 2비트/셀, 값 2는 자리 홀짝에 따라 ─/│ — 화면에는 네 방향+빈칸이 모두 나타나되
+    // 인코딩은 강건한 4값 그대로 (base-5 묶음은 1셀 오독이 2글자를 망가뜨려 폐기, 실측).
+    // 값: 0=╱ 1=╲ 2=(row+col 짝수면 ─, 홀수면 │) 3=빈칸
+    let bi = 0;
+    for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
+        const isFull = col < fullCols && row < fullRows;
+        const val = isFull && bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rand() * 4);
+        let o;
+        if (val === 3) o = 4;            // 빈칸
+        else if (val === 2) o = ((row + col) % 2 === 0) ? 2 : 3; // ─ 또는 │
+        else o = val;                     // ╱ ╲
+        glyphAt(col * cell, row * cell, o);
     }
     return c;
 }
@@ -779,41 +793,27 @@ function drawBlockLabels(cx, cy, v) {
     // 표식(추모 꽃)은 통계 패널과 상세 뷰에, 수는 상세 뷰 문장("N명이 확인했습니다")에 있다.
     const rightX = cx + w / 2 - 18;
 
-    // 밝은 글자 통일 (작가 결정 2026-08-17) — 밝은 돌 위에서는 글자 뒤에 어두운
-    // 반투명 띠를 깔고 흰 글자를 얹는다 (외곽선·글로우는 획을 삼켜 실패, 실측).
+    // 잉크 위계 (작가 선택 2026-08-17) — 획을 중간 회색으로 물리고 글자가 화면에서
+    // 가장 진한 검정이 되게 한다. 띠·외곽선·글로우 없이 글자 색만으로 읽힌다.
     const lightStone = GRANITE_ON && !STONE_DARK;
+    noStroke();
     textAlign(LEFT, CENTER);
 
     // 윗줄: 날짜 요일 장소
     textSize(18);
-    if (lightStone) {
-        const tw = textWidth(whenWhere);
-        noStroke();
-        fill(10, 10, 13, 165);
-        rect(leftX - 9, yTop - 14, tw + 18, 28, 14);
-        fill(245, 245, 248);
-    } else {
-        noStroke();
-        fill(...CONFIG.COLORS.text);
-    }
+    if (lightStone) fill(10, 10, 13);
+    else fill(...CONFIG.COLORS.text);
     text(whenWhere, leftX, yTop);
 
     // 아랫줄: 사인 · 연령 · 이주노동자 — 그래도 넘치면 뒤에서부터 덜어낸다
     if (infoParts.length) {
         textSize(16);
+        if (lightStone) fill(38, 39, 45);
+        else fill(...CONFIG.COLORS.textDim);
         const room = rightX - 12 - leftX;
         let parts = infoParts.slice();
         while (parts.length > 1 && textWidth(parts.join(" · ")) > room) parts.pop();
-        const line = parts.join(" · ");
-        if (lightStone) {
-            const tw = textWidth(line);
-            fill(10, 10, 13, 145);
-            rect(leftX - 8, yBottom - 12, tw + 16, 24, 12);
-            fill(228, 228, 233);
-        } else {
-            fill(...CONFIG.COLORS.textDim);
-        }
-        text(line, leftX, yBottom);
+        text(parts.join(" · "), leftX, yBottom);
     }
 }
 
