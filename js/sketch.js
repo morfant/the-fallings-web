@@ -396,7 +396,7 @@ function _stoneHatch(v, w, H, cell, scale, dark = false) {
     const bits = _recordBits(v), rand = _stoneRand(v);
     const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
     const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
-    ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : "hsl(228, 8%, 42%)";
+    ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : "hsl(228, 7%, 54%)"; // 획을 더 물림 (작가 조율)
     ctx.lineCap = "round";
     const baseW = Math.max(1, cell * 0.18);
     // 손떨림 — 의미(방향)는 양자화되어 있으므로 표현은 흔들려도 복원이 유지된다.
@@ -798,6 +798,7 @@ function drawBlockLabels(cx, cy, v) {
     const lightStone = GRANITE_ON && !STONE_DARK;
     noStroke();
     textAlign(LEFT, CENTER);
+    if (lightStone) textStyle(BOLD); // 밝은 돌 위 검은 글자는 볼드로 (작가 조율)
 
     // 윗줄: 날짜 요일 장소
     textSize(18);
@@ -815,6 +816,7 @@ function drawBlockLabels(cx, cy, v) {
         while (parts.length > 1 && textWidth(parts.join(" · ")) > room) parts.pop();
         text(parts.join(" · "), leftX, yBottom);
     }
+    if (lightStone) textStyle(NORMAL);
 }
 
 function drawHUD() {

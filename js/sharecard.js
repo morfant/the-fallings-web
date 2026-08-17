@@ -93,7 +93,8 @@ async function buildPostCard(v, summary, cssW, cssH) {
     // 본문 — 넘치면 마지막 줄을 " …"로 마무리 (fitSummary와 같은 규칙)
     const fs = 16 * scale;
     const lh = fs * 2.0;
-    ctx.font = `${fs}px ${_CARD_FONT}`;
+    // 밝은 돌 위 검은 글자는 볼드 (작가 조율 2026-08-17) — 줄바꿈 측정 전에 폰트 확정
+    ctx.font = `${graniteMode && !darkStone ? "700 " : ""}${fs}px ${_CARD_FONT}`;
     const maxW = Math.min(W - pad * 2, fs * 32);
     const x0 = (W - maxW) / 2;
     const availH = H - pad * 2;
