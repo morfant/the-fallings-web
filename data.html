@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>떨어지고, 끼이고, 깔린 — 데이터 안내</title>
-    <meta name="description" content="산업재해 사망 기록 공개 데이터 — 스키마, 이용조건(CC BY-NC-SA 4.0), 받는 방법">
+    <meta name="description" content="산업재해 사망 기록 공개 데이터 — 스키마, 이용 원칙, 받는 방법">
     <link rel="icon" type="image/png" href="img/favicon.png">
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
     <meta property="og:type" content="website">
     <meta property="og:title" content="떨어지고, 끼이고, 깔린 — 데이터 안내">
-    <meta property="og:description" content="산업재해 사망 기록 공개 데이터 — 스키마, 이용조건(CC BY-NC-SA 4.0), 받는 방법">
+    <meta property="og:description" content="산업재해 사망 기록 공개 데이터 — 스키마, 이용 원칙, 받는 방법">
     <meta property="og:url" content="https://fallen-caught-crushed.work/data.html">
     <meta property="og:image" content="https://fallen-caught-crushed.work/img/og-card.png">
     <meta name="twitter:card" content="summary_large_image">
@@ -48,6 +48,14 @@
             margin-bottom: 18px;
             overflow-x: auto;
             white-space: nowrap;
+        }
+        .principles { margin: 0 0 18px; padding-left: 18px; }
+        .principles li {
+            font-size: 14.5px;
+            line-height: 1.95;
+            color: var(--text);
+            word-break: keep-all;
+            margin-bottom: 6px;
         }
         .schema-wrap { overflow-x: auto; margin-bottom: 18px; }
         table.schema {
@@ -116,19 +124,30 @@
                 요약은 이 프로젝트가 사실만으로 새로 쓴 문장입니다.
                 각 기록은 원문 기사로 링크됩니다.</p>
 
+            <h2>이 데이터가 따르는 원칙</h2>
+            <p>이 데이터의 한 줄 한 줄은 누군가의 죽음입니다. 그래서 이 데이터는
+                원주민 데이터 거버넌스의 CARE 원칙에서 배워, 다음을 약속합니다.</p>
+            <ul class="principles">
+                <li>이 데이터의 사용은 피해자와 남은 이들에게 해가 아니라 이익이 되어야 합니다.</li>
+                <li>유족이 원치 않으면 그 기록은 공개하지 않습니다.</li>
+                <li>데이터를 어떻게 수집하고 처리하는지 투명하게 밝히고,
+                    죽음을 소비하는 방식의 사용을 막을 책임을 집니다.</li>
+                <li>데이터는 피해자에 대한 존중을 기반으로 다룹니다.</li>
+            </ul>
+
             <h2>이용조건</h2>
-            <p>이 데이터는 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko"
-                target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>으로 공개합니다.
-                출처를 밝히고, 영리 목적으로 사용하지 말아 주세요. 가공해 공개하려면 같은 조건을 유지해 주세요.
-                출처는 이렇게 밝혀 주시면 됩니다:</p>
-            <code class="endpoint">떨어지고, 끼이고, 깔린 (이강일) — fallen-caught-crushed.work, CC BY-NC-SA 4.0</code>
-            <p>이 데이터의 한 줄 한 줄은 누군가의 죽음입니다.
-                소비의 방식으로 다루는 것을 지양해주세요.</p>
+            <p>이 데이터는 열람할 수 있도록 공개되어 있지만, 자유 이용을 허락한 것은 아닙니다.
+                연구·보도·추모 등의 목적으로 사용하고 싶다면 먼저
+                <a href="mailto:giy.hands@gmail.com">문의해 주세요</a>.
+                출처 표시와 비영리는 기본 조건이며, 죽음을 소비하는 방식의 사용은 허락하지 않습니다.</p>
+            <p>유족께 — 원치 않는 기록이 있다면 같은 주소로 알려 주세요. 공개하지 않겠습니다.</p>
+            <p>출처는 이렇게 밝혀 주시면 됩니다:</p>
+            <code class="endpoint">떨어지고, 끼이고, 깔린 (이강일) — fallen-caught-crushed.work</code>
         </div>
 
         <a class="back" id="back-link" href="./">← 돌아가기</a>
 
-        <footer id="data-footer">© 2026 이강일(Gangil, Yi) · 데이터: CC BY-NC-SA 4.0</footer>
+        <footer id="data-footer">© 2026 이강일(Gangil, Yi). All rights reserved.</footer>
     </main>
     <script>
         // about.html과 같은 규칙 — 앱에서 왔으면 그 화면(정보 뷰/상세)으로 되돌아간다.
