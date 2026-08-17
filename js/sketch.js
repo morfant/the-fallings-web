@@ -388,11 +388,13 @@ function _stoneRand(v) {
 // (작가 요청 2026-08-17 — Truchet처럼 미로 같은 결이 생긴다).
 // dark=true면 어두운 돌 + 밝은 선 (흰 글자를 위한 반전 변형, ?stone=hatchdark)
 function _stoneHatch(v, w, H, cell, scale, dark = false) {
-    const [c, ctx] = _stoneCanvas(w, H, scale, dark ? "hsl(228, 8%, 15%)" : "hsl(224, 7%, 74%)");
+    // 흰 돌에 검은 획 (작가 조율 2026-08-17: 배경 더 희게, 선 더 검게).
+    // 값 3(비트 11) = 빈 셀 — 획 밀도가 ~25% 낮아지고, 비어 있음 자체가 값이라 복원 유지.
+    const [c, ctx] = _stoneCanvas(w, H, scale, dark ? "hsl(228, 8%, 15%)" : "hsl(220, 12%, 88%)");
     const bits = _recordBits(v), rand = _stoneRand(v);
     const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
     const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
-    ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : "hsl(228, 8%, 34%)";
+    ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : "hsl(228, 12%, 12%)";
     ctx.lineWidth = Math.max(1, cell * 0.18);
     ctx.lineCap = "round";
     const m = 0; // 선 끝이 셀 모서리에 닿는다
@@ -400,12 +402,12 @@ function _stoneHatch(v, w, H, cell, scale, dark = false) {
     for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
         const isFull = col < fullCols && row < fullRows;
         const o = isFull && bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rand() * 4);
+        if (o === 3) continue; // 빈 셀 = 값 3
         const x = col * cell, y = row * cell;
         ctx.beginPath();
         if (o === 0) { ctx.moveTo(x + m, y + cell - m); ctx.lineTo(x + cell - m, y + m); }
         else if (o === 1) { ctx.moveTo(x + m, y + m); ctx.lineTo(x + cell - m, y + cell - m); }
-        else if (o === 2) { ctx.moveTo(x + m, y + cell / 2); ctx.lineTo(x + cell - m, y + cell / 2); }
-        else { ctx.moveTo(x + cell / 2, y + m); ctx.lineTo(x + cell / 2, y + cell - m); }
+        else { ctx.moveTo(x + m, y + cell / 2); ctx.lineTo(x + cell - m, y + cell / 2); }
         ctx.stroke();
     }
     return c;
