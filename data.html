@@ -26,7 +26,8 @@
             box-sizing: border-box;
         }
         #data-page h1 { font-size: 22px; font-weight: 700; margin-bottom: 36px; line-height: 1.5; }
-        #data-page h2 { font-size: 15px; font-weight: 700; margin: 34px 0 14px; color: var(--text); }
+        #data-page h2 { font-size: 15px; font-weight: 700; margin: 62px 0 14px; color: var(--text); }
+        #data-page .note h2:first-child { margin-top: 0; } /* 첫 소제목은 제목 간격 유지 */
         .note p {
             font-size: 14.5px;
             line-height: 1.95;
@@ -136,8 +137,8 @@
                     <tr><td>immigrant</td><td>이주노동자 여부·국적 (null이면 알려지지 않음)</td></tr>
                     <tr><td>accSummary</td><td>사고 요약 (기사 발췌가 아니라 사실만으로 새로 쓴 문장)</td></tr>
                     <tr><td>link</td><td>근거가 된 대표 기사 원문 링크</td></tr>
-                    <tr><td>pid</td><td>사람 식별자 (사고의 0번째 사람은 sha256(link) 앞 16자,
-                        i번째 사람은 sha256(link + ":" + i) 앞 16자)</td></tr>
+                    <tr><td>pid</td><td>이 사람을 가리키는 고유한 값 — 대표 기사 링크에서
+                        만들어지며, 같은 사람에게는 언제나 같은 값이 붙습니다</td></tr>
                     <tr><td>ofDeaths</td><td>그 사고의 전체 사망자 수 (1명이면 생략)</td></tr>
                 </table>
             </div>
