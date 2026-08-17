@@ -97,7 +97,7 @@ async function buildPostCard(v, summary, cssW, cssH) {
     ctx.textBaseline = "top";
 
     // 본문 — 넘치면 마지막 줄을 " …"로 마무리 (fitSummary와 같은 규칙)
-    const fs = 16 * scale;
+    const fs = 18 * scale;
     const lh = fs * 2.0;
     // 밝은 돌 위 검은 글자는 볼드 (작가 조율 2026-08-17) — 줄바꿈 측정 전에 폰트 확정
     ctx.font = `${graniteMode && !darkStone ? "700 " : ""}${fs}px ${_CARD_FONT}`;
@@ -113,7 +113,7 @@ async function buildPostCard(v, summary, cssW, cssH) {
     let y = pad + Math.max(0, (availH - lines.length * lh) / 2);
     // 잉크 위계 (작가 선택 2026-08-17) — 획은 중간 회색, 글자가 가장 진한 검정.
     // 띠·판 없이 글자 색만으로 읽힌다. 어두운 돌·금속은 밝은 글자.
-    ctx.fillStyle = graniteMode && !darkStone ? "#0a0a0d" : "#e8e8ee";
+    ctx.fillStyle = graniteMode && !darkStone ? "#0d0c0e" : "#e8e8ee";
     lines.forEach((ln, i) => {
         _drawJustified(ctx, ln, x0, y + (lh - fs) / 2, maxW, i === lines.length - 1);
         y += lh;

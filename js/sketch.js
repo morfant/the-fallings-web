@@ -798,18 +798,21 @@ function drawBlockLabels(cx, cy, v) {
     const lightStone = GRANITE_ON && !STONE_DARK;
     noStroke();
     textAlign(LEFT, CENTER);
-    if (lightStone) textStyle(BOLD); // 밝은 돌 위 검은 글자는 볼드로 (작가 조율)
+    // if (lightStone) textStyle(BOLD); // 밝은 돌 위 검은 글자는 볼드로 (작가 조율)
 
     // 윗줄: 날짜 요일 장소
     textSize(18);
-    if (lightStone) fill(10, 10, 13);
+    // if (lightStone) fill(10, 10, 13);
+    // if (lightStone) fill(136, 159, 222);
+    if (lightStone) fill(40, 40, 40);
     else fill(...CONFIG.COLORS.text);
     text(whenWhere, leftX, yTop);
 
     // 아랫줄: 사인 · 연령 · 이주노동자 — 그래도 넘치면 뒤에서부터 덜어낸다
     if (infoParts.length) {
         textSize(16);
-        if (lightStone) fill(38, 39, 45);
+        // if (lightStone) fill(38, 39, 45);
+        if (lightStone) fill(40);
         else fill(...CONFIG.COLORS.textDim);
         const room = rightX - 12 - leftX;
         let parts = infoParts.slice();
