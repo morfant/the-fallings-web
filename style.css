@@ -363,9 +363,19 @@ body.info-open #follow-btn { display: none; }
 }
 #post-subscribe:hover,
 #panel-subscribe:hover { text-decoration-color: var(--accent); }
-/* 정보 뷰의 알림받기(✕ 왼쪽, right 36px)와 같은 가로 지점에 오도록 상세 뷰 쪽을 보정.
-   세로는 같은 줄의 ←와 맞추는 게 우선이라 보정하지 않는다 (작가 피드백 2026-08-17). */
-#post-subscribe { margin-right: 38px; }
+/* 상세 뷰 우상단도 메인과 같은 배치 — 알림받기 + '+' (작가 요청 2026-08-17).
+   '+'가 정보 뷰 ✕의 모서리 자리를 차지하므로 알림받기 여백은 flex 간격으로. */
+#post-topbar-right { display: flex; align-items: center; gap: 21px; }
+#post-info {
+    background: none;
+    border: none;
+    padding: 4px 8px 8px; /* 터치 여유 — 정보 뷰 #info-toggle과 동일 */
+    margin-right: -12px; /* 정보 뷰 ✕와 같은 모서리 지점 (실측 보정) */
+    font-size: 22px;
+    line-height: 1;
+    color: var(--text);
+    cursor: pointer;
+}
 
 /* 패널 우상단 알림받기 — 상세(포스트 뷰) 상단바와 같은 자리.
    데스크톱은 패널이 늘 열려 있으므로 항상 표시. 모바일은 정보 뷰가 열려 있는

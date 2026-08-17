@@ -640,6 +640,15 @@ function setupDOM() {
         if (document.body.classList.contains("info-open")) closeInfo();
         else openInfo();
     });
+    // 상세 뷰 우상단 '+' — 상세를 닫고 정보 뷰로 (작가 요청 2026-08-17).
+    // closeDetail()의 history.back() 경유는 popstate와 경합하므로 직접 정리 후 연다.
+    document.getElementById("post-info").addEventListener("click", () => {
+        hideDetailUI();
+        if (location.hash.startsWith("#/record")) {
+            history.replaceState(null, "", location.pathname + location.search);
+        }
+        openInfo();
+    });
     document.querySelector("#panel-header h1").addEventListener("click", () => {
         if (!isMobileView()) return;
         if (document.body.classList.contains("info-open")) closeInfo();
