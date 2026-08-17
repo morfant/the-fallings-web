@@ -609,6 +609,7 @@ function setupDOM() {
     document.getElementById("ack-btn").addEventListener("click", onAckClick);
     document.getElementById("post-ack-btn").addEventListener("click", onAckClick);
     document.getElementById("post-share-btn").addEventListener("click", onShareClick);
+    document.getElementById("project-share").addEventListener("click", onProjectShareClick);
     document.getElementById("post-back").addEventListener("click", closeDetail);
 
     const overlay = document.getElementById("detail-overlay");
@@ -917,6 +918,27 @@ async function onShareClick() {
     }
     const ok = await copyText(url);
     if (ok) flashShareMsg();
+}
+
+// 프로젝트 자체 공유 — 정보 뷰의 '알리기' (작가 선택 A, 2026-08-17).
+// 문구에 누적 숫자를 넣어 홍보가 아니라 증언이 되게 한다.
+async function onProjectShareClick(e) {
+    e.preventDefault();
+    const url = `${location.origin}${location.pathname}`;
+    const n = victims.length;
+    const text = `떨어지고, 끼이고, 깔린 — 일하다 죽은 사람들의 기록.${n ? ` 지금까지 ${n}명.` : ""}`;
+    if (navigator.share) {
+        try { await navigator.share({ title: "떨어지고, 끼이고, 깔린", text, url }); }
+        catch { /* 사용자가 공유 시트를 닫음 */ }
+        return;
+    }
+    const ok = await copyText(`${text}\n${url}`);
+    if (ok) {
+        const msg = document.getElementById("project-share-msg");
+        msg.hidden = false;
+        clearTimeout(onProjectShareClick._t);
+        onProjectShareClick._t = setTimeout(() => { msg.hidden = true; }, 1800);
+    }
 }
 
 async function copyText(t) {

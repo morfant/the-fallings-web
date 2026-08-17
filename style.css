@@ -212,6 +212,8 @@ html, body {
    '이 숫자는 전부가 아닙니다' 문단들은 이 작업의 요약 설명이고 about.html이 그 전문이라,
    공지의 마지막에 "더 읽기"로 잇는다. 공지가 숨는 모바일 접힘 상태에서는 함께 숨는다. */
 #about-sec { margin-top: 14px; text-align: right; }
+#about-sec .about-go + .about-go { margin-left: 16px; }
+#project-share-msg { font-size: 12px; color: var(--text-dim); margin-right: 12px; }
 /* 버튼이 아니라 밑줄 텍스트 — 모바일 제목(정보 뷰 토글)과 같은 어법 */
 .about-go {
     display: inline-block;

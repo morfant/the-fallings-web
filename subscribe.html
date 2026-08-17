@@ -12,7 +12,7 @@
     <meta property="og:url" content="https://fallen-caught-crushed.work/subscribe.html">
     <meta property="og:image" content="https://fallen-caught-crushed.work/img/og-card.png">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="stylesheet" href="style.css?v=43b080fc" />
+    <link rel="stylesheet" href="style.css?v=4b34db0a" />
     <style>
         body { overflow-y: auto; }
         #sub-page {
@@ -65,6 +65,22 @@
         <h1>알림 받기</h1>
         <p>새로운 죽음이 기록될 때 알림을 받으실 수 있습니다.</p>
 
+        <div class="ch-card" id="push-card">
+            <h2>이 화면이 직접 알립니다</h2>
+            <p class="ch-desc">별도의 앱이나 계정 없이, 이 기록이 브라우저로 직접 푸시 알림을 보냅니다.<br>
+                저장되는 것은 익명의 수신 주소뿐입니다.</p>
+            <ol id="push-ios-guide" hidden>
+                <li>사파리 하단의 <b>공유 버튼</b>(<span aria-hidden="true">&#x2BAD;</span>)을 누르고</li>
+                <li><b>홈 화면에 추가</b>를 선택한 뒤</li>
+                <li>홈 화면에 생긴 아이콘으로 열어, 이 페이지에서 <b>알림 켜기</b>를 누르세요.</li>
+            </ol>
+            <p class="ch-desc" id="push-ios-note" hidden>아이폰·아이패드는 홈 화면에 추가된
+                화면에서만 푸시를 받을 수 있습니다. 한 번 추가해 두면 텔레그램이나 ntfy 없이
+                알림이 옵니다.</p>
+            <button class="ch-go" id="push-btn" hidden>알림 켜기</button>
+            <p class="ch-desc" id="push-status" style="margin:12px 0 0" hidden></p>
+        </div>
+
         <div class="ch-card">
             <h2>텔레그램</h2>
             <p class="ch-desc">텔레그램을 쓰고 있다면 채널에 들어오는 것만으로 알림 구독이 시작됩니다.<br>
@@ -84,6 +100,13 @@
             <code class="sub-topic">fallen-caught-crushed-kr-xmnu</code>
         </div>
 
+        <div class="ch-card">
+            <h2>RSS</h2>
+            <p class="ch-desc">피드 리더를 쓰신다면 아래 주소를 구독하세요.
+                구독자에 대한 어떤 정보도 이쪽에 남지 않는 방식입니다.</p>
+            <code class="sub-topic">https://fallen-caught-crushed.work/feed.xml</code>
+        </div>
+
         <a class="back" id="back-link" href="./">← 돌아가기</a>
     </main>
     <script>
@@ -98,6 +121,92 @@
                 history.back();
             }
         });
+    </script>
+    <script>
+        // ---- Web Push (2026-08-17) ----
+        // 구독 저장은 애도 카운터 워커의 /push/subscribe (D1) — 익명 엔드포인트만 저장.
+        // 발송은 GitHub Actions(notify_subscribers.mjs)가 VAPID 개인키로. 공개키는 아래.
+        const PUSH_WORKER = "https://the-fallings-acks.thefallings.workers.dev";
+        const VAPID_PUBLIC_KEY = "BOouMWDuCOCoypF2Nml3Dw89zN4B6tjd4t_y6z7t1xe9SDTAQqUTJ5yP7KFYBTC4iaxjzlyM0NwRacPjiog8FxY";
+
+        const $btn = document.getElementById("push-btn");
+        const $status = document.getElementById("push-status");
+        const $iosGuide = document.getElementById("push-ios-guide");
+        const $iosNote = document.getElementById("push-ios-note");
+
+        function b64ToU8(s) {
+            const pad = "=".repeat((4 - (s.length % 4)) % 4);
+            const raw = atob((s + pad).replace(/-/g, "+").replace(/_/g, "/"));
+            return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+        }
+        function setStatus(msg) { $status.textContent = msg; $status.hidden = !msg; }
+
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+            || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const isStandalone = navigator.standalone === true
+            || matchMedia("(display-mode: standalone)").matches;
+        const pushSupported = "serviceWorker" in navigator && "PushManager" in window
+            && "Notification" in window;
+
+        async function refreshBtn(reg) {
+            const sub = await reg.pushManager.getSubscription();
+            $btn.textContent = sub ? "알림 끄기" : "알림 켜기";
+            $btn.dataset.on = sub ? "1" : "";
+            return sub;
+        }
+
+        async function initPush() {
+            if (isIOS && !isStandalone) {
+                // 아이폰 사파리 탭에서는 푸시 불가 — 홈 화면 추가 안내를 보여준다
+                $iosGuide.hidden = false;
+                $iosNote.hidden = false;
+                return;
+            }
+            if (!pushSupported) {
+                setStatus("이 브라우저는 푸시 알림을 지원하지 않습니다.");
+                return;
+            }
+            const reg = await navigator.serviceWorker.register("sw.js");
+            await refreshBtn(reg);
+            $btn.hidden = false;
+
+            $btn.addEventListener("click", async () => {
+                $btn.disabled = true;
+                try {
+                    let sub = await reg.pushManager.getSubscription();
+                    if (sub) { // 끄기
+                        await fetch(`${PUSH_WORKER}/push/unsubscribe`, {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ endpoint: sub.endpoint }),
+                        }).catch(() => { });
+                        await sub.unsubscribe();
+                        setStatus("알림을 껐습니다.");
+                    } else { // 켜기
+                        const perm = await Notification.requestPermission();
+                        if (perm !== "granted") {
+                            setStatus("알림 권한이 허용되지 않았습니다. 브라우저 설정에서 허용할 수 있습니다.");
+                            return;
+                        }
+                        sub = await reg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: b64ToU8(VAPID_PUBLIC_KEY),
+                        });
+                        const res = await fetch(`${PUSH_WORKER}/push/subscribe`, {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(sub.toJSON()),
+                        });
+                        if (!res.ok) throw new Error(`구독 저장 실패 (${res.status})`);
+                        setStatus("알림이 켜졌습니다. 새로운 죽음이 기록되면 이 기기로 알립니다.");
+                    }
+                } catch (e) {
+                    setStatus(`실패했습니다: ${e.message || e}`);
+                } finally {
+                    await refreshBtn(reg);
+                    $btn.disabled = false;
+                }
+            });
+        }
+        initPush().catch((e) => setStatus(`초기화 실패: ${e.message || e}`));
     </script>
 </body>
 </html>
