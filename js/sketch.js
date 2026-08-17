@@ -511,6 +511,35 @@ function _stoneWave(v, w, H, cell, scale) {
     return c;
 }
 
+// 지층결 — 가로로 흐르는 선의 경사가 값 (작가 제안 2026-08-17).
+// 행마다 보이지 않는 기준선을 두고, 구간(segW)마다 선의 끝점 높이를 기준선 주변
+// 4단계(2비트) 중 하나로 정한다. 기울기는 높이 사이의 전이에서 자연히 생기고,
+// 선은 기준선에 묶여 표류하지 않는다. 판독: 구간 경계마다 선의 높이 → 단계.
+function _stoneStrata(v, w, H, cell, scale) {
+    const [c, ctx] = _stoneCanvas(w, H, scale, "hsl(220, 12%, 88%)");
+    const bits = _recordBits(v), rand = _stoneRand(v);
+    const segW = cell, rowH = cell * 1.3;
+    const segs = Math.floor(w / segW);
+    const lvStep = rowH * 0.22; // 단계 간격 — 행 높이의 22%씩, 최대 ±0.33행
+    ctx.strokeStyle = "hsl(228, 12%, 12%)";
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    let bi = 0;
+    for (let base = rowH * 0.7; base + rowH * 0.35 < H; base += rowH) {
+        ctx.lineWidth = Math.max(1, cell * 0.14) * (0.85 + rand() * 0.3); // 행마다 굵기 미세 변주
+        ctx.beginPath();
+        ctx.moveTo(0, base); // 시작은 기준선
+        for (let sIdx = 0; sIdx < segs; sIdx++) {
+            const lv = bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rand() * 4);
+            // 미세 떨림은 단계 간격의 ±9% — 판독 여유(±50%) 안
+            const y1 = base + (lv - 1.5) * lvStep + (rand() - 0.5) * lvStep * 0.18;
+            ctx.lineTo((sIdx + 1) * segW, y1);
+        }
+        ctx.stroke();
+    }
+    return c;
+}
+
 // 문법 선택 — sharecard.js(상세 카드 배경)도 이 함수를 쓴다
 function stoneRender(v, w, H, cell, scale) {
     switch (STONE_STYLE) {
@@ -520,6 +549,7 @@ function stoneRender(v, w, H, cell, scale) {
         case "braille": return _stoneBraille(v, w, H, cell, scale);
         case "morse": return _stoneMorse(v, w, H, cell, scale);
         case "wave": return _stoneWave(v, w, H, cell, scale);
+        case "strata": return _stoneStrata(v, w, H, cell, scale);
         default: return graniteRender(v, w, H, cell, scale); // mosaic
     }
 }
