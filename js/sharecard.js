@@ -64,7 +64,13 @@ async function buildPostCard(v, summary, cssW, cssH) {
     const graniteMode = typeof GRANITE_ON !== "undefined" && GRANITE_ON;
     const darkStone = typeof STONE_DARK !== "undefined" && STONE_DARK;
     if (graniteMode) {
-        const stone = stoneRender(v, cssW, cssH, GRANITE.CELL_CARD, scale);
+        // 셀 크기를 화면에 맞춰 자동 조정 — 카드가 화면 크기로 렌더되므로 고정 셀이면
+        // 기기마다 담기는 양이 달라진다(작가 지적 2026-08-17: 데스크톱만 전문 수록).
+        // 어떤 기기에서든 기록 전문이 담기게, 작은 화면일수록 결이 촘촘해진다 (하한 4px).
+        let cardCell = GRANITE.CELL_CARD;
+        const needCells = Math.ceil(_recordBits(v).length / 2);
+        while (cardCell > 4 && Math.floor(cssW / cardCell) * Math.floor(cssH / cardCell) < needCells) cardCell--;
+        const stone = stoneRender(v, cssW, cssH, cardCell, scale);
         ctx.drawImage(stone, 0, 0, W, H);
         // 글자를 띄우는 얇은 장막 — 밝은 돌엔 흰 장막, 어두운 돌엔 검은 장막
         ctx.fillStyle = darkStone ? "rgba(0, 0, 0, 0.30)" : "rgba(255, 255, 255, 0.26)";
