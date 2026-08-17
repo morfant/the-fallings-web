@@ -47,4 +47,20 @@ function getParam(name) {
 // style.css의 html.standalone 규칙이 이 클래스를 받아 카드 크기를 보정한다.
 if (navigator.standalone === true) document.documentElement.classList.add("standalone");
 
+// 상세보기(/#/record/…)를 열어둔 채 홈화면에 추가하면 iOS가 그 해시까지 시작 주소로
+// 굳힌다 — 앱을 열 때마다 그 죽음의 상세가 뜬다 (작가 실기기 2026-08-17). standalone
+// "시작"(동일 출처 referrer 없음 + 히스토리 1)이고 딥링크 표식(?n=1 — 알림·피드 링크가
+// 붙임)이 없으면 해시를 지워 메인에서 시작한다. 알림 클릭 딥링크는 표식이 있어 통과.
+(function () {
+    const standalone = navigator.standalone === true
+        || matchMedia("(display-mode: standalone)").matches;
+    let fromApp = false;
+    try { fromApp = new URL(document.referrer).origin === location.origin; } catch (e) { }
+    const marked = new URLSearchParams(location.search).has("n");
+    if (standalone && !fromApp && history.length <= 1 && !marked
+        && (location.hash || "").startsWith("#/")) {
+        history.replaceState(null, "", location.pathname);
+    }
+})();
+
 const DEBUG = getParam("debug") === "1";
