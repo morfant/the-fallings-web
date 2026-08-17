@@ -308,7 +308,8 @@ const GRANITE_ON = !!STONE_STYLE;
 const STONE_DARK = STONE_STYLE === "hatchdark";
 const GRANITE = {
     CELL: 6, // px — 블럭 셀 크기
-    CELL_CARD: 12, // px — 상세 카드 배경 셀 (같은 돌의 확대판)
+    CELL_CARD: 10, // px — 상세 카드(비석) 셀. 10px = 약 960바이트 — 최장 요약(300자)까지
+                   // 모든 기록이 전문 수록된다 (작가 결정 2026-08-17, 12px에서 축소)
     // 4단계 회색 (금속 톤 hsl 228 주변) — 인덱스가 곧 2비트 값.
     // 조율 이력: 9~21%(은은) → 7~30%(또렷하게) → 12~40%(밝게) → 30~85%("흰색에 가깝게").
     // 밝은 돌에는 글자를 어둡게 새긴다 (drawBlockLabels·sharecard의 GRANITE_ON 분기).
