@@ -122,7 +122,9 @@ async function buildPostCard(v, summary, cssW, cssH) {
     let y = pad + Math.max(0, (availH - lines.length * lh) / 2);
     // 잉크 위계 (작가 선택 2026-08-17) — 획은 중간 회색, 글자가 가장 진한 검정.
     // 띠·판 없이 글자 색만으로 읽힌다. 어두운 돌·금속은 밝은 글자.
-    ctx.fillStyle = graniteMode && !darkStone ? "#0d0c0e" : "#e8e8ee";
+    // 본문 글자색 = 맨 돌의 진한 획(hsl 228 7% 32%)보다 살짝 더 진하게 (작가 조율 2026-08-17)
+    // — 글과 새김이 같은 잉크의 두 농도로 읽힌다
+    ctx.fillStyle = graniteMode && !darkStone ? "hsl(228, 8%, 26%)" : "#e8e8ee";
     lines.forEach((ln, i) => {
         _drawJustified(ctx, ln, x0, y + (lh - fs) / 2, maxW, i === lines.length - 1);
         y += lh;
