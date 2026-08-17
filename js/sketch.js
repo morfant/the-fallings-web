@@ -301,9 +301,11 @@ function bevelGradient(H) { // 입체감: 윗면 하이라이트 → 아랫면 �
 // 진짜 QR은 넣지 않는다 (작가 확정 — 파인더·대비가 곧 'QR스러움'이라 화강암과 양립 불가).
 const GRANITE_ON = typeof getParam === "function" && !!getParam("granite");
 const GRANITE = {
-    CELL: 6, // px — 셀 크기
-    // 은은한 4단계 회색 (현재 금속 톤 hsl 228 주변) — 인덱스가 곧 2비트 값
-    SHADES: ["hsl(228, 6%, 9%)", "hsl(228, 6%, 13%)", "hsl(228, 5%, 17%)", "hsl(226, 5%, 21%)"],
+    CELL: 6, // px — 블럭 셀 크기
+    CELL_CARD: 12, // px — 상세 카드 배경 셀 (같은 돌의 확대판)
+    // 4단계 회색 (금속 톤 hsl 228 주변) — 인덱스가 곧 2비트 값.
+    // 대비는 작가 피드백으로 조율 중 (2026-08-17 "좀 더 또렷하게" → 9~21%에서 확대)
+    SHADES: ["hsl(228, 6%, 7%)", "hsl(228, 6%, 14%)", "hsl(228, 5%, 22%)", "hsl(226, 5%, 30%)"],
     CACHE_MAX: 80, // 보이는 범위 + 여유 (LRU)
 };
 
@@ -316,25 +318,15 @@ function _recordBits(v) {
     return bits;
 }
 
-const _graniteCache = new Map(); // "victimIdx:w" -> offscreen canvas (LRU)
-function graniteCanvas(victimIdx, w, H) {
-    const key = `${victimIdx}:${Math.round(w)}`;
-    let c = _graniteCache.get(key);
-    if (c) { // LRU 갱신
-        _graniteCache.delete(key);
-        _graniteCache.set(key, c);
-        return c;
-    }
-    const v = victims[victimIdx];
-    const rand = _mulberry32(_flowerHash(String(v?.pid || v?.link || victimIdx)));
+// 핵심 렌더 — 블럭과 상세 카드 배경이 공유한다 (같은 돌, 셀 크기만 다름).
+// 데이터는 잘리지 않은 온전한 셀에만 새긴다 — 가장자리의 부분 셀은 화면 캡처
+// 해독이 불안정하므로 채움 전용 (해독 규칙: 온전한 셀만, 행 우선, 좌상단부터).
+function graniteRender(v, w, H, cell, scale) {
+    const rand = _mulberry32(_flowerHash(String(v?.pid || v?.link || "")));
     const bits = _recordBits(v);
-    const cell = GRANITE.CELL;
     const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
-    // 데이터는 잘리지 않은 온전한 셀에만 새긴다 — 가장자리의 부분 셀은 화면 캡처
-    // 해독이 불안정하므로 채움 전용 (해독 규칙: 온전한 셀만, 행 우선, 좌상단부터)
     const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
-    const scale = 2; // 레티나
-    c = document.createElement("canvas");
+    const c = document.createElement("canvas");
     c.width = Math.ceil(w * scale);
     c.height = Math.ceil(H * scale);
     const ctx = c.getContext("2d");
@@ -350,6 +342,19 @@ function graniteCanvas(victimIdx, w, H) {
             ctx.fillRect(col * cell, row * cell, cell, cell);
         }
     }
+    return c;
+}
+
+const _graniteCache = new Map(); // "victimIdx:w" -> offscreen canvas (LRU)
+function graniteCanvas(victimIdx, w, H) {
+    const key = `${victimIdx}:${Math.round(w)}`;
+    let c = _graniteCache.get(key);
+    if (c) { // LRU 갱신
+        _graniteCache.delete(key);
+        _graniteCache.set(key, c);
+        return c;
+    }
+    c = graniteRender(victims[victimIdx], w, H, GRANITE.CELL, 2);
     if (_graniteCache.size >= GRANITE.CACHE_MAX) {
         _graniteCache.delete(_graniteCache.keys().next().value); // 가장 오래된 것 제거
     }

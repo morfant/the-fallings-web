@@ -56,13 +56,22 @@ async function buildPostCard(v, summary, cssW, cssH) {
     c.width = W; c.height = H;
     const ctx = c.getContext("2d");
 
-    // 배경 — 블럭과 동일 공식: 가로 미러 그라데이션 + 수직 광 오버레이 (style.css #post-image)
-    let g = ctx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0, "hsl(228, 6%, 11%)");
-    g.addColorStop(0.5, "hsl(228, 7%, 27%)");
-    g.addColorStop(1, "hsl(228, 6%, 11%)");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    g = ctx.createLinearGradient(0, 0, 0, H);
+    // 배경 — 블럭과 동일 공식: 가로 미러 그라데이션 + 수직 광 오버레이 (style.css #post-image).
+    // 화강암 모드(?granite=1)에서는 그 사람의 데이터 모자이크 확대판이 배경이 된다 —
+    // 블럭과 같은 돌 (graniteRender는 sketch.js, 로드 순서상 호출 시점엔 존재).
+    if (typeof GRANITE_ON !== "undefined" && GRANITE_ON) {
+        const stone = graniteRender(v, cssW, cssH, GRANITE.CELL_CARD, scale);
+        ctx.drawImage(stone, 0, 0, W, H);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.22)"; // 텍스트 가독을 위한 얇은 장막
+        ctx.fillRect(0, 0, W, H);
+    } else {
+        let g0 = ctx.createLinearGradient(0, 0, W, 0);
+        g0.addColorStop(0, "hsl(228, 6%, 11%)");
+        g0.addColorStop(0.5, "hsl(228, 7%, 27%)");
+        g0.addColorStop(1, "hsl(228, 6%, 11%)");
+        ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
+    }
+    let g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "rgba(255,255,255,0.10)");
     g.addColorStop(0.18, "rgba(255,255,255,0.02)");
     g.addColorStop(0.55, "rgba(0,0,0,0)");
