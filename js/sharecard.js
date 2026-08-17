@@ -63,34 +63,39 @@ async function buildPostCard(v, summary, cssW, cssH) {
     // 블럭과 같은 돌 (graniteRender는 sketch.js, 로드 순서상 호출 시점엔 존재).
     const graniteMode = typeof GRANITE_ON !== "undefined" && GRANITE_ON;
     const darkStone = typeof STONE_DARK !== "undefined" && STONE_DARK;
+    const overlayV = () => { // 수직 광 오버레이 (style.css #post-image와 동일 공식)
+        const g = ctx.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, "rgba(255,255,255,0.10)");
+        g.addColorStop(0.18, "rgba(255,255,255,0.02)");
+        g.addColorStop(0.55, "rgba(0,0,0,0)");
+        g.addColorStop(1, "rgba(0,0,0,0.26)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+    };
+    let bareUrl;
     if (graniteMode) {
-        // 셀 크기를 화면에 맞춰 자동 조정 — 카드가 화면 크기로 렌더되므로 고정 셀이면
-        // 기기마다 담기는 양이 달라진다(작가 지적 2026-08-17: 데스크톱만 전문 수록).
-        // 어떤 기기에서든 기록 전문이 담기게, 작은 화면일수록 결이 촘촘해진다 (하한 4px).
+        // 셀 크기를 화면에 맞춰 자동 조정 — 어떤 기기에서든 기록 전문이 담기게 (하한 4px)
         let cardCell = GRANITE.CELL_CARD;
         const needCells = Math.ceil(_recordBits(v).length / 2);
         while (cardCell > 4 && Math.floor(cssW / cardCell) * Math.floor(cssH / cardCell) < needCells) cardCell--;
-        const stone = stoneRender(v, cssW, cssH, cardCell, scale);
-        ctx.drawImage(stone, 0, 0, W, H);
-        // 글자를 띄우는 얇은 장막 — 밝은 돌엔 흰 장막, 어두운 돌엔 검은 장막
-        ctx.fillStyle = darkStone ? "rgba(0, 0, 0, 0.30)" : "rgba(255, 255, 255, 0.26)";
-        ctx.fillRect(0, 0, W, H);
+        // ① 맨 돌 (토글용) — 진한 획: 글이 걷히면 새김이 또렷해진다 (작가 구성 2026-08-17)
+        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardBare), 0, 0, W, H);
+        overlayV();
+        bareUrl = c.toDataURL("image/png");
+        // ② 본문용 — 흐린 획: 글자가 주인공
+        ctx.clearRect(0, 0, W, H);
+        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardText), 0, 0, W, H);
+        if (darkStone) { ctx.fillStyle = "rgba(0, 0, 0, 0.30)"; ctx.fillRect(0, 0, W, H); }
+        overlayV();
     } else {
         let g0 = ctx.createLinearGradient(0, 0, W, 0);
         g0.addColorStop(0, "hsl(228, 6%, 11%)");
         g0.addColorStop(0.5, "hsl(228, 7%, 27%)");
         g0.addColorStop(1, "hsl(228, 6%, 11%)");
         ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
+        overlayV();
+        bareUrl = c.toDataURL("image/png");
     }
-    let g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "rgba(255,255,255,0.10)");
-    g.addColorStop(0.18, "rgba(255,255,255,0.02)");
-    g.addColorStop(0.55, "rgba(0,0,0,0)");
-    g.addColorStop(1, "rgba(0,0,0,0.26)");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-
-    // 글자를 얹기 전의 '맨 돌' 스냅샷 — 카드를 탭하면 글/돌을 오가는 토글용 (작가 요청 2026-08-17)
-    const bareUrl = c.toDataURL("image/png");
 
     // 내용(사고 경위)만 담는다 — 날짜·꽃·작품명 없이 (작가 결정 2026-08-09)
     const pad = 26 * scale;
