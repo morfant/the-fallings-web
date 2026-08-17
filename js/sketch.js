@@ -640,15 +640,10 @@ function setupDOM() {
         if (document.body.classList.contains("info-open")) closeInfo();
         else openInfo();
     });
-    // 상세 뷰 우상단 '+' — 상세를 닫고 정보 뷰로 (작가 요청 2026-08-17).
-    // closeDetail()의 history.back() 경유는 popstate와 경합하므로 직접 정리 후 연다.
-    document.getElementById("post-info").addEventListener("click", () => {
-        hideDetailUI();
-        if (location.hash.startsWith("#/record")) {
-            history.replaceState(null, "", location.pathname + location.search);
-        }
-        openInfo();
-    });
+    // 상세 뷰 우상단 '+' — 정보 뷰를 상세 위에 얹는다 (작가 요청 2026-08-17).
+    // 상세를 닫지 않으므로 정보 뷰의 ✕(= history.back)가 보던 상세로 그대로 돌아간다.
+    // 겹침은 body.info-open #panel의 z-index가 post-view 위로 올라가며 성립.
+    document.getElementById("post-info").addEventListener("click", openInfo);
     document.querySelector("#panel-header h1").addEventListener("click", () => {
         if (!isMobileView()) return;
         if (document.body.classList.contains("info-open")) closeInfo();
