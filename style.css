@@ -25,7 +25,8 @@ html, body {
     height: 100%;
     background: var(--bg);
     color: var(--text);
-    font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    /* IBM Plex Sans KR 확정 (작가 선택 2026-08-17) — fonts/plex.css 자체 호스팅 */
+    font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
     overscroll-behavior: none;
 }
 

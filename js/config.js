@@ -57,7 +57,9 @@ const _FONT_CHOICES = {
     pretendard: { css: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css", family: '"Pretendard Variable", Pretendard' },
     plex: { css: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;700&display=swap", family: '"IBM Plex Sans KR"' },
 };
-let APP_FONT = '"Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif';
+// 기본 = IBM Plex Sans KR (작가 확정 2026-08-17, fonts/plex.css 자체 호스팅).
+// ?font= 플래그는 비교용으로 유지 — 지정 시 그 서체가 앞에 얹힌다.
+let APP_FONT = '"IBM Plex Sans KR", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif';
 {
     const pick = _FONT_CHOICES[getParam("font")];
     if (pick) {
