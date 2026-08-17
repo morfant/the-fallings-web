@@ -53,17 +53,6 @@ html, body {
     gap: 24px;
 }
 
-#panel-footer {
-    margin-top: auto; /* 통계가 짧을 때도 패널 바닥에 붙는다 */
-    padding-top: 16px;
-    font-size: 11px;
-    line-height: 1.7;
-    color: var(--text-dim);
-    text-align: center;
-}
-#panel-footer a { color: #7ea7cc; text-decoration: none; }
-#panel-footer a:hover { text-decoration: underline; }
-
 #panel-header h1 {
     font-size: 22px;
     font-weight: 700;
@@ -208,13 +197,15 @@ html, body {
 .month-labels span { flex: 1; text-align: center; font-size: 9.5px; color: var(--text-dim); }
 
 #panel-footer {
-    margin-top: auto;
+    margin-top: auto; /* 통계가 짧을 때도 패널 바닥에 붙는다. 구분선 없이 (작가 결정 2026-08-17) */
     padding-top: 20px;
-    border-top: 1px solid var(--line);
     font-size: 11px;
     line-height: 1.7;
     color: var(--text-dim);
+    text-align: center;
 }
+#panel-footer a { color: #7ea7cc; text-decoration: none; }
+#panel-footer a:hover { text-decoration: underline; }
 
 /* ---- 이 작업에 대하여 (공지 블록 끝 — 2026-08-16 재배치) ----
    '이 숫자는 전부가 아닙니다' 문단들은 이 작업의 요약 설명이고 about.html이 그 전문이라,
@@ -355,17 +346,22 @@ body.info-open #follow-btn { display: none; }
     cursor: pointer;
 }
 #post-back:hover { color: #fff; }
+/* 알림받기는 두 뷰 모두 같은 모양·같은 위치 — .about-go와 같은 밑줄 텍스트 링크.
+   버튼은 정보 뷰에서 혼자 튀었고, 같은 행동이 뷰마다 다른 모양이면 다른 기능처럼
+   읽힌다 (작가 결정 2026-08-17). 위치는 우상단에서 ✕ 하나만큼 안쪽으로 통일. */
 #post-subscribe,
 #panel-subscribe {
-    border: 1px solid var(--accent);
-    border-radius: 6px;
-    padding: 7px 14px;
     font-size: 13px;
     color: var(--text);
-    text-decoration: none;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--text-dim);
 }
 #post-subscribe:hover,
-#panel-subscribe:hover { background: rgba(95, 125, 156, 0.12); }
+#panel-subscribe:hover { text-decoration-color: var(--accent); }
+/* 정보 뷰의 알림받기(✕ 왼쪽, right 36px)와 같은 지점에 오도록 상세 뷰 쪽을 보정 */
+#post-subscribe { position: relative; top: -8px; margin-right: 38px; }
 
 /* 패널 우상단 알림받기 — 상세(포스트 뷰) 상단바와 같은 자리.
    데스크톱은 패널이 늘 열려 있으므로 항상 표시. 모바일은 정보 뷰가 열려 있는
