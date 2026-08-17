@@ -395,19 +395,28 @@ function _stoneHatch(v, w, H, cell, scale, dark = false) {
     const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
     const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
     ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : "hsl(228, 12%, 12%)";
-    ctx.lineWidth = Math.max(1, cell * 0.18);
     ctx.lineCap = "round";
-    const m = 0; // 선 끝이 셀 모서리에 닿는다
+    const baseW = Math.max(1, cell * 0.18);
+    // 손떨림 — 의미(방향)는 양자화되어 있으므로 표현은 흔들려도 복원이 유지된다
+    // (작가 피드백 2026-08-17: 기계적으로 정확해서 금방 단조로움). 판독은 범주만 읽는다.
+    const jEnd = cell * 0.07, jCurve = cell * 0.10; // 판독 여유 안에서의 떨림 (0.09/0.13도 ~550셀당 1셀 오독)
     let bi = 0;
     for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
         const isFull = col < fullCols && row < fullRows;
         const o = isFull && bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rand() * 4);
         if (o === 3) continue; // 빈 셀 = 값 3
         const x = col * cell, y = row * cell;
+        let x1, y1, x2, y2;
+        if (o === 0) { x1 = x; y1 = y + cell; x2 = x + cell; y2 = y; }
+        else if (o === 1) { x1 = x; y1 = y; x2 = x + cell; y2 = y + cell; }
+        else { x1 = x; y1 = y + cell / 2; x2 = x + cell; y2 = y + cell / 2; }
+        const j = () => (rand() - 0.5) * 2 * jEnd;
+        const mx = (x1 + x2) / 2 + (rand() - 0.5) * 2 * jCurve;
+        const my = (y1 + y2) / 2 + (rand() - 0.5) * 2 * jCurve;
+        ctx.lineWidth = baseW * (0.75 + rand() * 0.5);
         ctx.beginPath();
-        if (o === 0) { ctx.moveTo(x + m, y + cell - m); ctx.lineTo(x + cell - m, y + m); }
-        else if (o === 1) { ctx.moveTo(x + m, y + m); ctx.lineTo(x + cell - m, y + cell - m); }
-        else { ctx.moveTo(x + m, y + cell / 2); ctx.lineTo(x + cell - m, y + cell / 2); }
+        ctx.moveTo(x1 + j(), y1 + j());
+        ctx.quadraticCurveTo(mx, my, x2 + j(), y2 + j());
         ctx.stroke();
     }
     return c;
