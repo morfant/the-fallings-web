@@ -368,13 +368,17 @@ body.info-open #panel { z-index: 50; }
 #panel-subscribe:hover { text-decoration-color: var(--accent); }
 /* 상세 뷰 우상단도 메인과 같은 배치 — 알림받기 + '+' (작가 요청 2026-08-17).
    '+'가 정보 뷰 ✕의 모서리 자리를 차지하므로 알림받기 여백은 flex 간격으로. */
-#post-topbar-right { display: flex; align-items: center; gap: 21px; }
+#post-topbar-right { display: flex; align-items: center; gap: 13px; }
 #post-subscribe { position: relative; top: 3px; } /* 정보 뷰 알림받기와 같은 세로 지점 */
 #post-info {
     background: none;
     border: none;
     padding: 4px 8px 8px; /* 터치 여유 — 정보 뷰 #info-toggle과 동일 */
-    margin-right: -12px; /* 정보 뷰 ✕와 같은 모서리 지점 (실측 보정) */
+    /* 메인/정보 뷰 +와 같은 지점 (박스 r10, t10 실측 일치 — 회전 전 박스 기준.
+       ✕의 회전된 바운딩 박스에 맞추면 8px 오른쪽 위로 어긋난다, 작가 보고 2026-08-17) */
+    margin-right: -4px;
+    position: relative;
+    top: 5px;
     font-size: 22px;
     line-height: 1;
     color: var(--text);
