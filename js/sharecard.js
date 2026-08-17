@@ -106,8 +106,8 @@ async function buildPostCard(v, summary, cssW, cssH) {
     // 본문 — 넘치면 마지막 줄을 " …"로 마무리 (fitSummary와 같은 규칙)
     const fs = 17 * scale;
     const lh = fs * 2.0;
-    // 밝은 돌 위 검은 글자는 볼드 (작가 조율 2026-08-17) — 줄바꿈 측정 전에 폰트 확정
-    ctx.font = `${graniteMode && !darkStone ? "700 " : ""}${fs}px ${_CARD_FONT}`;
+    // 본문은 레귤러 (작가 조율 2026-08-17 — 볼드 제거, 흐린 획 위에선 레귤러로 충분)
+    ctx.font = `${fs}px ${_CARD_FONT}`;
     // 웹폰트(?font=) 로드 대기 — 카드는 1회 렌더라 폰트가 준비된 뒤 그려야 한다
     try { await document.fonts.load(ctx.font, summary.slice(0, 8)); } catch { /* 폴백 폰트로 진행 */ }
     const maxW = Math.min(W - pad * 2, fs * 32);
