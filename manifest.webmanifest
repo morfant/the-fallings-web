@@ -1,0 +1,18 @@
+{
+    "name": "떨어지고, 끼이고, 깔린",
+    "short_name": "떨어지고, 끼이고, 깔린",
+    "description": "일하다 죽은 사람들의 기록. 한 사람이 사망할 때마다 블럭 하나가 떨어져 쌓입니다.",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#0d0d0f",
+    "theme_color": "#0d0d0f",
+    "lang": "ko",
+    "icons": [
+        {
+            "src": "img/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ]
+}
