@@ -49,6 +49,18 @@
             text-align: center;
         }
     </style>
+    <script>
+        // 홈화면 앱(standalone)이 이 페이지에서 "시작"되면 메인으로 보낸다 — iOS가 매니페스트
+        // start_url을 무시하고 추가 시점의 페이지를 시작 화면으로 삼는 경우의 보정 (2026-08-17).
+        // 앱 안에서 링크로 들어온 경우(동일 출처 referrer + 히스토리)는 그대로 둔다.
+        (function () {
+            var standalone = navigator.standalone === true
+                || matchMedia("(display-mode: standalone)").matches;
+            var fromApp = false;
+            try { fromApp = new URL(document.referrer).origin === location.origin; } catch (e) { }
+            if (standalone && !fromApp && history.length <= 1) location.replace("./");
+        })();
+    </script>
 </head>
 <body>
     <main id="about-page">
