@@ -322,12 +322,18 @@ const GRANITE = {
     // 획 두께(셀 크기 대비 비율) — INK와 같은 축의 다른 손잡이. 흐리게 하는 것과
     // 얇게 하는 것은 다른 일이다: 흐린 굵은 획은 면으로 남아 글자 뒤에 깔리고,
     // 얇은 획은 결로 남는다. 글이 얹히는 면만 따로 얇게 할 수 있게 분리 (2026-08-18).
-    // ?hatchw=0.12 로 카드 값을 덮어써 비교할 수 있다.
+    // ?hatchw=0.12(상세 카드) / ?blockw=0.12(블럭)로 덮어써 비교할 수 있다.
     STROKE: { block: 0.18, cardText: 0.18, cardBare: 0.18 },
 };
-{   // 두께 실험용 파라미터 — 값을 고르면 위 STROKE.cardText에 적어 확정한다
-    const w = typeof getParam === "function" ? parseFloat(getParam("hatchw")) : NaN;
-    if (Number.isFinite(w) && w > 0) GRANITE.STROKE.cardText = w;
+{   // 두께 실험용 파라미터 — 값을 고르면 위 STROKE에 적어 확정한다.
+    // 블럭은 셀이 6px이라 여지가 좁다: 화소 하한(1/scale=0.5px) 때문에 0.084 아래는
+    // 값을 낮춰도 더 얇아지지 않는다 (카드는 셀 10px이라 0.05까지 내려간다).
+    const set = (param, key) => {
+        const w = typeof getParam === "function" ? parseFloat(getParam(param)) : NaN;
+        if (Number.isFinite(w) && w > 0) GRANITE.STROKE[key] = w;
+    };
+    set("hatchw", "cardText");
+    set("blockw", "block");
 }
 
 // 기록의 정본 문자열 → 비트열. 이 규칙이 공개될 '비문의 문법'이다 (data.html, 2단계).
