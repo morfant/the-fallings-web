@@ -82,13 +82,13 @@
         <div class="ch-card" id="push-card">
             <h2>Web push</h2>
             <p class="ch-desc">별도의 앱이나 계정 없이 브라우저로 직접 알림을 보냅니다.</p>
+            <p class="ch-desc" id="push-ios-note" hidden>아이폰·아이패드는 홈 화면에 추가된
+                화면에서만 알림을 받을 수 있습니다.</p>
             <ol id="push-ios-guide" hidden>
                 <li>브라우저의 <b>공유 버튼</b>(<span aria-hidden="true">&#x2BAD;</span>)을 누르고</li>
                 <li><b>홈 화면에 추가</b>를 선택한 뒤('웹 앱으로 열기'가 켜진 채로)</li>
                 <li>홈 화면에 생긴 아이콘으로 열어, <b>알림받기</b>에서 <b>알림 켜기</b>를 누르세요.</li>
             </ol>
-            <p class="ch-desc" id="push-ios-note" hidden>아이폰·아이패드는 홈 화면에 추가된
-                화면에서만 알림을 받을 수 있습니다.</p>
             <button class="ch-go" id="push-btn" hidden>알림 켜기</button>
             <p class="ch-desc" id="push-status" style="margin:12px 0 0" hidden></p>
         </div>
@@ -114,7 +114,7 @@
 
         <div class="ch-card">
             <h2>RSS</h2>
-            <p class="ch-desc">피드 리더를 쓰신다면 아래 주소를 구독하세요.</p>
+            <p class="ch-desc">피드 리더를 쓰신다면 아래 주소를 구독해 주세요.</p>
             <code class="sub-topic">https://fallen-caught-crushed.work/feed.xml</code>
         </div>
 
@@ -207,7 +207,7 @@
                             body: JSON.stringify(sub.toJSON()),
                         });
                         if (!res.ok) throw new Error(`구독 저장 실패 (${res.status})`);
-                        setStatus("알림이 켜졌습니다. 새로운 죽음이 기록되면 이 기기로 알립니다.");
+                        setStatus("알림이 켜졌습니다.");
                     }
                 } catch (e) {
                     setStatus(`실패했습니다: ${e.message || e}`);
