@@ -300,10 +300,13 @@ function bevelGradient(H) { // 입체감: 윗면 하이라이트 → 아랫면 �
 // 새겨지고(팔레트 4단계 = 2비트), 나머지는 pid 시드 PRNG로 같은 팔레트에서 채워진다.
 // 표준 스캐너는 못 읽지만 규칙을 알면 화면 캡처에서도 기록을 복원할 수 있는 비문(銘文).
 // 진짜 QR은 넣지 않는다 (작가 확정 — 파인더·대비가 곧 'QR스러움'이라 화강암과 양립 불가).
-// ?stone=mosaic|hatch|weave|braille|morse|wave 로 표면 문법을 갈아끼운다 (전부 비교용 프로토타입).
+// ?stone=mosaic|hatch|weave|braille|morse|wave 로 표면 문법을 갈아끼운다 (나머지는 비교용 프로토타입).
 // ?granite=1은 mosaic의 별칭 (기존 링크 호환).
-const STONE_STYLE = (typeof getParam === "function" &&
+// **기본 표면 = hatch** (작가 확정 2026-08-18 — 프로토타입에서 기본값으로 전환).
+// 금속 블럭으로 되돌려 보려면 ?stone=off (되돌림 경로는 코드에 남겨 둔다).
+const _stoneParam = (typeof getParam === "function" &&
     (getParam("stone") || (getParam("granite") ? "mosaic" : ""))) || "";
+const STONE_STYLE = ["off", "metal", "none"].includes(_stoneParam) ? "" : (_stoneParam || "hatch");
 const GRANITE_ON = !!STONE_STYLE;
 // 어두운 돌 변형(밝은 선·흰 글자) — 그 외 스타일은 밝은 돌 + 어두운 글자(음각)
 const STONE_DARK = STONE_STYLE === "hatchdark";
@@ -323,7 +326,10 @@ const GRANITE = {
     // 얇게 하는 것은 다른 일이다: 흐린 굵은 획은 면으로 남아 글자 뒤에 깔리고,
     // 얇은 획은 결로 남는다. 글이 얹히는 면만 따로 얇게 할 수 있게 분리 (2026-08-18).
     // ?hatchw=0.12(상세 카드) / ?blockw=0.12(블럭)로 덮어써 비교할 수 있다.
-    STROKE: { block: 0.18, cardText: 0.18, cardBare: 0.18 },
+    // 확정값 (작가 선택 2026-08-18): 블럭 0.084 = 화소 하한(셀 6px·2배 렌더에서
+    // 실화소 1개)에 닿는 가장 가는 결, 카드 0.08 = 글자가 주인공이 되는 두께.
+    // 맨 돌(cardBare)만 굵게 남긴다 — 글이 걷히면 새김이 드러나는 구성.
+    STROKE: { block: 0.084, cardText: 0.08, cardBare: 0.18 },
 };
 {   // 두께 실험용 파라미터 — 값을 고르면 위 STROKE에 적어 확정한다.
     // 블럭은 셀이 6px이라 여지가 좁다: 화소 하한(1/scale=0.5px) 때문에 0.084 아래는
