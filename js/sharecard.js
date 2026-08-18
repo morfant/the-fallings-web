@@ -83,11 +83,11 @@ async function buildPostCard(v, summary, cssW, cssH) {
         // 돌에는 수직 광 오버레이를 얹지 않는다 — 균일한 돌 (작가 지적 2026-08-17:
         // 아래가 어두워지는 그라데이션이 비쳐 보임. overlayV는 금속 전용으로 남김)
         // ① 맨 돌 (토글용) — 진한 획: 글이 걷히면 새김이 또렷해진다 (작가 구성 2026-08-17)
-        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardBare), 0, 0, W, H);
+        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardBare, GRANITE.STROKE.cardBare), 0, 0, W, H);
         bareUrl = c.toDataURL("image/png");
         // ② 본문용 — 흐린 획: 글자가 주인공
         ctx.clearRect(0, 0, W, H);
-        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardText), 0, 0, W, H);
+        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardText, GRANITE.STROKE.cardText), 0, 0, W, H);
         if (darkStone) { ctx.fillStyle = "rgba(0, 0, 0, 0.30)"; ctx.fillRect(0, 0, W, H); }
     } else {
         let g0 = ctx.createLinearGradient(0, 0, W, 0);

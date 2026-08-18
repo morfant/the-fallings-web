@@ -319,7 +319,16 @@ const GRANITE = {
     // 획 밝기(hsl L%) — 클수록 흐림. 글이 얹히는 면은 흐리게(가독), 맨 돌은 진하게
     // (작가 구성 2026-08-17: 상세에서 텍스트를 토글해 없애면 선이 진해진다).
     INK: { block: 76, cardText: 76, cardBare: 32 },
+    // 획 두께(셀 크기 대비 비율) — INK와 같은 축의 다른 손잡이. 흐리게 하는 것과
+    // 얇게 하는 것은 다른 일이다: 흐린 굵은 획은 면으로 남아 글자 뒤에 깔리고,
+    // 얇은 획은 결로 남는다. 글이 얹히는 면만 따로 얇게 할 수 있게 분리 (2026-08-18).
+    // ?hatchw=0.12 로 카드 값을 덮어써 비교할 수 있다.
+    STROKE: { block: 0.18, cardText: 0.18, cardBare: 0.18 },
 };
+{   // 두께 실험용 파라미터 — 값을 고르면 위 STROKE.cardText에 적어 확정한다
+    const w = typeof getParam === "function" ? parseFloat(getParam("hatchw")) : NaN;
+    if (Number.isFinite(w) && w > 0) GRANITE.STROKE.cardText = w;
+}
 
 // 기록의 정본 문자열 → 비트열. 이 규칙이 공개될 '비문의 문법'이다 (data.html, 2단계).
 // 작가 결정(2026-08-17): 공개 기록 전체를 새긴다 — 요약문까지. 공간이 모자라면
@@ -391,7 +400,7 @@ function _stoneRand(v) {
 // 2비트/셀: 0=╱ 1=╲ 2=─ 3=│. 선이 셀 모서리까지 닿아 이웃과 이어진다
 // (작가 요청 2026-08-17 — Truchet처럼 미로 같은 결이 생긴다).
 // dark=true면 어두운 돌 + 밝은 선 (흰 글자를 위한 반전 변형, ?stone=hatchdark)
-function _stoneHatch(v, w, H, cell, scale, dark = false, inkL = 54) {
+function _stoneHatch(v, w, H, cell, scale, dark = false, inkL = 54, strokeF = 0.18) {
     // 흰 돌 위 다섯 값: ╱ ╲ ─ │ 빈칸 (작가 결정 2026-08-17 — 세로줄 복귀 + 5값).
     // 5값은 2비트에 안 떨어지므로 7셀 = 16비트(5^7 ≥ 2^16, base-5 묶음)로 새긴다 —
     // 셀당 2.29비트, 용량 +14%. 획은 중간 회색(잉크 위계 — 화면에서 가장 어두운 것은
@@ -402,7 +411,8 @@ function _stoneHatch(v, w, H, cell, scale, dark = false, inkL = 54) {
     const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
     ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : `hsl(228, 7%, ${inkL}%)`; // 농도는 GRANITE.INK
     ctx.lineCap = "round";
-    const baseW = Math.max(1, cell * 0.18);
+    // 하한은 실제 화소 1개 — 그보다 얇으면 선이 끊겨 보이지 않고 흐려지기만 한다
+    const baseW = Math.max(1 / scale, cell * strokeF);
     // 손떨림 — 의미(방향)는 양자화되어 있으므로 표현은 흔들려도 복원이 유지된다.
     const jEnd = cell * 0.07, jCurve = cell * 0.10;
 
@@ -565,10 +575,10 @@ function _stoneStrata(v, w, H, cell, scale) {
 }
 
 // 문법 선택 — sharecard.js(상세 카드 배경)도 이 함수를 쓴다
-function stoneRender(v, w, H, cell, scale, inkL) {
+function stoneRender(v, w, H, cell, scale, inkL, strokeF) {
     switch (STONE_STYLE) {
-        case "hatch": return _stoneHatch(v, w, H, cell, scale, false, inkL);
-        case "hatchdark": return _stoneHatch(v, w, H, cell, scale, true);
+        case "hatch": return _stoneHatch(v, w, H, cell, scale, false, inkL, strokeF);
+        case "hatchdark": return _stoneHatch(v, w, H, cell, scale, true, undefined, strokeF);
         case "weave": return _stoneWeave(v, w, H, cell, scale);
         case "braille": return _stoneBraille(v, w, H, cell, scale);
         case "morse": return _stoneMorse(v, w, H, cell, scale);
@@ -587,7 +597,7 @@ function graniteCanvas(victimIdx, w, H) {
         _graniteCache.set(key, c);
         return c;
     }
-    c = stoneRender(victims[victimIdx], w, H, GRANITE.CELL, 2, GRANITE.INK.block);
+    c = stoneRender(victims[victimIdx], w, H, GRANITE.CELL, 2, GRANITE.INK.block, GRANITE.STROKE.block);
     if (_graniteCache.size >= GRANITE.CACHE_MAX) {
         _graniteCache.delete(_graniteCache.keys().next().value); // 가장 오래된 것 제거
     }
