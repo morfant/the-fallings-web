@@ -312,8 +312,17 @@ const GRANITE_ON = !!STONE_STYLE;
 const STONE_DARK = STONE_STYLE === "hatchdark";
 const GRANITE = {
     CELL: 6, // px — 블럭 셀 크기
-    CELL_CARD: 10, // px — 상세 카드(비석) 셀. 10px = 약 960바이트 — 최장 요약(300자)까지
-                   // 모든 기록이 전문 수록된다 (작가 결정 2026-08-17, 12px에서 축소)
+    CELL_CARD: 10, // px — 상세 카드 셀. hatch는 아래 CARD_GRID를 쓰므로 다른 표면 문법 전용.
+    // **카드의 데이터 격자는 기기와 무관하게 고정한다** (작가 결정 2026-08-18).
+    // 종전에는 셀만 10px로 고정하고 격자를 카드의 실제 픽셀 크기에서 뽑았다 — 그래서
+    // 화면이 크면 열이 많아졌고, 줄바꿈 위치가 어긋나 **같은 사람의 무늬가 기기마다
+    // 달랐다**(작가 발견: "시작은 같은데 끝이 다르다"). 게다가 폰에서는 격자가 작아
+    // 기록이 요약 중간에서 잘렸다(아이폰 354B vs 데스크톱 838B) — 같은 비석인데 어디서
+    // 저장했느냐로 비문 길이가 달라지는 셈이었다. 이제 격자를 고정하고 셀 크기가 화면에
+    // 맞춰 늘고 준다: 같은 사람은 어디서 보든 같은 무늬, 어디서 저장해도 같은 기록.
+    // 64x76 = 4,864칸 = 1,216바이트 — 요약 상한(300자 ≈ 1,020바이트)까지 담고도
+    // 오류정정 여벌이 남는다. 가로세로비 0.84는 데스크톱(0.90)과 폰(0.79) 사이 값.
+    CARD_GRID: { cols: 64, rows: 76 },
     // 4단계 회색 (금속 톤 hsl 228 주변) — 인덱스가 곧 2비트 값.
     // 조율 이력: 9~21%(은은) → 7~30%(또렷하게) → 12~40%(밝게) → 30~85%("흰색에 가깝게").
     // 밝은 돌에는 글자를 어둡게 새긴다 (drawBlockLabels·sharecard의 GRANITE_ON 분기).
@@ -407,20 +416,34 @@ function _stoneCanvas(w, H, scale, base) {
 function _stoneRand(v) {
     return _mulberry32(_flowerHash(String(v?.pid || v?.link || "")));
 }
+// 칸 좌표로 씨를 나눈 난수 — 한 줄로 흐르는 난수열을 쓰면 앞쪽 칸 수가 달라지는 순간
+// 뒤쪽 칸의 흔들림이 전부 밀린다. 그러면 격자를 고정해도 같은 사람의 무늬가 기기마다
+// 미세하게 달라진다(획 방향은 같고 떨림만 다름). 칸마다 독립된 씨를 쓰면 돌 전체가
+// **결정적인 무한 평면**이 되고, 화면 크기는 그 평면을 얼마나 보여주는지만 정한다.
+function _cellRand(seed, row, col) {
+    return _mulberry32((seed ^ Math.imul(row + 1, 73856093) ^ Math.imul(col + 1, 19349663)) >>> 0);
+}
 
 // 사선 해칭 — 빗금의 방향이 값 (작가 제안). 석공이 정으로 쪼은 잔다듬 자국.
 // 2비트/셀: 0=╱ 1=╲ 2=─ 3=│. 선이 셀 모서리까지 닿아 이웃과 이어진다
 // (작가 요청 2026-08-17 — Truchet처럼 미로 같은 결이 생긴다).
 // dark=true면 어두운 돌 + 밝은 선 (흰 글자를 위한 반전 변형, ?stone=hatchdark)
-function _stoneHatch(v, w, H, cell, scale, dark = false, inkL = 54, strokeF = 0.18) {
+// grid({cols,rows})를 주면 **데이터 격자를 고정**하고 셀 크기를 화면에서 도출한다
+// (카드 경로). 격자 밖으로 남는 가장자리는 pid 시드 채움이 이어 덮어 여백 띠가 없다.
+function _stoneHatch(v, w, H, cell, scale, dark = false, inkL = 54, strokeF = 0.18, grid = null) {
+    if (grid) cell = Math.min(w / grid.cols, H / grid.rows);
     // 흰 돌 위 다섯 값: ╱ ╲ ─ │ 빈칸 (작가 결정 2026-08-17 — 세로줄 복귀 + 5값).
     // 5값은 2비트에 안 떨어지므로 7셀 = 16비트(5^7 ≥ 2^16, base-5 묶음)로 새긴다 —
     // 셀당 2.29비트, 용량 +14%. 획은 중간 회색(잉크 위계 — 화면에서 가장 어두운 것은
     // 글자여야 라벨이 띠 없이 읽힌다), 글자가 가장 진한 검정.
     const [c, ctx] = _stoneCanvas(w, H, scale, dark ? "hsl(228, 8%, 15%)" : "hsl(220, 12%, 88%)");
-    const bits = _recordBits(v), rand = _stoneRand(v);
+    const bits = _recordBits(v); // 난수는 칸마다(_cellRand) — 흐르는 난수열을 쓰지 않는다
+    const seed = _flowerHash(String(v?.pid || v?.link || ""));
     const cols = Math.ceil(w / cell), rows = Math.ceil(H / cell);
-    const fullCols = Math.floor(w / cell), fullRows = Math.floor(H / cell);
+    // 데이터를 새기는 범위. 고정 격자면 그 크기, 아니면 종전대로 "온전히 들어가는 칸"
+    // (가장자리에 잘린 칸에 데이터를 넣으면 오독된다 — 2026-08-17 실측 교훈).
+    const fullCols = grid ? grid.cols : Math.floor(w / cell);
+    const fullRows = grid ? grid.rows : Math.floor(H / cell);
     ctx.strokeStyle = dark ? "hsl(226, 6%, 55%)" : `hsl(228, 7%, ${inkL}%)`; // 농도는 GRANITE.INK
     ctx.lineCap = "round";
     // 하한은 실제 화소 1개 — 그보다 얇으면 선이 끊겨 보이지 않고 흐려지기만 한다
@@ -429,17 +452,17 @@ function _stoneHatch(v, w, H, cell, scale, dark = false, inkL = 54, strokeF = 0.
     const jEnd = cell * 0.07, jCurve = cell * 0.10;
 
     // 온전한 셀들의 좌표 목록 (행 우선) — 7셀 그룹이 여기에 순서대로 놓인다
-    const glyphAt = (x, y, o) => {
+    const glyphAt = (x, y, o, rnd) => {
         if (o === 4) return; // 빈 셀
         let x1, y1, x2, y2;
         if (o === 0) { x1 = x; y1 = y + cell; x2 = x + cell; y2 = y; }        // ╱
         else if (o === 1) { x1 = x; y1 = y; x2 = x + cell; y2 = y + cell; }   // ╲
         else if (o === 2) { x1 = x; y1 = y + cell / 2; x2 = x + cell; y2 = y + cell / 2; } // ─
         else { x1 = x + cell / 2; y1 = y; x2 = x + cell / 2; y2 = y + cell; } // │
-        const j = () => (rand() - 0.5) * 2 * jEnd;
-        const mx = (x1 + x2) / 2 + (rand() - 0.5) * 2 * jCurve;
-        const my = (y1 + y2) / 2 + (rand() - 0.5) * 2 * jCurve;
-        ctx.lineWidth = baseW * (0.75 + rand() * 0.5);
+        const j = () => (rnd() - 0.5) * 2 * jEnd;
+        const mx = (x1 + x2) / 2 + (rnd() - 0.5) * 2 * jCurve;
+        const my = (y1 + y2) / 2 + (rnd() - 0.5) * 2 * jCurve;
+        ctx.lineWidth = baseW * (0.75 + rnd() * 0.5);
         ctx.beginPath();
         ctx.moveTo(x1 + j(), y1 + j());
         ctx.quadraticCurveTo(mx, my, x2 + j(), y2 + j());
@@ -452,12 +475,14 @@ function _stoneHatch(v, w, H, cell, scale, dark = false, inkL = 54, strokeF = 0.
     let bi = 0;
     for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
         const isFull = col < fullCols && row < fullRows;
-        const val = isFull && bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rand() * 4);
+        // 칸 좌표로 씨를 나눈 난수 — 이 칸의 채움값과 흔들림이 화면 크기와 무관해진다
+        const rnd = _cellRand(seed, row, col);
+        const val = isFull && bi + 1 < bits.length ? (bits[bi++] << 1) | bits[bi++] : Math.floor(rnd() * 4);
         let o;
         if (val === 3) o = 4;            // 빈칸
         else if (val === 2) o = ((row + col) % 2 === 0) ? 2 : 3; // ─ 또는 │
         else o = val;                     // ╱ ╲
-        glyphAt(col * cell, row * cell, o);
+        glyphAt(col * cell, row * cell, o, rnd);
     }
     return c;
 }
@@ -587,10 +612,10 @@ function _stoneStrata(v, w, H, cell, scale) {
 }
 
 // 문법 선택 — sharecard.js(상세 카드 배경)도 이 함수를 쓴다
-function stoneRender(v, w, H, cell, scale, inkL, strokeF) {
+function stoneRender(v, w, H, cell, scale, inkL, strokeF, grid) {
     switch (STONE_STYLE) {
-        case "hatch": return _stoneHatch(v, w, H, cell, scale, false, inkL, strokeF);
-        case "hatchdark": return _stoneHatch(v, w, H, cell, scale, true, undefined, strokeF);
+        case "hatch": return _stoneHatch(v, w, H, cell, scale, false, inkL, strokeF, grid);
+        case "hatchdark": return _stoneHatch(v, w, H, cell, scale, true, undefined, strokeF, grid);
         case "weave": return _stoneWeave(v, w, H, cell, scale);
         case "braille": return _stoneBraille(v, w, H, cell, scale);
         case "morse": return _stoneMorse(v, w, H, cell, scale);

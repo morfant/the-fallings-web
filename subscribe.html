@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://fallen-caught-crushed.work/img/og-card.png">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="fonts/plex.css" />
-    <link rel="stylesheet" href="style.css?v=f9b4dd17" />
+    <link rel="stylesheet" href="style.css?v=9a84db6f" />
     <style>
         body { overflow-y: auto; }
         #sub-page {
@@ -35,6 +35,8 @@
         .ch-card .ch-desc { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 16px; word-break: keep-all; }
         .ch-card ol { margin: 0 0 16px 20px; font-size: 13px; color: var(--text-dim); line-height: 2; }
         .ch-card ol a { color: #7ea7cc; }
+        /* 글자 사이에 놓이는 iOS 공유 글리프 — 폰트가 아니라 SVG라 어느 기기에서나 그려진다 */
+        .ios-share { width: 0.85em; height: 1.05em; vertical-align: -0.2em; margin: 0 1px; }
         .ch-go {
             display: inline-block;
             background: var(--block);
@@ -85,7 +87,13 @@
             <p class="ch-desc" id="push-ios-note" hidden>아이폰·아이패드는 홈 화면에 추가된
                 화면에서만 알림을 받을 수 있습니다.</p>
             <ol id="push-ios-guide" hidden>
-                <li>브라우저의 <b>공유 버튼</b>(<span aria-hidden="true">&#x2BAD;</span>)을 누르고</li>
+                <li>브라우저의 <b>공유 버튼</b>(<svg class="ios-share" viewBox="0 0 16 20" aria-hidden="true"
+                        fill="none" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round"><!-- iOS 공유 글리프.
+                        유니코드 U+2BAD은 자체 호스팅 폰트에 없어 두부 상자로 보였다 (2026-08-18) -->
+                        <path d="M5 7H3.2A1.2 1.2 0 0 0 2 8.2v9.6A1.2 1.2 0 0 0 3.2 19h9.6a1.2 1.2 0 0 0 1.2-1.2V8.2A1.2 1.2 0 0 0 12.8 7H11" />
+                        <path d="M8 1.5v11" /><path d="M4.8 4.7 8 1.5l3.2 3.2" />
+                    </svg>)을 누르고</li>
                 <li><b>홈 화면에 추가</b>를 선택한 뒤('웹 앱으로 열기'가 켜진 채로)</li>
                 <li>홈 화면에 생긴 아이콘으로 열어, <b>알림받기</b>에서 <b>알림 켜기</b>를 누르세요.</li>
             </ol>

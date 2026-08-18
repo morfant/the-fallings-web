@@ -76,18 +76,19 @@ async function buildPostCard(v, summary, cssW, cssH) {
     };
     let bareUrl;
     if (graniteMode) {
-        // 셀 크기를 화면에 맞춰 자동 조정 — 어떤 기기에서든 기록 전문이 담기게 (하한 4px)
-        let cardCell = GRANITE.CELL_CARD;
-        const needCells = Math.ceil(_recordBits(v).length / 2);
-        while (cardCell > 4 && Math.floor(cssW / cardCell) * Math.floor(cssH / cardCell) < needCells) cardCell--;
+        // 데이터 격자는 고정(GRANITE.CARD_GRID) — 셀 크기는 stoneRender가 카드 크기에서
+        // 도출한다. 기기마다 다른 격자를 쓰던 종전 방식(셀 고정 + 격자 가변)은 같은 사람의
+        // 무늬를 기기마다 다르게 만들고 폰에서 기록을 잘라 먹었다 (작가 발견 2026-08-18).
+        const cardCell = GRANITE.CELL_CARD; // 격자를 안 쓰는 다른 표면 문법용 폴백
+        const grid = GRANITE.CARD_GRID;
         // 돌에는 수직 광 오버레이를 얹지 않는다 — 균일한 돌 (작가 지적 2026-08-17:
         // 아래가 어두워지는 그라데이션이 비쳐 보임. overlayV는 금속 전용으로 남김)
         // ① 맨 돌 (토글용) — 진한 획: 글이 걷히면 새김이 또렷해진다 (작가 구성 2026-08-17)
-        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardBare, GRANITE.STROKE.cardBare), 0, 0, W, H);
+        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardBare, GRANITE.STROKE.cardBare, grid), 0, 0, W, H);
         bareUrl = c.toDataURL("image/png");
         // ② 본문용 — 흐린 획: 글자가 주인공
         ctx.clearRect(0, 0, W, H);
-        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardText, GRANITE.STROKE.cardText), 0, 0, W, H);
+        ctx.drawImage(stoneRender(v, cssW, cssH, cardCell, scale, GRANITE.INK.cardText, GRANITE.STROKE.cardText, grid), 0, 0, W, H);
         if (darkStone) { ctx.fillStyle = "rgba(0, 0, 0, 0.30)"; ctx.fillRect(0, 0, W, H); }
     } else {
         let g0 = ctx.createLinearGradient(0, 0, W, 0);
