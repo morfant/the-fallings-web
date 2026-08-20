@@ -10,11 +10,11 @@
   "attribution": "떨어지고, 끼이고, 깔린 (이강일) — fallen-caught-crushed.work",
   "note": "언론 보도에 기반한 기록으로 전수가 아닙니다. 2025-09-01 이후 확인된 사망만 공개합니다. 각 레코드의 요약(accSummary)은 이 프로젝트가 사실만으로 새로 쓴 문장입니다."
  },
- "generatedAt": "2026-08-19T08:58:36.435Z",
+ "generatedAt": "2026-08-20T22:47:34.919Z",
  "unit": "person",
  "collectionSince": "2025-09-01",
- "count": 262,
- "accidents": 224,
+ "count": 263,
+ "accidents": 225,
  "victims": [
   {
    "date": "2025-09-20",
@@ -2687,6 +2687,16 @@
    "link": "https://www.khan.co.kr/article/202608190802011/?utm_source=khan_rss&utm_medium=rss&utm_campaign=total_news",
    "pid": "61e3bd6618470771",
    "ofDeaths": 3
+  },
+  {
+   "date": "2026-08-20",
+   "region": "인천 미추홀구",
+   "accType": "깔림",
+   "age": 50,
+   "immigrant": null,
+   "accSummary": "2026년 8월 20일 오후 3시 43분께 인천 미추홀구 도화동의 프레스 기기 제조 공장에서 50대 노동자가 무게 3.2t짜리 철판에 깔렸다. 이 노동자는 공장 안에서 철판을 재단하는 작업을 하고 있었고, 3m 높이에 있던 철판이 아래로 떨어지면서 사고가 난 것으로 파악됐다. 중상을 입은 노동자는 출동한 119구급대에 의해 가까운 병원으로 이송됐지만 끝내 숨졌다.",
+   "link": "https://www.yna.co.kr/view/AKR20260821012500065",
+   "pid": "841898a8774e8972"
   }
  ]
 }
