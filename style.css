@@ -454,8 +454,23 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
    이미지 저장 메뉴가 그것에 달려 있다. */
 #post-image.has-card #post-summary {
     pointer-events: none;
+}
+/* 선택 차단을 카드 영역 전체로 넓힌다 (2026-08-21 2차): <p>만 껐을 때도 길게 누르면
+   여전히 텍스트가 선택됐다. 폰이 새 빌드를 받은 것은 확인됐으므로(저장 이미지가 v1
+   여벌 형식) 밑에 깔린 DOM 텍스트가 아니라 **이미지에 구워진 글자를 iOS가 읽어
+   선택하는 것**(라이브 텍스트)으로 보인다. 웹에서 이를 끄는 표준 수단은 없고,
+   -webkit-user-select: none이 이미지의 선택 UI를 억제하는 경우가 보고돼 있어 시도한다.
+   -webkit-touch-callout은 명시적으로 살려 둔다 — 저장 메뉴가 그것에 달려 있다. */
+#post-image.has-card,
+#post-image.has-card #post-summary,
+#post-card,
+#post-card-bare {
     -webkit-user-select: none;
     user-select: none;
+}
+#post-card,
+#post-card-bare {
+    -webkit-touch-callout: default;
 }
 #post-summary {
     font-size: 16px;
