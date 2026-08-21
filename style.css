@@ -433,7 +433,9 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
     height: 100%;
 }
 /* 맨 돌(진한 획) 레이어 — 본문 카드 위에 겹쳐 두고 탭 토글 시 크로스페이드.
-   pointer-events 없음: 탭은 항상 아래의 #post-card가 받는다. */
+   숨어 있을 때는 pointer-events 없음(탭은 아래 #post-card가 받는다). 보일 때는
+   넘겨받는다 — 길게 눌러 저장할 때 OS가 집는 것이 화면에 보이는 판이어야 하므로
+   (작가 보고 2026-08-21: 글을 감추고 저장했는데 글 있는 판이 저장됐다). */
 #post-card-bare {
     position: absolute;
     inset: 0;
@@ -443,7 +445,7 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
     transition: opacity 0.5s ease;
     pointer-events: none;
 }
-#post-card-bare.shown { opacity: 1; }
+#post-card-bare.shown { opacity: 1; pointer-events: auto; }
 #post-summary {
     font-size: 16px;
     line-height: 2.0;
@@ -475,6 +477,19 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
     color: var(--text-dim);
     flex-shrink: 0;
 }
+/* 맨 돌로 토글한 순간에만 몇 초 떠 있는 힌트 (작가 결정 2026-08-21) — 저장 버튼을
+   두지 않기로 한 자리를 대신한다. 버튼처럼 상주하지 않고, 그 상태에 들어간 사람에게만
+   보이며, 끼어들지 않도록 아주 흐리다. 항상 DOM에 있고 opacity로만 나타난다
+   (hidden은 전환이 걸리지 않는다). 투명할 때 자리만 지키므로 위 확인 수는 움직이지 않는다. */
+#post-save-hint {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    opacity: 0;
+    flex-shrink: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+}
+#post-save-hint.shown { opacity: 0.45; }
 #post-share-btn {
     display: inline-flex;
     align-items: center;

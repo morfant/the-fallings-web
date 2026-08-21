@@ -136,6 +136,25 @@ async function buildPostCard(v, summary, cssW, cssH) {
     return { full: c.toDataURL("image/png"), bare: bareUrl };
 }
 
+// "길게 눌러 저장" 힌트 — 맨 돌로 토글한 순간에만 몇 초 (작가 결정 2026-08-21).
+// 저장 버튼을 두지 않기로 한 대신의 최소 안내: 롱프레스는 눈에 보이지 않고, 맨 돌 토글
+// 자체가 숨은 동작이라 그 상태에 들어온 사람에게만 한 번 알려준다.
+// 손가락 기기에서만 — 데스크톱은 우클릭이라 문구가 맞지 않는다.
+const HINT_MS = 3000;
+let _hintTimer = 0;
+function _isTouch() {
+    return typeof matchMedia === "function"
+        && matchMedia("(hover: none) and (pointer: coarse)").matches;
+}
+function _flashSaveHint(on) {
+    const el = document.getElementById("post-save-hint");
+    if (!el) return;
+    clearTimeout(_hintTimer);
+    if (!on || !_isTouch()) { el.classList.remove("shown"); return; }
+    el.classList.add("shown");
+    _hintTimer = setTimeout(() => el.classList.remove("shown"), HINT_MS);
+}
+
 // 포스트 뷰가 열릴 때 호출 — 사고 경위 영역 위에 카드 이미지를 얹는다
 async function updatePostCard(v, summary) {
     const box = document.getElementById("post-image");
@@ -156,16 +175,40 @@ async function updatePostCard(v, summary) {
             img.alt = ""; // 실제 내용은 밑의 #post-summary가 담당
             box.appendChild(img);
             // 맨 돌(진한 획) 레이어 — 본문 위에 겹쳐 두고 탭 토글 시 크로스페이드
-            // (작가 요청 2026-08-17: 페이드인/아웃). 공유·저장은 항상 글이 있는 쪽.
-            // 돌 프로토타입(?stone=)에서만 — 기본 금속 화면에서는 혼란 방지로 끔.
+            // (작가 요청 2026-08-17: 페이드인/아웃). 공유 버튼은 항상 글이 있는 쪽을
+            // 첨부하고(getCardFile), 길게 눌러 저장하는 쪽은 **화면에 보이는 판**이다
+            // (.shown일 때 pointer-events를 넘겨받는다 — style.css).
             bareImg = document.createElement("img");
             bareImg.id = "post-card-bare";
             bareImg.alt = "";
             box.appendChild(bareImg);
-            img.addEventListener("click", () => {
-                if (!bareImg.src) return;
-                bareImg.classList.toggle("shown");
+
+            // 탭 토글은 **짧게 눌렀다 뗀 것만** 받는다 (작가 보고 2026-08-21):
+            // 아이폰에서 이미지를 저장하려면 몇 초 눌러야 하는데(길게 누르기 → 사진에 저장),
+            // 종전에는 그 누름이 click으로 새어 토글이 한 번 더 돌았다 — 글을 감춘 뒤
+            // 저장하려는 순간 글이 다시 나타났다. 길게 누르기·끌기는 통과시켜 OS에 넘긴다.
+            const TAP_MS = 400;   // 이보다 오래 누르면 저장 제스처로 본다
+            const TAP_SLOP = 10;  // px — 이보다 움직이면 스크롤/끌기
+            let downT = 0, downX = 0, downY = 0, held = false, holdTimer = 0;
+            const isCard = (t) => t === img || t === bareImg;
+            box.addEventListener("pointerdown", (e) => {
+                if (!isCard(e.target)) return;
+                downT = e.timeStamp; downX = e.clientX; downY = e.clientY; held = false;
+                clearTimeout(holdTimer);
+                // 손가락을 든 시점이 아니라 누르고 있는 동안에 판정한다 — iOS는 컨텍스트
+                // 메뉴가 뜨면 pointerup 대신 pointercancel을 주기도 한다.
+                holdTimer = setTimeout(() => { held = true; }, TAP_MS);
             });
+            box.addEventListener("pointerup", (e) => {
+                clearTimeout(holdTimer);
+                if (!isCard(e.target) || held) return;
+                if (e.timeStamp - downT > TAP_MS) return;
+                if (Math.hypot(e.clientX - downX, e.clientY - downY) > TAP_SLOP) return;
+                if (!bareImg.src) return;
+                const bareNow = bareImg.classList.toggle("shown");
+                _flashSaveHint(bareNow); // 맨 돌이 드러난 쪽으로 갈 때만
+            });
+            box.addEventListener("pointercancel", () => { clearTimeout(holdTimer); held = true; });
         }
         const stoneMode = typeof GRANITE_ON !== "undefined" && GRANITE_ON;
         img.src = urls.full;
@@ -174,6 +217,7 @@ async function updatePostCard(v, summary) {
             if (stoneMode) bareImg.src = urls.bare;
             else bareImg.removeAttribute("src");
             bareImg.classList.remove("shown"); // 열릴 때는 항상 글이 보이는 상태로
+            _flashSaveHint(false);
         }
     } catch {
         if (img) img.hidden = true;
