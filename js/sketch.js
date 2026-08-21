@@ -354,10 +354,21 @@ const GRANITE = {
 // 기록의 정본 문자열 → 비트열. 이 규칙이 공개될 '비문의 문법'이다 (data.html, 2단계).
 // 작가 결정(2026-08-17): 공개 기록 전체를 새긴다 — 요약문까지. 공간이 모자라면
 // 앞에서부터 들어가는 만큼 새겨지고(잘림), 남으면 pid 시드 채움이 잇는다.
+// 새김 용량은 **항상 상세 카드의 고정 격자**로 잡는다 (64x76 = 1,216바이트).
+// 블럭(88px)은 같은 바이트열의 앞부분만 담고 끊긴다 — 종전과 같다. 여벌 크기를 표면마다
+// 다르게 고르면 같은 사람의 무늬가 블럭과 카드에서 갈리므로("같은 돌, 셀 크기만 다름"이
+// 깨진다) 기준을 하나로 둔다. 완전한 비문은 카드다.
+const RECORD_CAP_BYTES = (64 * 76 * 2) / 8;
+
+// 기록 → 비트열. 이제 오류정정 여벌이 꼬리에 붙는다 (rs.js, 2026-08-21).
+// 판독은 머리말 3벌 다수결 → 본문 길이·여벌 크기 확인 → 블록별 리드-솔로몬 정정.
 function _recordBits(v) {
     const s = [v?.pid, v?.date, v?.region, v?.accType, v?.age ?? "", v?.immigrant || "",
         v?.ofDeaths || "", v?.accSummary || ""].map((x) => x ?? "").join("|");
-    const bytes = new TextEncoder().encode(s);
+    const payload = new TextEncoder().encode(s);
+    // rs.js가 없으면(로드 순서 사고) 여벌 없이 종전 형식으로 새긴다 — 무늬가 사라지는
+    // 것보다 여벌이 없는 편이 낫다.
+    const bytes = typeof rsFrame === "function" ? rsFrame(payload, RECORD_CAP_BYTES) : payload;
     const bits = [];
     for (const b of bytes) for (let i = 7; i >= 0; i--) bits.push((b >> i) & 1);
     return bits;

@@ -446,6 +446,17 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
     pointer-events: none;
 }
 #post-card-bare.shown { opacity: 1; pointer-events: auto; }
+/* 카드 이미지가 얹힌 동안에는 밑의 요약 <p>가 선택되지 않게 한다 (작가 보고 2026-08-21):
+   글 있는 판을 저장하려고 길게 누르면 iOS가 이미지 메뉴 대신 **밑에 깔린 이 텍스트의
+   선택**을 시작해 저장이 어려웠다. DOM에는 남겨 둔다 — 스크린리더가 읽어야 하고
+   (img는 alt=""), 카드 렌더가 실패하면 이 텍스트가 그대로 보이는 폴백이기 때문에
+   무조건 끄지 않고 .has-card일 때만 끈다. -webkit-touch-callout은 건드리지 않는다 —
+   이미지 저장 메뉴가 그것에 달려 있다. */
+#post-image.has-card #post-summary {
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
 #post-summary {
     font-size: 16px;
     line-height: 2.0;
@@ -477,19 +488,6 @@ html.standalone #post-view::after { content: ""; flex: 1 1 0; }
     color: var(--text-dim);
     flex-shrink: 0;
 }
-/* 맨 돌로 토글한 순간에만 몇 초 떠 있는 힌트 (작가 결정 2026-08-21) — 저장 버튼을
-   두지 않기로 한 자리를 대신한다. 버튼처럼 상주하지 않고, 그 상태에 들어간 사람에게만
-   보이며, 끼어들지 않도록 아주 흐리다. 항상 DOM에 있고 opacity로만 나타난다
-   (hidden은 전환이 걸리지 않는다). 투명할 때 자리만 지키므로 위 확인 수는 움직이지 않는다. */
-#post-save-hint {
-    font-size: 12.5px;
-    color: var(--text-dim);
-    opacity: 0;
-    flex-shrink: 0;
-    pointer-events: none;
-    transition: opacity 0.6s ease;
-}
-#post-save-hint.shown { opacity: 0.45; }
 #post-share-btn {
     display: inline-flex;
     align-items: center;

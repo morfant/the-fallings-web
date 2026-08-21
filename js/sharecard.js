@@ -136,31 +136,13 @@ async function buildPostCard(v, summary, cssW, cssH) {
     return { full: c.toDataURL("image/png"), bare: bareUrl };
 }
 
-// "길게 눌러 저장" 힌트 — 맨 돌로 토글한 순간에만 몇 초 (작가 결정 2026-08-21).
-// 저장 버튼을 두지 않기로 한 대신의 최소 안내: 롱프레스는 눈에 보이지 않고, 맨 돌 토글
-// 자체가 숨은 동작이라 그 상태에 들어온 사람에게만 한 번 알려준다.
-// 손가락 기기에서만 — 데스크톱은 우클릭이라 문구가 맞지 않는다.
-const HINT_MS = 3000;
-let _hintTimer = 0;
-function _isTouch() {
-    return typeof matchMedia === "function"
-        && matchMedia("(hover: none) and (pointer: coarse)").matches;
-}
-function _flashSaveHint(on) {
-    const el = document.getElementById("post-save-hint");
-    if (!el) return;
-    clearTimeout(_hintTimer);
-    if (!on || !_isTouch()) { el.classList.remove("shown"); return; }
-    el.classList.add("shown");
-    _hintTimer = setTimeout(() => el.classList.remove("shown"), HINT_MS);
-}
-
 // 포스트 뷰가 열릴 때 호출 — 사고 경위 영역 위에 카드 이미지를 얹는다
 async function updatePostCard(v, summary) {
     const box = document.getElementById("post-image");
     let img = document.getElementById("post-card");
     if (!box || !summary || box.clientWidth < 40 || box.clientHeight < 40) {
         if (img) img.hidden = true;
+        if (box) box.classList.remove("has-card");
         _cardCanvas = null;
         return;
     }
@@ -205,22 +187,22 @@ async function updatePostCard(v, summary) {
                 if (e.timeStamp - downT > TAP_MS) return;
                 if (Math.hypot(e.clientX - downX, e.clientY - downY) > TAP_SLOP) return;
                 if (!bareImg.src) return;
-                const bareNow = bareImg.classList.toggle("shown");
-                _flashSaveHint(bareNow); // 맨 돌이 드러난 쪽으로 갈 때만
+                bareImg.classList.toggle("shown");
             });
             box.addEventListener("pointercancel", () => { clearTimeout(holdTimer); held = true; });
         }
         const stoneMode = typeof GRANITE_ON !== "undefined" && GRANITE_ON;
         img.src = urls.full;
         img.hidden = false;
+        box.classList.add("has-card"); // 밑의 요약 <p> 선택 차단 (style.css)
         if (bareImg) {
             if (stoneMode) bareImg.src = urls.bare;
             else bareImg.removeAttribute("src");
             bareImg.classList.remove("shown"); // 열릴 때는 항상 글이 보이는 상태로
-            _flashSaveHint(false);
         }
     } catch {
         if (img) img.hidden = true;
+        box.classList.remove("has-card"); // 폴백에서는 텍스트가 진짜 본문이므로 선택 허용
         _cardCanvas = null; // 실패하면 DOM 텍스트가 그대로 보인다
     }
 }
