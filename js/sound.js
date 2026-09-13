@@ -17,12 +17,19 @@ let _noiseBuf = null;
 // 실제로 소리가 난다 — 아래에서 제스처 시 오디오를 잠금 해제한다.
 let soundOn = true;
 
-// 날씨 → 신스 파라미터 (SC와 동일 매핑, wttr.in/Seoul — 설치 버전과 같은 소스)
+// 날씨 → 신스 파라미터 (SC와 동일 매핑).
+// **어디의 날씨인가 (작가 확정 2026-09-13): 듣고 있는 사람의 지금·이곳.** 경로 없는
+// wttr.in은 요청 IP로 위치를 추정해 그곳 날씨를 준다 — 위치 권한 팝업 없이, 지금도
+// 보내는 요청의 응답만 달라진다. 설치 버전의 '서울 고정'은 그 방에 있는 사람들의
+// 날씨였으므로, 청취자 위치는 그 문법의 웹 일반화다. 개념: "지금 여기 이곳과 누군가의
+// 죽음이 발생한 곳의 차이" — 좋은 날씨 속의 나와 그 죽음 사이의 간극이 소리의 구조.
+// IP 추정이 실패하면 서울로 폴백(종전과 동일해질 뿐).
 let _weather = { freq2: 150, wet: 0.1, category: 0 }; // 기본값 = SynthDef 기본값
 
 async function loadWeather() {
     try {
-        const r = await fetch("https://wttr.in/Seoul?format=j1");
+        const r = await fetch("https://wttr.in/?format=j1")
+            .catch(() => fetch("https://wttr.in/Seoul?format=j1"));
         const d = await r.json();
         const c = d.current_condition[0];
         const temp = parseFloat(c.temp_C);
