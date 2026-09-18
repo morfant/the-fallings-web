@@ -11,11 +11,18 @@
 // 같은 주파수의 자기 FM(모듈레이터 인덱스가 0.1초 만에 감쇠)으로 근사.
 // rainy의 Convolution×Dust는 랜덤 스파이크 게이트로 근사.
 
+// ---- 착지음의 두 판 (2026-09-18) ----
+// 기본 = **돌 소리**(playStone, web/js/stone.js — SC/stone_sonify.scd 이식: 그 사람의 무늬에서
+// 읽은 긴 사선의 글리산도, 되먹임 = 지금·이곳의 날씨). 아래 \victimNew 이식(playThud)은
+// 되돌림 경로로 유지 — `?sound=thud`. (`?stone=off`가 금속 블럭으로 돌아가는 것과 같은 문법)
+const SOUND_MODE = (typeof getParam === "function" && getParam("sound")) || "stone";
+
 let _audioCtx = null;
 let _noiseBuf = null;
 // 소리는 기본 켬. 브라우저 자동재생 정책상 첫 사용자 제스처(클릭/터치/키) 후부터
 // 실제로 소리가 난다 — 아래에서 제스처 시 오디오를 잠금 해제한다.
 let soundOn = true;
+let audioUnlocked = false; // 첫 제스처가 있었는가 — sketch.js가 리플레이 낙하를 이때까지 붙들어 둔다
 
 // 날씨 → 신스 파라미터 (SC와 동일 매핑).
 // **어디의 날씨인가 (작가 확정 2026-09-13): 듣고 있는 사람의 지금·이곳.** 경로 없는
@@ -64,6 +71,12 @@ function _unlockAudio() {
     if (ctx && ctx.state === "suspended") ctx.resume();
     ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
         document.removeEventListener(ev, _unlockAudio));
+    audioUnlocked = true;
+    // 낙하가 이미 무음으로 지나간 뒤라면(제스처가 늦은 경우) 최근 사람부터 앰비언트를 바로 시작.
+    // 낙하가 아직 붙들려 있으면 착지가 첫 소리가 되고 거기서 이어짐이 시작된다 (sketch.js).
+    if (typeof appState !== "undefined" && appState === "live" && typeof ambientStart === "function") {
+        setTimeout(ambientStart, 300);
+    }
 }
 
 // SinOscFB 근사: 자기 FM — 인덱스(rad)×주파수 = 주파수 편차, Env.perc(0.001, 0.1)로 감쇠
@@ -207,15 +220,110 @@ function playThud(vol = 1) {
     _categoryLayer(ctx, t, layer, _weather);
 }
 
+// ---- 돌 소리 (web/js/stone.js) ----
+// 사람당 버퍼를 미리 렌더해 캐시한다 — 착지 순간에 수십 ms 렌더가 끼면 프레임이 튄다.
+// 캐시 키에 fb(날씨)가 들어가므로 날씨가 바뀌면 그 사람도 다시 렌더된다.
+const _stoneBufs = new Map(); // "pid|fb|sr" → AudioBuffer
+const _WEATHER_NAMES = ["clear", "cloudy", "rainy", "snowy", "stormy", "foggy"];
+function stoneFb() {
+    if (typeof STONE === "undefined") return 1;
+    return STONE.FB[_WEATHER_NAMES[_weather.category]] ?? STONE.FB.cloudy;
+}
+function _stoneKey(v, fb, sr) { return `${v?.pid || v?.link}|${fb}|${sr}`; }
+// 렌더만 (재생 없음). 낙하가 시작될 때 불러 두면 착지 시 지연 0.
+function prepareStone(v) {
+    const ctx = _ensureCtx();
+    if (!ctx || typeof renderStone !== "function" || !v) return null;
+    const fb = stoneFb(), key = _stoneKey(v, fb, ctx.sampleRate);
+    let buf = _stoneBufs.get(key);
+    if (!buf) {
+        const r = renderStone(v, fb, ctx.sampleRate);
+        buf = ctx.createBuffer(2, r.length, r.sr);
+        buf.copyToChannel(r.L, 0);
+        buf.copyToChannel(r.R, 1);
+        if (_stoneBufs.size > 24) _stoneBufs.delete(_stoneBufs.keys().next().value); // 오래된 것부터 버림
+        _stoneBufs.set(key, buf);
+    }
+    return buf;
+}
+// 그 사람의 돌 소리. 첫 획의 8ms 어택이 착지의 타격이다 (별도 타격음 없음).
+function playStone(v, vol = 1) {
+    if (!soundOn) return;
+    const ctx = _ensureCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    const buf = prepareStone(v);
+    if (!buf) { playThud(vol); return; } // stone.js 미로드 등 — 옛 소리로 폴백
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const g = ctx.createGain();
+    g.gain.value = vol;
+    const dc = ctx.createBiquadFilter(); // LeakDC 근사 (playThud와 동일)
+    dc.type = "highpass"; dc.frequency.value = 20;
+    src.connect(g).connect(dc).connect(ctx.destination);
+    src.start(ctx.currentTime);
+}
+// 착지음 진입점 — 모드에 따라 돌 소리 / 옛 착지음
+function playLanding(v, vol = 1) {
+    if (SOUND_MODE === "thud") playThud(vol);
+    else playStone(v, vol);
+}
+
+// ---- 확인 소리 (작가 지정 2026-09-18) ----
 // 누군가 죽음을 확인했을 때 — 푸시 알림을 걷어내고 그 자리를 소리에 넘겼다
 // (작가 결정 2026-08-01). 알림은 "전달"이지만 소리는 "지금 함께 있음"이다.
-// 지금은 블럭 착지음을 그대로 빌려 쓴다(작동 확인용) — 소리 자체는 뒤에 바꾼다.
+// 소리는 작가의 SC 신스 \ping_other 의 이식 (종전엔 착지음을 빌렸다):
+//   sig = SinOsc.ar(rrand(600, 700)) * SinOsc.ar(300 * SinOsc.kr(250));
+//   env = Env.perc(0.1, 2.0);  Pan2(sig, 0, 0.1) * env
+// 핵심은 변조기 주파수를 흔드는 SinOsc.kr(250)이 **제어율(sr/64 ≈ 689Hz)로 샘플링**돼
+// 엘리어싱한다는 것 — 그 계단식 흔들림이 이 소리의 결이다. 오디오 그래프의 LFO는 그걸
+// 내지 못하므로 돌 소리처럼 샘플 단위로 렌더하며 kr을 SC 기본(44.1k/64)으로 흉내 낸다.
+// 반송파는 매번 600~700Hz에서 새로 뽑는다(SC의 rrand이 정의 시점마다 굴려지는 것과 같게).
+// amp: 원문은 0.1이지만 돌 소리(10~300Hz) 곁에서는 600~700Hz가 훨씬 크게 들려 1/3로 (작가 조율 2026-09-19).
+const ACK_PING = { fLo: 600, fHi: 700, modDepth: 300, modLfo: 250, att: 0.1, rel: 2.0, amp: 0.1 / 3,
+    krRate: 44100 / 64 };
+function _renderAckPing(sr) {
+    const P = ACK_PING;
+    const N = Math.ceil((P.att + P.rel) * sr);
+    const out = new Float32Array(N);
+    const f0 = P.fLo + Math.random() * (P.fHi - P.fLo);
+    const curve = (a, b, u, c) => a + (b - a) * (1 - Math.exp(u * c)) / (1 - Math.exp(c)); // SC Env 커브
+    const blockLen = sr / P.krRate; // kr 한 틱의 샘플 수 (SC 기본 44.1k에서 64)
+    let phC = 0, phM = 0, phK = 0, modF = 0, nextBlock = 0;
+    for (let i = 0; i < N; i++) {
+        if (i >= nextBlock) { // 제어율 틱 — 변조기 주파수 갱신 (여기서 엘리어싱이 난다)
+            modF = P.modDepth * Math.sin(phK);
+            phK += 2 * Math.PI * P.modLfo / P.krRate;
+            nextBlock += blockLen;
+        }
+        const t = i / sr;
+        const env = t < P.att ? curve(0, 1, t / P.att, -4) : curve(1, 0, (t - P.att) / P.rel, -4);
+        phC += 2 * Math.PI * f0 / sr;
+        phM += 2 * Math.PI * modF / sr;
+        out[i] = Math.sin(phC) * Math.sin(phM) * env * P.amp * Math.SQRT1_2; // Pan2 중앙
+    }
+    return out;
+}
+function playAckPing() {
+    if (!soundOn) return;
+    const ctx = _ensureCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    const mono = _renderAckPing(ctx.sampleRate);
+    const buf = ctx.createBuffer(2, mono.length, ctx.sampleRate);
+    buf.copyToChannel(mono, 0);
+    buf.copyToChannel(mono, 1);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(ctx.currentTime);
+}
 // 한 주기에 여러 건이 들어오면 겹치지 않게 벌려서 그 수만큼 울린다.
 function playAckChime(n = 1) {
     if (!soundOn) return;
     const times = Math.min(n, 3);
     for (let i = 0; i < times; i++) {
-        setTimeout(() => playThud(0.8), i * 550);
+        setTimeout(playAckPing, i * 550);
     }
 }
 

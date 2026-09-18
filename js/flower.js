@@ -73,3 +73,8 @@ function flowerImgHTML(seedStr, sizePx = 25) {
     return `<img class="flower-ic" src="${flowerDataURL(seedStr, sizePx)}" ` +
         `width="${sizePx}" height="${sizePx}" alt="추모 꽃">`;
 }
+
+// Node에서도 씨앗 규칙을 쓸 수 있게 (web/js/stone.js → data/scripts 시안·검사 스크립트)
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = { _flowerHash, _mulberry32 };
+}

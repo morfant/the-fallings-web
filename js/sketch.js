@@ -18,6 +18,8 @@ let lastViewedIdx = -1;
 // 배정한다. "숨졌습니다"라는 문장을 누르고 들어온 사람 앞에서 바로 그 블럭이 떨어지고,
 // 떨어진 블럭에 표시가 남는다 (2026-08-07, 8/6 구미 건 실사용 보고).
 let pendingDeepLinkVi = -1; // victims 배열 인덱스, -1 = 없음
+const REPLAY_HOLD_MS = 8000;   // 리플레이 낙하를 첫 제스처까지 붙드는 최대 시간 (ambient.js 참고)
+let replayHoldUntil = 0;
 
 // 착지 충격파 (렌더 전용 — 물리 바디는 건드리지 않음)
 let shakeStart = -1e9; // millis
@@ -86,14 +88,18 @@ async function initData() {
 
     renderStats(victims, pile.settled.length);
     appState = "replay";
+    replayHoldUntil = millis() + REPLAY_HOLD_MS;
     startPolling();
 
     // ?demo=1 — 사운드/낙하 튜닝용: 6초마다 무작위 기록을 다시 떨어뜨림
     // (화면·통계 숫자가 부풀어 보임 — 새로고침하면 원상복구되는 클라이언트 전용 모드)
+    // `?demo=1&pid=<pid 앞자리>`면 그 사람만 반복 — SC 판과 같은 돌을 나란히 들을 때.
     if (getParam("demo")) {
+        const pidPrefix = getParam("pid");
+        const fixed = pidPrefix ? victims.findIndex((v) => String(v.pid || "").startsWith(pidPrefix)) : -1;
         setInterval(() => {
             if (appState === "live" && !pile.falling && spawnQueue.length === 0) {
-                spawnQueue.push(Math.floor(Math.random() * victims.length));
+                spawnQueue.push(fixed >= 0 ? fixed : Math.floor(Math.random() * victims.length));
             }
         }, 6000);
     }
@@ -116,12 +122,25 @@ function draw() {
     const now = millis();
 
     // 낙하 스폰 (직렬화)
-    if (!pile.falling && spawnQueue.length > 0) {
+    // 리플레이 낙하는 첫 제스처(오디오 잠금 해제)까지 붙들어 둔다 — 최근 블럭의 낙하와 그 돌
+    // 소리가 한 순간이 되게 (작가 결정 2026-09-18, 앰비언트의 시작). 알림 딥링크로 들어와
+    // 상세 뷰가 열린 채라도, 카드를 닫는 손짓이 첫 제스처가 되어 그때 떨어진다 — 종전에는
+    // 카드 뒤에서 이미 떨어져 낙하를 보지 못했다. 제스처가 REPLAY_HOLD_MS 안에 없으면(보기만
+    // 하는 사람) 종전대로 무음으로 떨어진다.
+    const holdReplay = appState === "replay" && AMBIENT_ON
+        && !(typeof audioUnlocked !== "undefined" && audioUnlocked)
+        && now < replayHoldUntil;
+    if (!pile.falling && spawnQueue.length > 0 && !holdReplay) {
         const interval = appState === "replay" ? CONFIG.REPLAY_INTERVAL : 800;
         if (now - lastLandAt > interval) {
             const vi = spawnQueue.shift();
             const spawnY = pile.topY() - height * 0.9;
             pile.spawn(vi, spawnY);
+            // 돌 소리를 낙하 중에 미리 렌더 — 착지 순간의 프레임을 지키기 위해
+            if (typeof prepareStone === "function") {
+                const v = victims[vi];
+                setTimeout(() => prepareStone(v), 0);
+            }
         }
     }
 
@@ -144,7 +163,15 @@ function draw() {
         renderStats(victims, pile.settled.length);
         // 착지음은 '보고 있는 동안 도착한 죽음'에만 울린다. 페이지를 열 때 과거분이
         // 다시 떨어지며 소리가 나는 것은 도착이 아니라 재생이다 (작가 결정 2026-08-01).
-        if (appState === "live") playThud();
+        // 소리는 그 사람의 돌에서 읽는다 (playLanding → playStone, `?sound=thud`면 옛 착지음).
+        // 라이브 착지는 언제나 울린다. 리플레이 착지는 제스처 뒤(=붙들렸다 떨어진 것)에만 울린다 —
+        // 제스처 없이 무음으로 떨어진 재생은 종전 결정(2026-08-01, 재생은 도착이 아니다) 그대로.
+        const unlocked = typeof audioUnlocked !== "undefined" && audioUnlocked;
+        if (appState === "live" || unlocked) {
+            playLanding(victims[landedIdx]);
+            // 앰비언트: 이 사람 다음(그 전 사람)부터 이어 간다
+            if (unlocked && typeof ambientRestart === "function") ambientRestart(landedIdx);
+        }
         shakeStart = now; // 아래 블럭들로 전파되는 충격파
         shakeTopIdx = pile.settled.length - 1;
         // 딥링크가 기다리던 블럭이면 이제 선택 표시를 배정한다 (열려 있는 상세 뷰의 블럭).
@@ -791,8 +818,12 @@ function drawSettledBlocks(now) {
             rect(bx - w / 2 + 1, cy - H / 2 + 10, 3, H - 20, 1.5);
         }
 
-        const highlight = s.settledAt > 0 && now - s.settledAt < CONFIG.HIGHLIGHT_MS
+        let highlight = s.settledAt > 0 && now - s.settledAt < CONFIG.HIGHLIGHT_MS
             ? 1 - (now - s.settledAt) / CONFIG.HIGHLIGHT_MS : 0;
+        // 앰비언트로 지금 울리는 사람 — 소리 길이만큼 같은 테두리 (ambient.js)
+        if (typeof ambientIdx !== "undefined" && i === ambientIdx && now - ambientAt < ambientLenMs) {
+            highlight = Math.max(highlight, 1 - (now - ambientAt) / ambientLenMs);
+        }
         if ((highlight > 0 || i === hoverIdx) && i !== selectedIdx) {
             noFill();
             if (i === hoverIdx) { stroke(...CONFIG.COLORS.text); strokeWeight(1.2); }
