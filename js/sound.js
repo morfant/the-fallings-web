@@ -272,16 +272,16 @@ function playLanding(v, vol = 1) {
 // ---- 확인 소리 (작가 지정 2026-09-18) ----
 // 누군가 죽음을 확인했을 때 — 푸시 알림을 걷어내고 그 자리를 소리에 넘겼다
 // (작가 결정 2026-08-01). 알림은 "전달"이지만 소리는 "지금 함께 있음"이다.
-// 소리는 작가의 SC 신스 \ping_other 의 이식 (종전엔 착지음을 빌렸다; 2026-09-19 2판):
-//   sig = SinOsc.ar(rrand(600, 700)) * SinOsc.ar(100 * SinOsc.kr(320, mul: 0.8));
+// 소리는 작가의 SC 신스 \ping_other 의 이식 (종전엔 착지음을 빌렸다; 2026-09-19 3판):
+//   sig = SinOsc.ar(rrand(600, 700)) * SinOsc.ar(300 * SinOsc.kr(250, mul: 0.4));
 //   env = Env.perc(0.1, 1.0);  Pan2(sig, 0, amp) * env
-//   (1판: 300 * SinOsc.kr(250), Env.perc(0.1, 2.0))
-// 핵심은 변조기 주파수를 흔드는 SinOsc.kr(320)이 **제어율(sr/64 ≈ 689Hz)로 샘플링**돼
+//   (1판: 300 * kr(250), perc 0.1/2.0 · 2판: 100 * kr(320, mul 0.8), perc 0.1/1.0)
+// 핵심은 변조기 주파수를 흔드는 SinOsc.kr(250)이 **제어율(sr/64 ≈ 689Hz)로 샘플링**돼
 // 엘리어싱한다는 것 — 그 계단식 흔들림이 이 소리의 결이다. 오디오 그래프의 LFO는 그걸
 // 내지 못하므로 돌 소리처럼 샘플 단위로 렌더하며 kr을 SC 기본(44.1k/64)으로 흉내 낸다.
 // 반송파는 매번 600~700Hz에서 새로 뽑는다(SC의 rrand이 정의 시점마다 굴려지는 것과 같게).
-// modDepth = 100 × mul 0.8. amp: 원문 0.1의 1/3 (돌 소리 곁에서 600~700Hz가 훨씬 크게 들려, 작가 조율 2026-09-19).
-const ACK_PING = { fLo: 600, fHi: 700, modDepth: 100 * 0.8, modLfo: 320, att: 0.1, rel: 1.0, amp: 0.1 / 3,
+// modDepth = 300 × mul 0.4. amp: 원문 0.1의 1/3 (돌 소리 곁에서 600~700Hz가 훨씬 크게 들려, 작가 조율 2026-09-19).
+const ACK_PING = { fLo: 600, fHi: 700, modDepth: 300 * 0.4, modLfo: 250, att: 0.1, rel: 1.0, amp: 0.1 / 3,
     krRate: 44100 / 64 };
 function _renderAckPing(sr) {
     const P = ACK_PING;
