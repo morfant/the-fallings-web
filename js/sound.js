@@ -280,8 +280,8 @@ function playLanding(v, vol = 1) {
 // 엘리어싱한다는 것 — 그 계단식 흔들림이 이 소리의 결이다. 오디오 그래프의 LFO는 그걸
 // 내지 못하므로 돌 소리처럼 샘플 단위로 렌더하며 kr을 SC 기본(44.1k/64)으로 흉내 낸다.
 // 반송파는 매번 600~700Hz에서 새로 뽑는다(SC의 rrand이 정의 시점마다 굴려지는 것과 같게).
-// modDepth = 300 × mul 0.4. amp: 원문 0.1의 1/3 (돌 소리 곁에서 600~700Hz가 훨씬 크게 들려, 작가 조율 2026-09-19).
-const ACK_PING = { fLo: 600, fHi: 700, modDepth: 300 * 0.4, modLfo: 250, att: 0.1, rel: 1.0, amp: 0.1 / 3,
+// modDepth = 300 × mul 0.4. amp: 원문 0.1 → 1/3(돌 소리 곁에서 600~700Hz가 훨씬 크게 들려) → ×1.5 = 0.05 (작가 조율 2026-09-19).
+const ACK_PING = { fLo: 600, fHi: 700, modDepth: 300 * 0.4, modLfo: 250, att: 0.1, rel: 1.0, amp: 0.05,
     krRate: 44100 / 64 };
 function _renderAckPing(sr) {
     const P = ACK_PING;
