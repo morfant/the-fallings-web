@@ -146,36 +146,55 @@ let _acks = {};
 // 지난 loadAcks 이후 늘어난 확인 수 — 누군가 확인한 순간을 소리로 알리는 데 쓴다.
 // 첫 로드는 기준선만 잡고 0 (그때까지 쌓인 확인은 '방금 일어난 일'이 아니다).
 let acksAdded = 0;
-let _acksTotal = null;
-
-function _ackSum() {
-    let n = 0;
-    for (const k in _acks) n += _acks[k];
-    return n;
-}
+// 기준선은 **기록별 최고 수위**(id → 지금까지 본 최대 카운트). 종전엔 합계 하나였는데,
+// 폴링 응답과 내 확인의 순서가 어긋나면(낡은 스냅샷이 내 클릭 뒤에 도착) 기준선이 내려갔다
+// 올라오며 **내 확인이 30~60초 뒤 남의 것처럼 울리는 틈**이 있었다 (2026-09-19 수정).
+// 기록별로 "지난 값보다 늘어난 만큼"만 더하고 지난 값은 절대 낮추지 않으면, 낡은 응답도
+// 감사로 지워진 기록(합계 감소)도 소리를 만들거나 삼키지 못한다. null = 첫 로드 전.
+let _ackSeen = null;
 
 async function loadAcks() {
     try {
-        const res = await fetch(`${CONFIG.ACK_URL}/acks`);
+        const res = await fetch(`${CONFIG.ACK_URL}/acks`, { cache: "no-store" });
         if (res.ok) {
-            _acks = await res.json();
-            const total = _ackSum();
-            acksAdded = _acksTotal === null ? 0 : Math.max(0, total - _acksTotal);
-            _acksTotal = total;
+            const next = await res.json();
+            if (_ackSeen === null) {
+                _ackSeen = { ...next };
+                acksAdded = 0;
+            } else {
+                let added = 0;
+                for (const id in next) {
+                    const seen = _ackSeen[id] || 0;
+                    if (next[id] > seen) { added += next[id] - seen; _ackSeen[id] = next[id]; }
+                    // next[id] <= seen: 이미 본 것이거나 낡은 응답 — 기준선을 낮추지 않는다
+                }
+                acksAdded = added;
+            }
+            // 표시용 카운트 — 낡은 응답이 방금 반영된 내 확인을 덮어쓰지 않게 최대값으로.
+            // 지워진 id를 굳이 빼지 않는다: 화면 합계(stats.js)는 현재 데이터의 id만 더한다.
+            for (const id in next) _acks[id] = Math.max(_acks[id] || 0, next[id]);
         }
     } catch { /* 카운터 서버 불통은 치명적이지 않음 */ }
     return _acks;
 }
 
 async function sendAck(id) {
-    const res = await fetch(`${CONFIG.ACK_URL}/ack/${id}`, { method: "POST" });
-    if (!res.ok) throw new Error(`ack ${res.status}`);
-    const data = await res.json();
-    _acks[id] = data.count;
-    // 내가 누른 확인은 내 화면에서 울리지 않는다 — 소리는 '다른 누군가의 확인'을
-    // 알리는 것이므로 기준선을 여기서 같이 올려 둔다.
-    if (_acksTotal !== null) _acksTotal = _ackSum();
-    return data.count;
+    // 내가 누른 확인은 내 화면에서 울리지 않는다 — 소리는 '다른 누군가의 확인'을 알리는
+    // 것이므로. 응답이 어떤 순서로 와도 내 것으로 잡히지 않게 **요청 전에** 기준선을 1 올려
+    // 두고, 실패하면 되돌린다.
+    const before = _ackSeen ? (_ackSeen[id] || 0) : null;
+    if (_ackSeen) _ackSeen[id] = Math.max(before, _acks[id] || 0) + 1;
+    try {
+        const res = await fetch(`${CONFIG.ACK_URL}/ack/${id}`, { method: "POST" });
+        if (!res.ok) throw new Error(`ack ${res.status}`);
+        const data = await res.json();
+        _acks[id] = Math.max(_acks[id] || 0, data.count);
+        if (_ackSeen) _ackSeen[id] = Math.max(_ackSeen[id], data.count);
+        return data.count;
+    } catch (e) {
+        if (_ackSeen) { if (before) _ackSeen[id] = before; else delete _ackSeen[id]; }
+        throw e;
+    }
 }
 
 function hasAcked(id) {
