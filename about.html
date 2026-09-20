@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://fallen-caught-crushed.work/img/og-card.png">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="fonts/plex.css" />
-    <link rel="stylesheet" href="style.css?v=8f345f1a" />
+    <link rel="stylesheet" href="style.css?v=61dc54fb" />
     <style>
         body { overflow-y: auto; }
         #about-page {
@@ -37,7 +37,7 @@
         }
         .note em { font-style: italic; }
         .sign { text-align: right; margin-top: 16px; }
-        .sign .date { font-size: 14px; color: var(--text); margin-bottom: 28px; }
+        .sign .date { font-size: 14px; color: var(--text); margin-bottom: 14px; }  /* 28 → 14 (작가 조율 2026-09-20) */
         .sign p { font-size: 13.5px; line-height: 1.9; }
         .sign a { color: #7ea7cc; text-decoration: none; }
         .sign a:hover { text-decoration: underline; }
@@ -120,6 +120,39 @@
 
         <footer id="about-footer">© 2026 이강일(Gangil, Yi). All rights reserved.</footer>
     </main>
+    <!-- 작가 노트를 읽는 동안에도 소리가 이어진다 (작가 결정 2026-09-20): 메인과 같은 소리
+         모듈만 싣고 화면은 없다. 앰비언트는 메인이 세션에 적어 둔 '다음 사람'부터 이어 읊고,
+         누군가의 확인 소리도 같은 주기로 온다. 태그에는 반드시 ?v=61dc54fb (sync-web이 치환). -->
+    <script src="js/config.js?v=61dc54fb"></script>
+    <script src="js/rs.js?v=61dc54fb"></script>
+    <script src="js/flower.js?v=61dc54fb"></script>
+    <script src="js/stone.js?v=61dc54fb"></script>
+    <script src="js/sound.js?v=61dc54fb"></script>
+    <script src="js/dataloader.js?v=61dc54fb"></script>
+    <script src="js/ambient.js?v=61dc54fb"></script>
+    <script>
+        // sound.js/ambient.js가 기대하는 전역 — 이 페이지에는 낙하가 없으니 바로 live.
+        let victims = [];
+        let appState = "loading";
+        (async () => {
+            try { victims = await loadVictimData(); } catch (e) { console.warn("data:", e); return; }
+            appState = "live";
+            // Chrome은 같은 도메인에서 한 번 손댄 뒤면 자동재생을 허용한다 — 바로 시도하고,
+            // 막혀 있으면(Safari 등) sound.js의 첫 제스처 잠금 해제가 ambientStart를 부른다.
+            const ctx = _ensureCtx();
+            if (ctx) {
+                const tryStart = () => { if (ctx.state === "running") { audioUnlocked = true; ambientStart(); } };
+                if (ctx.state === "running") tryStart();
+                else ctx.resume().then(tryStart).catch(() => { });
+            }
+            // 확인 소리 — 메인과 같은 주기·같은 기준선 규칙(dataloader.js)
+            await loadAcks();
+            setInterval(async () => {
+                await loadAcks();
+                if (acksAdded > 0) playAckChime(acksAdded);
+            }, CONFIG.ACK_POLL_MS);
+        })();
+    </script>
     <script>
         // subscribe.html과 같은 규칙 — 앱에서 왔으면 그 화면(정보 뷰/상세)으로 되돌아간다.
         document.getElementById("back-link").addEventListener("click", (e) => {

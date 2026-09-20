@@ -14,6 +14,24 @@
 //
 // 손잡이: `?gap=초` 또는 `?gap=최소-최대`(돌과 돌 사이 침묵 — 기본 3.5~4초 사이 무작위, 작가
 // 조율 2026-09-18; 고정값을 주면 그 값으로), `?ambient=off`(끄기 — 착지음만).
+//
+// 페이지 사이 이어받기 (2026-09-20): 다음에 읊을 사람의 pid를 sessionStorage에 적어 두어,
+// 작가 노트(about.html)로 넘어가도 **그 다음 사람부터** 이어진다 — 소리가 페이지를 따라
+// 한 줄기로. 탭 단위 저장이라 새 탭·새 방문은 최근 사람부터 다시.
+const _AMB_NEXT_KEY = "tf:amb:next";
+function _ambSaveNext(vi) {
+    try {
+        const v = typeof victims !== "undefined" ? victims[vi] : null;
+        if (v?.pid) sessionStorage.setItem(_AMB_NEXT_KEY, v.pid);
+    } catch { /* 저장 불가 환경 — 이어받기만 포기 */ }
+}
+function _ambLoadNext() {
+    try {
+        const pid = sessionStorage.getItem(_AMB_NEXT_KEY);
+        if (!pid || typeof victims === "undefined") return -1;
+        return victims.findIndex((v) => v.pid === pid);
+    } catch { return -1; }
+}
 
 const AMBIENT_ON = (typeof getParam === "function" ? getParam("ambient") : null) !== "off";
 const AMBIENT_GAP = (() => { // [최소, 최대] 초
@@ -44,15 +62,19 @@ function ambientRestart(vi) {
     if (!AMBIENT_ON || typeof playStone !== "function") return;
     clearTimeout(_ambTimer);
     _ambCursor = vi - 1;
+    if (_ambCursor < 0) _ambCursor = victims.length - 1;
+    _ambSaveNext(_ambCursor);
     _ambMark(vi);
     _ambTimer = setTimeout(_ambStep, _ambStoneLenMs() + _ambGapMs());
 }
 
-// 아무 소리 없이 시작 — 최근 사람부터 바로 (낙하가 이미 무음으로 지나간 뒤 제스처가 온 경우).
+// 아무 소리 없이 시작 — 세션에 이어받을 자리가 있으면 거기서, 없으면 최근 사람부터
+// (낙하가 이미 무음으로 지나간 뒤 제스처가 온 경우, 그리고 작가 노트 페이지).
 function ambientStart() {
     if (!AMBIENT_ON || typeof playStone !== "function" || _ambTimer) return;
     if (typeof victims === "undefined" || !victims.length) return;
-    _ambCursor = victims.length - 1;
+    const saved = _ambLoadNext();
+    _ambCursor = saved >= 0 ? saved : victims.length - 1;
     _ambStep();
 }
 
@@ -73,7 +95,8 @@ function _ambStep() {
     if (typeof prepareStone === "function" && victims[nextVi]) setTimeout(() => prepareStone(victims[nextVi]), 50);
     playStone(v);
     _ambMark(vi);
-    _ambCursor = vi - 1;
+    _ambCursor = nextVi;
+    _ambSaveNext(nextVi);
     _ambTimer = setTimeout(_ambStep, _ambStoneLenMs() + _ambGapMs());
 }
 
