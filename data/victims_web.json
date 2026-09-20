@@ -10,7 +10,29 @@
   "attribution": "떨어지고, 끼이고, 깔린 (이강일) — fallen-caught-crushed.work",
   "note": "언론 보도에 기반한 기록으로 전수가 아닙니다. 2025-09-01 이후 확인된 사망만 공개합니다. 각 레코드의 요약(accSummary)은 이 프로젝트가 사실만으로 새로 쓴 문장입니다."
  },
- "generatedAt": "2026-09-20T11:29:00.337Z",
+ "generatedAt": "2026-09-20T14:15:39.010Z",
+ "sources": [
+  {
+   "name": "한겨레",
+   "domain": "hani.co.kr"
+  },
+  {
+   "name": "연합뉴스",
+   "domain": "yna.co.kr"
+  },
+  {
+   "name": "경향신문",
+   "domain": "khan.co.kr"
+  },
+  {
+   "name": "뉴시스",
+   "domain": "newsis.com"
+  },
+  {
+   "name": "노컷뉴스",
+   "domain": "nocutnews.co.kr"
+  }
+ ],
  "unit": "person",
  "collectionSince": "2025-09-01",
  "count": 288,
