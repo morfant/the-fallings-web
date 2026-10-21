@@ -1435,9 +1435,25 @@ function showRevisitBanner(n) {
     el.hidden = false;
 }
 
+// =====================[ 열람 신호 ]=====================
+// 페이지 로드당 한 번 워커에 +1 (2026-10-22). 보내는 것은 종류 한 단어뿐 — 알림·공유 딥링크로
+// 상세에 직행했는지(record) 첫 화면인지(page). IP·UA·쿠키 없음. 로컬 개발·테스트 파라미터는 제외.
+function sendSeen() {
+    try {
+        if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+        if (["debug", "demo", "stress", "poll"].some((k) => getParam(k))) return;
+        const kind = location.hash.startsWith("#/record") ? "record" : "page";
+        const body = JSON.stringify({ kind });
+        if (!(navigator.sendBeacon && navigator.sendBeacon(`${CONFIG.ACK_URL}/seen`, body))) {
+            fetch(`${CONFIG.ACK_URL}/seen`, { method: "POST", body, keepalive: true }).catch(() => {});
+        }
+    } catch { /* 열람 신호 실패는 아무것도 막지 않는다 */ }
+}
+
 // =====================[ 폴링 ]=====================
 
 function startPolling() {
+    sendSeen();
     const sec = parseInt(getParam("poll") || "0", 10);
     const ms = sec > 0 ? sec * 1000 : CONFIG.POLL_MS;
     // 확인(ack)은 신규 데이터보다 훨씬 자주 본다 — 누군가 확인한 순간을 소리로
