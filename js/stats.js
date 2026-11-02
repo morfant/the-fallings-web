@@ -66,9 +66,15 @@ function aggregateStats(victims, uptoCount) {
 // region의 첫 토큰을 시도 표준 약칭으로 정규화 — 데이터에 "경기도/경기", "서울특별시/서울",
 // "강원도/강원특별자치도" 같은 표기가 혼재해 그대로 세면 같은 시도가 쪼개진다.
 // 첫 토큰이 시도인 것은 추출 규칙(시도+시군구)의 전제 — displayRegion도 같은 가정을 쓴다.
+// 통합 행정구역의 통계 표시값. "전남광주통합특별시"는 지금 접두어 규칙대로 "전남"으로 집계된다.
+// '광주'/'전남'/'광주·전남' 중 무엇으로 보일지는 작가 결정 대기(2026-11-02) — 이 값만 바꾸면 된다.
+// (data/scripts/qa_new_records.mjs의 SIDO_UNIONS는 후보 비교용이라 표시와 별개)
+const UNION_SIDO_LABEL = "전남";
+
 function sidoLabel(region) {
     const t = String(region || "").trim().split(/\s+/)[0];
     if (!t) return "미상";
+    if (/^(전남광주|광주전남)/.test(t)) return UNION_SIDO_LABEL;
     const map = [
         ["서울", "서울"], ["부산", "부산"], ["대구", "대구"], ["인천", "인천"],
         ["광주", "광주"], ["대전", "대전"], ["울산", "울산"], ["세종", "세종"],
