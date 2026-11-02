@@ -1,10 +1,15 @@
 // victims_web.json fetch + 신규 diff. 정적 호스팅이라 폴링으로 갱신 감지.
 
+// 옛 pid → 지금 pid (build_persons.mjs 7번). 알림이 나간 뒤 기록이 병합되면 옛 링크의 pid가
+// 데이터에서 사라진다 — openFromHash가 못 찾은 pid를 여기서 한 번 더 찾는다.
+let pidAliases = {};
+
 async function loadVictimData() {
     const res = await fetch(`${CONFIG.DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) throw new Error(`data fetch failed: ${res.status}`);
     const json = await res.json();
     let list = Array.isArray(json.victims) ? json.victims : [];
+    if (json.aliases && typeof json.aliases === "object") pidAliases = json.aliases;
 
     // ?stress=N — 성능 테스트용 데이터 증폭 (식별자인 link만 달리해 복제)
     const stress = parseInt(getParam("stress") || "0", 10);

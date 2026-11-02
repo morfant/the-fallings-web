@@ -1268,7 +1268,13 @@ function openFromHash() {
     }
     const m = /^#\/record\/([0-9a-f]{16})/.exec(location.hash || "");
     if (!m) return;
-    const v = victims.find((x) => x._ackId === m[1]);
+    let rid = m[1];
+    let v = victims.find((x) => x._ackId === rid);
+    // 병합 등으로 pid가 바뀐 옛 링크 — 연결표로 지금 기록을 연다 (주소도 지금 pid로 바꾼다)
+    if (!v && pidAliases[rid]) {
+        rid = pidAliases[rid];
+        v = victims.find((x) => x._ackId === rid);
+    }
     if (!v) return;
     const si = pile.settled.findIndex((s) => victims[s.victimIdx] === v);
     if (si >= 0) {
@@ -1288,7 +1294,7 @@ function openFromHash() {
     // 돌아오게 한다 (2026-08-01 텔레그램 실사용 보고).
     const base = location.pathname + location.search;
     history.replaceState(null, "", base);            // 아래: 블럭 화면
-    history.pushState({ tfDetail: m[1] }, "", `#/record/${m[1]}`); // 위: 상세
+    history.pushState({ tfDetail: rid }, "", `#/record/${rid}`); // 위: 상세
     showDetail(v);
 }
 
